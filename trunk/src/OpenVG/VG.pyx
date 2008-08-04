@@ -436,7 +436,7 @@ cdef class Image:
         handle = vgChildImage(self.handle, corner[0], corner[1], dimensions[0], dimensions[1])
         check_error()
 
-        image = VGObject.__new__(Image)
+        image = Image.__new__(Image)
         image.handle = handle
         _image_table[<long>handle] = image
         return image
@@ -486,7 +486,7 @@ cdef class Image:
             if (<long>handle) in _image_table:
                 return _image_table[<long>handle]
             else:
-                image = VGObject.__new__(Image)
+                image = Image.__new__(Image)
                 image.handle = handle
                 _image_table[<long>handle] = image
                 return image
@@ -677,7 +677,7 @@ def rotate(angle):
 ##    if (<long>handle) in _paint_table:
 ##        return _paint_table[<long>handle]
 ##    else:
-##        paint = Object.__new__(Paint)
+##        paint = Paint.__new__(Paint)
 ##        paint.handle = handle
 ##        _paint_table[<long>handle] = paint
 ##        return paint
@@ -685,15 +685,23 @@ def rotate(angle):
 def set_paint(Paint paint, mode):
     if paint is None:
         vgSetPaint(VG_INVALID_HANDLE, mode)
-        Context.singleton.paint = None
+        if mode & VG_STROKE_PATH:
+            Context.singleton.stroke_paint = None
+        if mode & VG_FILL_PATH:
+            Context.singleton.fill_paint = None
     else:
         vgSetPaint((<Paint>paint).handle, mode)
-        Context.singleton.paint = <Paint>paint
+        if mode & VG_STROKE_PATH:
+            Context.singleton.stroke_paint = paint
+        if mode & VG_FILL_PATH:
+            Context.singleton.stroke_paint = paint
     check_error()
 
 class Context(object):
     def __init__(self, dimensions):
         self.dimensions = dimensions
+        self.stroke_paint = None
+        self.fill_paint = None
 
     def resize(self, dimensions):
         vgResizeSurfaceSH(dimensions[0], dimensions[1])
