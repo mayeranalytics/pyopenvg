@@ -685,23 +685,19 @@ def rotate(angle):
 def set_paint(Paint paint, mode):
     if paint is None:
         vgSetPaint(VG_INVALID_HANDLE, mode)
-        if mode & VG_STROKE_PATH:
-            Context.singleton.stroke_paint = None
-        if mode & VG_FILL_PATH:
-            Context.singleton.fill_paint = None
     else:
         vgSetPaint((<Paint>paint).handle, mode)
-        if mode & VG_STROKE_PATH:
-            Context.singleton.stroke_paint = paint
-        if mode & VG_FILL_PATH:
-            Context.singleton.stroke_paint = paint
     check_error()
+    
+    if mode & VG_STROKE_PATH:
+        Context.singleton.stroke_paint = paint
+    if mode & VG_FILL_PATH:
+        Context.singleton.fill_paint = paint
+    
 
 class Context(object):
     def __init__(self, dimensions):
         self.dimensions = dimensions
-        self.stroke_paint = None
-        self.fill_paint = None
 
     def resize(self, dimensions):
         vgResizeSurfaceSH(dimensions[0], dimensions[1])
@@ -721,8 +717,8 @@ def __new__(cls, dimensions):
         if not success:
             raise RuntimeError("Unable to create OpenVG context")
         cls.singleton = object.__new__(cls)
-        cls.singleton.paint = None
-        cls.singleton.mask = None
+        cls.singleton.stroke_paint = None
+        cls.singleton.fill_paint = None
     else:
         if dimensions != cls.singleton.dimensions:
             cls.singleton.resize(dimensions)

@@ -11,7 +11,7 @@ def main():
     pygame.init()
 
     srf = pygame.display.set_mode((640,480), pygame.OPENGL | pygame.DOUBLEBUF)
-    pygame.display.set_caption("Pyn test")
+    pygame.display.set_caption("Polyline test")
     
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_NORMALIZE)

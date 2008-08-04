@@ -1,0 +1,34 @@
+Though the code generally works, it is still incomplete. In particular, the following functions have not yet been wrapped:
+vgMask
+
+vgRemovePathCapabilities
+vgModifyPathCoords
+vgTransformPath
+vgInterpolatePath
+vgPathLength
+vgPointAlongPath
+
+vgSetColor
+vgGetColor
+
+vgImageSubData
+vgGetImageSubData
+vgWritePixels
+vgReadPixels
+vgColorMatrix
+vgConvolve
+vgSeparableConvolve
+vgGaussianBlur
+vgLookup
+vgLookupSingle
+
+vgHardwareQuery
+vgGetString
+
+vguComputeWarpQuadToSquare
+vguComputeWarpSquareToQuad
+vguComputeWarpQuadToQuad
+
+Additionally, the code is currently dependent on Ivan Leben's ShivaVG implementation to take care of managing the context as EGL support on Windows is lacking.
+vgGetPaint is not implemented in the current release of ShivaVG, so it is currently commented out.
+
