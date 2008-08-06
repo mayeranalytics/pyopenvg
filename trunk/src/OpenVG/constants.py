@@ -255,5 +255,5 @@ VG_RENDERER = 0x2301
 VG_VERSION = 0x2302
 VG_EXTENSIONS = 0x2303
 
-
 __all__ = [name for name in dir() if name.startswith("VG")]
+constants_table = dict((name,value) for (name,value) in globals().items() if name.startswith("VG"))

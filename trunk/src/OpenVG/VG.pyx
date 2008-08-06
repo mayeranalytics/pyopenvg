@@ -110,7 +110,30 @@ cdef class Path:
         check_error()
         return (minX, minY, width, height)
 
-    def draw(self, paint_modes):
+    def length(self, start=0, num_segments=None):
+        if not self.capabilities & VG_PATH_CAPABILITY_PATH_LENGTH:
+            raise VGError(VG_PATH_CAPABILITY_ERROR, "VG_PATH_CAPABILITY_PATH_LENGTH must be enabled")
+
+        if num_segments is None:
+            num_segments = self.num_segments
+
+        L = vgPathLength(self.handle, start, num_segments)
+        check_error()
+        return L
+
+    def get_point(self, distance, start=0, num_segments=None):
+        cdef VGfloat x, y, tangentX, tangentY
+        if num_segments is None:
+            num_segments = self.num_segments
+
+        vgPointAlongPath(self.handle, start, num_segments, distance,
+                         &x, &y, &tangentX, &tangentY)
+        check_error()
+        return (x, y), (tangentX, tangentY)
+
+    def draw(self, paint_modes, Paint paint=None):
+        if paint is not None:
+            set_paint(paint, paint_modes)
         vgDrawPath(self.handle, paint_modes)
         check_error()
 
@@ -155,6 +178,24 @@ cdef class Path:
         else:
             command = VG_SCWARC_TO
         self.append((command | rel, data))
+
+
+    def transform(self, Path dest=None):
+        capabilities = self.capabilities
+        if not capabilities & VG_PATH_CAPABILITY_TRANSFORM_FROM:
+            raise VGError(VG_PATH_CAPABILITY_ERROR, "source path must have VG_PATH_CAPABILITY_TRANSFORM_FROM enabled")
+
+        if dest is None:
+            capabilities |= VG_PATH_CAPABILITY_TRANSFORM_TO
+            dest = Path(self.format, self.datatype, self.scale, self.bias,
+                        self.num_segments, self.num_coords, capabilities)
+        elif not dest.capabilities & VG_PATH_CAPABILITY_TRANSFORM_TO:
+            raise VGError(VG_PATH_CAPABILITY_ERROR, "dest path must have VG_PATH_CAPABILITY_TRANSFORM_TO enabled")
+        
+        vgTransformPath(dest.handle, self.handle)
+        check_error()
+
+        return dest
 
     property format:
         def __get__(self):
@@ -406,8 +447,8 @@ cdef class PatternPaint(Paint):
             check_error()
 
 cdef class Image:
-    def __init__(self, format, width, height, quality=VG_IMAGE_QUALITY_BETTER):
-        self.handle = vgCreateImage(format, width, height, quality)
+    def __init__(self, format, dimensions, quality=VG_IMAGE_QUALITY_BETTER):
+        self.handle = vgCreateImage(format, dimensions[0], dimensions[1], quality)
         if self.handle == NULL:
             raise VGError(VG_BAD_HANDLE_ERROR, "unable to create image")
         check_error()
@@ -416,6 +457,47 @@ cdef class Image:
     def __dealloc__(self):
         del _image_table[<long>self.handle]
         vgDestroyImage(self.handle)
+
+    def sub_data(self, char *data, stride, format, corner, dimensions):
+        vgImageSubData(self.handle, <void*>data,
+                       stride, format,
+                       corner[0], corner[1],
+                       dimensions[0], dimensions[1])
+        check_error(VG_IMAGE_IN_USE_ERROR="%r is currently a rendering target" % self,
+                    VG_UNSUPPORTED_IMAGE_FORMAT_ERROR="invalid format",
+                    VG_ILLEGAL_ARGUMENT_ERROR="invalid width/height or data is NULL or data is misaligned")
+
+    def fromiter(self, it, corner, dimensions, alpha=False):
+        cdef VGubyte *data
+        cdef VGImageFormat format
+        cdef long i
+
+        width, height = dimensions
+        data = <VGubyte*>malloc(sizeof(VGubyte) * 4 * width * height)
+        try:
+            if alpha:
+                format = VG_lRGBA_8888
+                for i from 0 <= i < width*height:
+                    obj = it.next()
+                    data[i*4] = obj[0]
+                    data[i*4+1] = obj[1]
+                    data[i*4+2] = obj[2]
+                    data[i*4+3] = obj[3]
+                    
+            else:
+                format = VG_lRGBX_8888
+                for i from 0 <= i < width*height:
+                    obj = it.next()
+                    data[i*4] = obj[0]
+                    data[i*4+1] = obj[1]
+                    data[i*4+2] = obj[2]
+            
+            vgImageSubData(self.handle, <void*>data, 4 * width, format,
+                           corner[0], corner[1], width, height)
+            check_error()
+
+        finally:
+            free(<void*>data)
 
     def clear(self, corner, dimensions, color=None):
         if color is not None:
@@ -471,6 +553,10 @@ cdef class Image:
     property height:
         def __get__(self):
             return vgGetParameteri(self.handle, VG_IMAGE_HEIGHT)
+
+    property size:
+        def __get__(self):
+            return (self.width, self.height)
 
     property parent:
         def __get__(self):
@@ -669,18 +755,11 @@ def rotate(angle):
     vgRotate(angle)
 
 ##def get_paint(mode):
-##    cdef Paint paint
 ##    cdef VGPaint handle
 ##    handle = vgGetPaint(mode)
 ##    check_error()
 ##
-##    if (<long>handle) in _paint_table:
-##        return _paint_table[<long>handle]
-##    else:
-##        paint = Paint.__new__(Paint)
-##        paint.handle = handle
-##        _paint_table[<long>handle] = paint
-##        return paint
+##    return lookup_paint(handle)
 
 def set_paint(Paint paint, mode):
     if paint is None:
@@ -694,6 +773,51 @@ def set_paint(Paint paint, mode):
     if mode & VG_FILL_PATH:
         Context.singleton.fill_paint = paint
     
+
+def interpolate(Path start, Path end, VGfloat amount, Path dest=None):
+    if not start.capabilities & VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM:
+        raise VGError(VG_PATH_CAPABILITY_ERROR, "start path must have VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM enabled")
+    elif not end.capabilities & VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM:
+        raise VGError(VG_PATH_CAPABILITY_ERROR, "end path must have VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM enabled")
+
+    if dest is None:
+        capabilities = start.capabilities | end.capabilities | VG_PATH_CAPABILITY_INTERPOLATE_TO
+        dest = Path(format=start.format,
+                    datatype=max(start.datatype, end.datatype),
+                    capabilties=capabilities)
+    elif not dest.capabilities & VG_PATH_CAPABILITY_PATH_INTERPOLATE_TO:
+        raise VGError(VG_PATH_CAPABILITY_ERROR, "dest path must have VG_PATH_CAPABILITY_PATH_INTERPOLATE_TO enabled")
+
+    vgInterpolatePath(dest.handle, start.handle, end.handle, amount)
+    check_error()
+    return dest
+
+cdef object lookup_image(VGImage handle):
+    cdef Image im
+    if (<long>handle) in _image_table:
+        return _image_table[<long>handle]
+    else:
+        im = Image.__new__(Image)
+        im.handle = handle
+        return im
+
+cdef object lookup_paint(VGPaint handle):
+    cdef Paint paint
+    if (<long>handle) in _paint_table:
+        return _paint_table[<long>handle]
+    else:
+        paint_type = vgGetParameteri(handle, VG_PAINT_TYPE)
+        check_error()
+        if paint_type == VG_PAINT_TYPE_COLOR:
+            paint = Paint.__new__(ColorPaint)
+        elif paint_type == VG_PAINT_TYPE_LINEAR_GRADIENT or \
+             paint_type == VG_PAINT_TYPE_RADIAL_GRADIENT:
+            paint = Paint.__new__(GradientPaint)
+        else:
+            paint = Paint.__new__(PatternPaint)
+            paint._pattern = None
+        paint.handle = handle
+        return paint
 
 class Context(object):
     def __init__(self, dimensions):
@@ -745,5 +869,54 @@ Context.translate = staticmethod(translate)
 Context.scale = staticmethod(scale)
 Context.shear = staticmethod(shear)
 Context.rotate = staticmethod(rotate)
+Context.interpolate = staticmethod(interpolate)
 
-__all__ = ["Path", "Paint", "ColorPaint", "GradientPaint", "PatternPaint", "Image", "Context", "VGError", "check_error"]
+from constants import constants_table
+class Style(object):
+    def __init__(self, **params):
+        self.params = {}
+        self.old_params = {}
+        for name, value in params.items():
+            param_type = constants_table[name]
+            
+            self.params[param_type] = value
+            
+    def __enter__(self):
+        for param_type, value in self.params.items():
+            self.old_params[param_type] = get(param_type)
+            set(param_type, value)
+
+    def __exit__(self, exc_type, value, traceback):
+        for param_type, val in self.old_params.items():
+            set(param_type, val)
+        self.old_params.clear()
+
+    def __getitem__(self, name):
+        return self.params[name]
+
+    def __setitem__(self, name, value):
+        if name not in constants_table:
+            raise KeyError("Invalid parameter type %r" % name)
+        self.params[name] = value
+
+    def __delitem__(self, name):
+        del self.params[name]
+
+    def __iter__(self):
+        return iter(self.params)
+
+    def __add__(self, other):
+        collision = frozenset(self.params) & frozenset(other.params)
+        if collision:
+            raise ValueError("params are repeated: %r" % collision)
+            
+        style = object.__new__(Style)
+        style.params = self.params.copy()
+        style.params.update(other.params)
+        style.old_params = {}
+
+        return style
+        
+
+__all__ = ["Path", "Paint", "ColorPaint", "GradientPaint", "PatternPaint",
+           "Image", "Context", "Style" "VGError", "check_error", "interpolate"]

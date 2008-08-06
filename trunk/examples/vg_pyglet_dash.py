@@ -1,5 +1,8 @@
+from __future__ import with_statement
+
 from pyglet.gl import *
 from pyglet import window
+
 from OpenVG import VG
 from OpenVG.constants import *
 
@@ -42,27 +45,36 @@ VG.set_paint(stroke_paint, VG_STROKE_PATH)
 fill_paint = VG.ColorPaint((0.3, 1.0, 0.0, 0.6))
 VG.set_paint(fill_paint, VG_FILL_PATH)
 
+stroke_style = VG.Style(VG_STROKE_DASH_PATTERN = (5, 10),
+                        VG_STROKE_DASH_PHASE_RESET = True,
+                        VG_STROKE_DASH_PHASE = 0.0,
+
+                        VG_STROKE_LINE_WIDTH = 5.0,
+                        VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
+                        VG_STROKE_CAP_STYLE = VG_CAP_ROUND)
 
 win.set_visible()
 while not win.has_exit:
     win.dispatch_events()
     VG.clear((0, 0), (640, 480))
 
-    VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
-    VG.set(VG_STROKE_DASH_PHASE_RESET, True)
-    VG.set(VG_STROKE_DASH_PHASE, 0.0)
-
-    VG.set(VG_STROKE_LINE_WIDTH, 5.0)
-    VG.set(VG_STROKE_JOIN_STYLE, VG_JOIN_MITER)
-    VG.set(VG_STROKE_CAP_STYLE, VG_CAP_ROUND)
-
     VG.set(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE)
-
     VG.load_identity()
     VG.translate(320, 240)
     VG.scale(3.0, 3.0)
-    p.draw(VG_FILL_PATH)
-    p.draw(VG_STROKE_PATH)
+
+#uncomment if no with statement support
+##    VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
+##    VG.set(VG_STROKE_DASH_PHASE_RESET, True)
+##    VG.set(VG_STROKE_DASH_PHASE, 0.0)
+##
+##    VG.set(VG_STROKE_LINE_WIDTH, 5.0)
+##    VG.set(VG_STROKE_JOIN_STYLE, VG_JOIN_MITER)
+##    VG.set(VG_STROKE_CAP_STYLE, VG_CAP_ROUND)
+
+    with stroke_style:
+        p.draw(VG_FILL_PATH)
+        p.draw(VG_STROKE_PATH)
     
 
     win.flip()
