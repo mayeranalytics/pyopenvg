@@ -56,9 +56,15 @@ def main():
     red_paint = VG.ColorPaint((1.0, 0.0, 0.0, 1.0))
     grey_paint = VG.ColorPaint((0.5, 0.5, 0.5, 1.0))
 
-    svg_style = VG.Style(VG_STROKE_LINE_WIDTH = 5.0,
-                         VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
-                         VG_STROKE_CAP_STYLE = VG_CAP_BUTT)
+    control_style = VG.Style(VG_STROKE_LINE_WIDTH = 5.0,
+                             VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
+                             VG_STROKE_CAP_STYLE = VG_CAP_BUTT,
+                             VG_STROKE_PATH = grey_paint)
+    quad_style = VG.Style(VG_STROKE_LINE_WIDTH = 5.0,
+                          VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
+                          VG_STROKE_CAP_STYLE = VG_CAP_BUTT,
+                          VG_STROKE_PATH = red_paint)
+    
                           
                           
 
@@ -79,9 +85,11 @@ def main():
 
         VG.scale(0.4, 0.4)
         VG.translate(320, 240)
-        with svg_style:
-            quad.draw(VG_STROKE_PATH, red_paint)
-            control.draw(VG_STROKE_PATH, grey_paint)
+        with quad_style:
+            quad.draw(VG_STROKE_PATH)
+        
+        with control_style:
+            control.draw(VG_STROKE_PATH)
         
         pygame.display.flip()
 

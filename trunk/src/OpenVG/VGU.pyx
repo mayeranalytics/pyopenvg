@@ -45,5 +45,50 @@ def arc(Path path not None, corner, dimensions, start_angle, angle_extent, arc_t
     if error_code != VGU_NO_ERROR:
         raise VGUError(error_code)
 
+def compute_warp_quad_to_square(p1, p2, p3, p4):
+    #   p2 _______ p3      0,1 ______ 1,1
+    #     /      /            |      |
+    #    /      /     -->     |      |
+    # p1/______/ p4        0,0|______|1,0
+    cdef VGfloat m[9]
+    error_code = vguComputeWarpQuadToSquare(p1[0], p1[1], p2[0], p2[1],
+                                            p3[0], p3[1], p4[0], p4[1], m)
+    if error_code != VGU_NO_ERROR:
+        raise VGUError(error_code)
 
-__all__ = ["VGUError", "line", "rect", "round_rect", "ellipse", "arc"]
+    return [m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]]
+
+def compute_warp_square_to_quad(p1, p2, p3, p4):
+    #0,1 ______ 1,1         p2 _______ p3
+    #   |      |              /      /
+    #   |      |   -->       /      /
+    #0,0|______|1,0       p1/______/ p4
+    cdef VGfloat m[9]
+    error_code = vguComputeWarpSquareToQuad(p1[0], p1[1], p2[0], p2[1],
+                                            p3[0], p3[1], p4[0], p4[1], m)
+    if error_code != VGU_NO_ERROR:
+        raise VGUError(error_code)
+
+    return [m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]]
+
+def compute_warp_quad_to_quad(quad1, quad2):
+    #   p2 _______ p3      q2 _______ q3
+    #     /      /            \      \
+    #    /      /     -->      \      \
+    # p1/______/ p4          q1 \______\ q4
+    cdef VGfloat m[9]
+    p1, p2, p3, p4 = quad1
+    q1, q2, q3, q4 = quad2
+    error_code = vguComputeWarpQuadToQuad(q1[0], q1[1], q2[0], q2[1],
+                                          q3[0], q3[1], q4[0], q4[1],
+                                          p1[0], p1[1], p2[0], p2[1],
+                                          p3[0], p3[1], p4[0], p4[1], m)
+    if error_code != VGU_NO_ERROR:
+        raise VGUError(error_code)
+
+    return [m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]]
+
+
+__all__ = ["VGUError", "line", "rect", "round_rect", "ellipse", "arc",
+           "compute_warp_quad_to_square", "compute_warp_square_to_quad",
+           "compute_warp_quad_to_quad"]

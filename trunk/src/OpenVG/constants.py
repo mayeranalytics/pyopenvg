@@ -257,3 +257,12 @@ VG_EXTENSIONS = 0x2303
 
 __all__ = [name for name in dir() if name.startswith("VG")]
 constants_table = dict((name,value) for (name,value) in globals().items() if name.startswith("VG"))
+_paramtypes = ["VG_MATRIX_MODE", "VG_FILL_RULE", "VG_IMAGE_QUALITY", "VG_IMAGE_QUALITY",
+               "VG_RENDERING_QUALITY", "VG_BLEND_MODE", "VG_IMAGE_MODE", "VG_SCISSOR_RECTS",
+               "VG_STROKE_LINE_WIDTH", "VG_STROKE_CAP_STYLE", "VG_STROKE_JOIN_STYLE",
+               "VG_STROKE_MITER_LIMIT", "VG_STROKE_DASH_PATTERN", "VG_STROKE_DASH_PHASE",
+               "VG_STROKE_DASH_PHASE_RESET", "VG_TILE_FILL_COLOR", "VG_CLEAR_COLOR",
+               "VG_MASKING", "VG_SCISSORING", "VG_PIXEL_LAYOUT", "VG_SCREEN_LAYOUT",
+               "VG_FILTER_FORMAT_LINEAR", "VG_FILTER_FORMAT_PREMULTIPLIED",
+               "VG_FILTER_CHANNEL_MASK"]
+param_table = dict((name,value) for (name,value) in globals().items() if name in _paramtypes)
