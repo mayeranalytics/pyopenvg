@@ -108,11 +108,22 @@ cdef class Path:
         check_error()
         return (x, y), (tangentX, tangentY)
 
-    def draw(self, paint_modes, Paint paint=None):
-        if paint is not None:
-            set_paint(paint, paint_modes)
-        vgDrawPath(self.handle, paint_modes)
-        check_error()
+    def draw(self, paint_modes, object style=None):
+        if self.style is not None and style is not None:
+            style = self.style + style
+        elif self.style is not None and style is None:
+            style = self.style
+
+        if style is not None:
+            try:
+                style.enable()
+                vgDrawPath(self.handle, paint_modes)
+                check_error()
+            finally:
+                style.disable()
+        else:
+            vgDrawPath(self.handle, paint_modes)
+            check_error()
 
     def close(self):
         self.append((VG_CLOSE_PATH, ()))

@@ -55,11 +55,6 @@ def main():
 
         VG.clear((0, 0), (640, 480))
 
-#uncomment if no with statement
-##        VG.set(VG_STROKE_LINE_WIDTH, 4.0)
-##        VG.set(VG_STROKE_JOIN_STYLE, VG_JOIN_MITER)
-##        VG.set(VG_STROKE_CAP_STYLE, VG_CAP_ROUND)
-
         with stroke_style:
             polyline.draw(VG_STROKE_PATH)
 
