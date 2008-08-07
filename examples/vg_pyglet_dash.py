@@ -63,15 +63,6 @@ while not win.has_exit:
     VG.translate(320, 240)
     VG.scale(3.0, 3.0)
 
-#uncomment if no with statement support
-##    VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
-##    VG.set(VG_STROKE_DASH_PHASE_RESET, True)
-##    VG.set(VG_STROKE_DASH_PHASE, 0.0)
-##
-##    VG.set(VG_STROKE_LINE_WIDTH, 5.0)
-##    VG.set(VG_STROKE_JOIN_STYLE, VG_JOIN_MITER)
-##    VG.set(VG_STROKE_CAP_STYLE, VG_CAP_ROUND)
-
     with stroke_style:
         p.draw(VG_FILL_PATH)
         p.draw(VG_STROKE_PATH)

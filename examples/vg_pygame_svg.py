@@ -1,42 +1,39 @@
 from __future__ import with_statement
 
 import pygame
-import re
 
 from OpenGL.GL import *
 from OpenVG import VG
 from OpenVG.constants import *
 
-command_table = dict(M=VG_MOVE_TO_ABS, m=VG_MOVE_TO_REL,
-                     Z=VG_CLOSE_PATH, z=VG_CLOSE_PATH,
-                     L=VG_LINE_TO_ABS, l=VG_LINE_TO_REL,
-                     H=VG_HLINE_TO_ABS, h=VG_HLINE_TO_REL,
-                     V=VG_VLINE_TO_ABS, v=VG_VLINE_TO_REL,
-                     C=VG_CUBIC_TO_ABS, c=VG_CUBIC_TO_REL,
-                     S=VG_SCUBIC_TO_ABS, s=VG_SCUBIC_TO_REL,
-                     Q=VG_QUAD_TO_ABS, q=VG_QUAD_TO_REL,
-                     T=VG_SQUAD_TO_ABS, t=VG_SQUAD_TO_REL)
+from svg import parse_path_string
 
-quad_string = "M200,300 Q400,50 600,300 T1000,300"
-control_string = "M200,300 L400,50 L600,300 L800,550 L1000,300"
+comm_table = {VG_CLOSE_PATH:"VG_CLOSE_PATH",
+              VG_MOVE_TO:"VG_MOVE_TO",
+              VG_LINE_TO:"VG_LINE_TO",
+              VG_HLINE_TO:"VG_HLINE_TO",
+              VG_VLINE_TO:"VG_VLINE_TO",
+              VG_QUAD_TO:"VG_QUAD_TO",
+              VG_CUBIC_TO:"VG_CUBIC_TO",
+              VG_SQUAD_TO:"VG_SQUAD_TO",
+              VG_SCUBIC_TO:"VG_SCUBIC_TO"}
+def pprint_segments(segments):
+    for command, args in segments:
+        rel = command % 2
+        if rel:
+            print (comm_table[command - rel] + "_REL"), args
+        else:
+            print (comm_table[command - rel] + "_ABS"), args
 
-
-svg_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)(?:\s|$)", re.IGNORECASE)
-def parse_path_string(data):
-    segments = []
-    for command, args in svg_pattern.findall(data):
-        vg_command = command_table[command]
-        coords = map(float, re.split(r"(?:,| )", args))
-        segments.append((vg_command, coords))
-    return segments
-
-def path_from_string(s):
-    segments = parse_path_string(s)
-
+def path_from_string(data):
+    segments = parse_path_string(data)
+    pprint_segments(segments)
     p = VG.Path()
     p.extend(segments)
-    p.close()
     return p
+
+quad_string = "M200 300 Q400 50 600 300 T1000 300"
+control_string = "M200 300 L400 50 L600 300 L800 550 L1000 300"
 
 def main():
     pygame.init()
@@ -52,6 +49,7 @@ def main():
 
     control = path_from_string(control_string)
     quad = path_from_string(quad_string)
+    
 
     red_paint = VG.ColorPaint((1.0, 0.0, 0.0, 1.0))
     grey_paint = VG.ColorPaint((0.5, 0.5, 0.5, 1.0))

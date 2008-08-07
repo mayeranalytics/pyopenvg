@@ -362,10 +362,8 @@ class Style(object):
             param_type = param_table[name]
             
             self.params[param_type] = value
-
-        
-            
-    def __enter__(self):
+    
+    def enable(self):
         if self.stroke_paint:
             self.old_stroke_paint = get_paint(VG_STROKE_PATH)
             set_paint(self.stroke_paint, VG_STROKE_PATH)
@@ -378,7 +376,7 @@ class Style(object):
             self.old_params[param_type] = get(param_type)
             set(param_type, value)
 
-    def __exit__(self, exc_type, value, traceback):
+    def disable(self):
         if self.stroke_paint:
             set_paint(self.old_stroke_paint, VG_STROKE_PATH)
             self.old_stroke_paint = None
@@ -390,6 +388,12 @@ class Style(object):
         for param_type, val in self.old_params.items():
             set(param_type, val)
         self.old_params.clear()
+
+    def __enter__(self):
+        self.enable()
+        
+    def __exit__(self, exc_type, value, traceback):
+        self.disable()
 
     def __getitem__(self, name):
         if name == VG_STROKE_PATH:
@@ -420,23 +424,16 @@ class Style(object):
     def __iter__(self):
         return iter(self.params)
 
-    def __add__(self, other):
-        collision = frozenset(self.params) & frozenset(other.params)
-        if collision:
-            raise ValueError("params are repeated: %r" % collision)
-        if self.stroke_paint and other.stroke_paint or\
-           self.fill_paint and other.fill_paint:
-            raise ValueError("paint is repeated")
-            
+    def __add__(self, other):       
         style = object.__new__(Style)
         if self.stroke_paint:
             style.stroke_paint = self.stroke_paint
-        elif other.stroke_paint:
+        if other.stroke_paint:
             style.stroke_paint = other.stroke_paint
 
         if self.fill_paint:
             style.fill_paint = self.fill_paint
-        elif other.fill_paint:
+        if other.fill_paint:
             style.fill_paint = other.fill_paint
 
         style.old_stroke_paint = None
@@ -447,7 +444,6 @@ class Style(object):
         style.old_params = {}
 
         return style
-        
 
 __all__ = ["Path", "Paint", "ColorPaint", "GradientPaint", "PatternPaint",
            "Image", "Context", "Style" "VGError", "check_error", "interpolate"]
