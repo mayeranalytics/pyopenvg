@@ -8,7 +8,14 @@ from OpenVG.constants import *
 def load_image(path):
     im = Image.open(path)
 ##    pixels = reversed([(p[2], p[1], p[0]) for p in im.getdata()])
-    pixels = reversed(list(im.getdata()))
+##    pixels = reversed(list(im.getdata()))
+
+    data = list(im.getdata())
+##    pixels = data
+    pixels = []
+    width,height = im.size
+    for j in xrange(height, -1, -1):
+        pixels.extend(data[j*width:(j+1)*width])
 
     image = VG.Image(VG_lRGBX_8888, im.size)
     image.fromiter(iter(pixels), (0,0), im.size)

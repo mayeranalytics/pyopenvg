@@ -1,8 +1,14 @@
 from distutils.core import setup, Extension
 import Pyrex.Distutils
+import os
 
 libraries = ["libOpenVG"]
 include_dirs = [".\include"]
+
+#Pyrex cannot detect the change in included files
+#so it will not normally regnerate the .c
+if os.path.exists(os.path.join("src", "OpenVG", "VG.c")):
+    os.remove(os.path.join("src", "OpenVG", "VG.c"))
 
 setup(name = "PyOpenVG",
       version = "0.0.1",
