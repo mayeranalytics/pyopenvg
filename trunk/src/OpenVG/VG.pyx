@@ -240,18 +240,18 @@ def set_paint(Paint paint, mode):
     
 
 def interpolate(Path start, Path end, VGfloat amount, Path dest=None):
-    if not start.capabilities & VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM:
-        raise VGError(VG_PATH_CAPABILITY_ERROR, "start path must have VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM enabled")
-    elif not end.capabilities & VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM:
-        raise VGError(VG_PATH_CAPABILITY_ERROR, "end path must have VG_PATH_CAPABILITY_PATH_INTERPOLATE_FROM enabled")
+    if not start.capabilities & VG_PATH_CAPABILITY_INTERPOLATE_FROM:
+        raise VGError(VG_PATH_CAPABILITY_ERROR, "start path must have VG_PATH_CAPABILITY_INTERPOLATE_FROM enabled")
+    elif not end.capabilities & VG_PATH_CAPABILITY_INTERPOLATE_FROM:
+        raise VGError(VG_PATH_CAPABILITY_ERROR, "end path must have VG_PATH_CAPABILITY_INTERPOLATE_FROM enabled")
 
     if dest is None:
         capabilities = start.capabilities | end.capabilities | VG_PATH_CAPABILITY_INTERPOLATE_TO
         dest = Path(format=start.format,
                     datatype=max(start.datatype, end.datatype),
                     capabilties=capabilities)
-    elif not dest.capabilities & VG_PATH_CAPABILITY_PATH_INTERPOLATE_TO:
-        raise VGError(VG_PATH_CAPABILITY_ERROR, "dest path must have VG_PATH_CAPABILITY_PATH_INTERPOLATE_TO enabled")
+    elif not dest.capabilities & VG_PATH_CAPABILITY_INTERPOLATE_TO:
+        raise VGError(VG_PATH_CAPABILITY_ERROR, "dest path must have VG_PATH_CAPABILITY_INTERPOLATE_TO enabled")
 
     success = vgInterpolatePath(dest.handle, start.handle, end.handle, amount)
     check_error()

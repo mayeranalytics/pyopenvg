@@ -19,6 +19,7 @@ cdef class Path:
 
     def clear(self, capabilities=VG_PATH_CAPABILITY_ALL):
         vgClearPath(self.handle, capabilities)
+        check_error()
 
     def append(self, segment):
         cdef VGubyte pathSegment
