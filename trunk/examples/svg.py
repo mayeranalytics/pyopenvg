@@ -3,6 +3,7 @@ from __future__ import with_statement
 import re
 from OpenVG.constants import *
 from OpenVG import VG
+from OpenVG import VGU
 
 
 color_table = dict(aliceblue=(240, 248, 255),
@@ -291,7 +292,6 @@ def path_from_element(element):
     p.style = style
     if segments:
         p.extend(segments)
-    p.close()
     return p
 
 def group_from_element(element):

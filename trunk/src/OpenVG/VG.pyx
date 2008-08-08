@@ -60,10 +60,20 @@ def flush():
 def finish():
     vgFinish()
 
-def clear(corner, dimensions):
+def clear(corner, dimensions, color=None):
     if dimensions[0] <= 0.0 or dimensions[1] <= 0.0:
         raise ValueError("width and height must be positive")
-    vgClear(corner[0], corner[1], dimensions[0], dimensions[1])
+    if color is not None:
+        old_color = get(VG_CLEAR_COLOR)
+        try:
+            set(VG_CLEAR_COLOR, color)
+            vgClear(corner[0], corner[1], dimensions[0], dimensions[1])
+        finally:
+            set(VG_CLEAR_COLOR, old_color)
+    else:
+        vgClear(corner[0], corner[1], dimensions[0], dimensions[1])
+
+    check_error()
 
 def blit(src, dest_pos, src_pos, dimensions):
     if isinstance(src, Image):        
@@ -237,29 +247,7 @@ def set_paint(Paint paint, mode):
         Context.singleton.stroke_paint = paint
     if mode & VG_FILL_PATH:
         Context.singleton.fill_paint = paint
-    
 
-def interpolate(Path start, Path end, VGfloat amount, Path dest=None):
-    if not start.capabilities & VG_PATH_CAPABILITY_INTERPOLATE_FROM:
-        raise VGError(VG_PATH_CAPABILITY_ERROR, "start path must have VG_PATH_CAPABILITY_INTERPOLATE_FROM enabled")
-    elif not end.capabilities & VG_PATH_CAPABILITY_INTERPOLATE_FROM:
-        raise VGError(VG_PATH_CAPABILITY_ERROR, "end path must have VG_PATH_CAPABILITY_INTERPOLATE_FROM enabled")
-
-    if dest is None:
-        capabilities = start.capabilities | end.capabilities | VG_PATH_CAPABILITY_INTERPOLATE_TO
-        dest = Path(format=start.format,
-                    datatype=max(start.datatype, end.datatype),
-                    capabilties=capabilities)
-    elif not dest.capabilities & VG_PATH_CAPABILITY_INTERPOLATE_TO:
-        raise VGError(VG_PATH_CAPABILITY_ERROR, "dest path must have VG_PATH_CAPABILITY_INTERPOLATE_TO enabled")
-
-    success = vgInterpolatePath(dest.handle, start.handle, end.handle, amount)
-    check_error()
-
-    if not success:
-        raise ValueError("Interpolation failed (segment types may not have matched)")
-    
-    return dest
 
 cdef object lookup_image(VGImage handle):
     cdef Image im
