@@ -141,6 +141,9 @@ def parse_path_string(data):
     for command, args in path_pattern.findall(data):
         command = command.strip()
         vg_command = command_table[command]
+        if vg_command == VG_CLOSE_PATH:
+            segments.append((vg_command, ()))
+            continue
         coords = map(parse_number_string, re.split(r"(?:,|\s+)", args.strip()))
 
         count = arg_count(vg_command)
@@ -186,6 +189,8 @@ def parse_style_string(data):
     do_stroke = False
     style = VG.Style()
     for name, value in style_pattern.findall(data):
+        name = name.lower().strip()
+        value = value.lower().strip()
         if name == "fill":
             if value == "none":
                 do_fill = False
@@ -196,12 +201,46 @@ def parse_style_string(data):
             if value == "none":
                 do_stroke = False
             else:
-                do_fill = True
+                do_stroke = True
                 style[VG_STROKE_PATH] = parse_color_string(value)
         elif name == "stroke-width":
-            style[VG_STROKE_LINE_WIDTH] = float(value)
+            style[VG_STROKE_LINE_WIDTH] = parse_number_string(value)
+        elif name == "stroke-linecap":
+            if value == "round":
+                style[VG_STROKE_CAP_STYLE] = VG_CAP_ROUND
+            elif value == "butt":
+                style[VG_STROKE_CAP_STYLE] = VG_CAP_BUTT
+            elif value == "square":
+                style[VG_STROKE_CAP_STYLE] = VG_CAP_SQUARE
+            else:
+                raise ValueError("Unknown stroke-linecap style \"%s\"" % value)
+        elif name == "stroke-linejoin":
+            if value == "round":
+                style[VG_STROKE_JOIN_STYLE] = VG_JOIN_ROUND
+            elif value == "bevel":
+                style[VG_STROKE_JOIN_STYLE] = VG_JOIN_BEVEL
+            elif value == "miter":
+                style[VG_STROKE_JOIN_STYLE] = VG_JOIN_MITER
+            else:
+                raise ValueError("Unknown stroke-linejoin style \"%s\"" % value)
+        elif name == "stroke-miterlimit":
+            style[VG_STROKE_MITER_LIMIT] = parse_number_string(value)
+        elif name == "stroke-dashoffset":
+            style[VG_STROKE_DASH_PHASE] = parse_number_string(value)
+        elif name == "stroke-dasharray":
+            if value == "none":
+                style[VG_STROKE_DASH_PATTERN] = ()
+            else:
+                style[VG_STROKE_DASH_PATTERN] = map(parse_number_string, re.split(r"(\s*,\s*)|(?:\s*|,)", value))
+        elif name == "fill-rule":
+            if value == "evenodd":
+                style[VG_FILL_RULE] = VG_EVEN_ODD
+            elif value == "nonzero":
+                style[VG_FILL_RULE] = VG_NON_ZERO
         else:
             pass
+            #print "Ignoring style attribute \"%s\"" % name
+    
     paint_mode = 0
     if do_stroke:
         paint_mode |= VG_STROKE_PATH
