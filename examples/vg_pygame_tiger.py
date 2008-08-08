@@ -39,8 +39,9 @@ def main():
         VG.set(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE)
         VG.load_identity()
         VG.scale(0.4, 0.4)
-        VG.translate(320, 240)
+        VG.translate(480, 360)
         VG.rotate(180)
+        VG.scale(1.5, 1.5)
         g.draw()
         
         pygame.display.flip()

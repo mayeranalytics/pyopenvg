@@ -105,7 +105,7 @@ class Group(object):
                     child.draw()
                 elif child.style:
                     with child.style:
-                        child.draw(self.paint_mode)
+                        child.draw(child.style.paint_mode)
                 else:
                     child.draw(self.paint_mode)
         
@@ -129,13 +129,19 @@ def arg_count(command):
     else:
         raise ValueError("Unsupported command type % r" % command)
 
+def parse_number_string(data):
+    if "." in data:
+        return float(data)
+    else:
+        return int(data)
+
 path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
 def parse_path_string(data):
     segments = []
     for command, args in path_pattern.findall(data):
         command = command.strip()
         vg_command = command_table[command]
-        coords = map(float, re.split(r"(?:,|\s+)", args.strip()))
+        coords = map(parse_number_string, re.split(r"(?:,|\s+)", args.strip()))
 
         count = arg_count(vg_command)
         if len(coords) % count:
@@ -154,7 +160,7 @@ def parse_color_string(data):
     data = data.strip()
     if data.startswith("rgb"):
         s = data[data.index("(") + 1:data.rindex(")")]
-        r, g, b = map(int, s.split(","))
+        r, g, b = map(parse_number_string, s.split(","))
     elif data.startswith("#"):
         s = re.match(r"#\s*([0-9a-fA-F]{3,6})", data).group(1)
         if len(s) == 3:
@@ -174,21 +180,23 @@ def parse_color_string(data):
 
     return VG.ColorPaint((r/255.0, g/255.0, b/255.0, 1.0))
 
-style_pattern = re.compile(r"(\w+)\s*:\s*([^;]+);")
+style_pattern = re.compile(r"(\w+-?\w+)\s*:\s*([^;]+)(?:;|$)")
 def parse_style_string(data):
-    do_fill = True
-    do_stroke = True
+    do_fill = False
+    do_stroke = False
     style = VG.Style()
     for name, value in style_pattern.findall(data):
         if name == "fill":
             if value == "none":
                 do_fill = False
             else:
+                do_fill = True
                 style[VG_FILL_PATH] = parse_color_string(value)
         elif name == "stroke":
             if value == "none":
                 do_stroke = False
             else:
+                do_fill = True
                 style[VG_STROKE_PATH] = parse_color_string(value)
         elif name == "stroke-width":
             style[VG_STROKE_LINE_WIDTH] = float(value)
@@ -196,9 +204,9 @@ def parse_style_string(data):
             pass
     paint_mode = 0
     if do_stroke:
-        paint_mode |= VG_FILL_PATH
-    if do_fill:
         paint_mode |= VG_STROKE_PATH
+    if do_fill:
+        paint_mode |= VG_FILL_PATH
     return style, paint_mode
 
 transform_pattern = re.compile("(matrix|translate|scale|rotate|skewX|skewY)\s*\((.+?)\)")
@@ -208,7 +216,7 @@ def parse_transform_string(data):
         for f, args in transforms:
             f(*args)
     for action, s in transform_pattern.findall(data):
-        args = map(float, re.split(r"(?:,|\s+)", s))
+        args = map(parse_number_string, re.split(r"(?:,|\s+)", s))
         if action == "matrix":
             a, b, c, d, e, f = args
             M = (a, c, e, b, d, f, 0, 0, 1)
@@ -236,6 +244,7 @@ def path_from_element(element):
     segments = parse_path_string(element.attrib["d"])
     if "style" in element.attrib:
         style, paint_mode = parse_style_string(element.attrib["style"])
+        style.paint_mode = paint_mode
     else:
         style = None
 
