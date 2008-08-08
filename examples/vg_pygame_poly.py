@@ -6,15 +6,15 @@ from OpenGL.GL import *
 from OpenVG import VG
 from OpenVG.constants import *
 
-def main():
+def main(width, height):
     pygame.init()
     
     pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 16)
     pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
-    srf = pygame.display.set_mode((640,480), pygame.OPENGL | pygame.DOUBLEBUF)
+    srf = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Polyline test")
     
-    VG.create_context((640, 480))
+    VG.create_context((width, height))
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
 
     polyline = VG.Path()
@@ -24,9 +24,9 @@ def main():
     fill_paint = VG.ColorPaint((0.3, 1.0, 0.0, 0.6))
     VG.set_paint(fill_paint, VG_FILL_PATH)
 
-    stroke_style = VG.Style(VG_STROKE_LINE_WIDTH = 4.0,
-                            VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
-                            VG_STROKE_CAP_STYLE = VG_CAP_ROUND)
+    polyline.style = VG.Style(VG_STROKE_LINE_WIDTH = 4.0,
+                              VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
+                              VG_STROKE_CAP_STYLE = VG_CAP_ROUND)
 
     print "Usage"
     print "Left click: LINE_TO"
@@ -46,17 +46,16 @@ def main():
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1: #left button
                     if first_click:
-                        polyline.move_to((e.pos[0], 480-e.pos[1]), rel=False)
+                        polyline.move_to((e.pos[0], width-e.pos[1]), rel=False)
                         first_click = False
                     else:
-                        polyline.line_to((e.pos[0], 480-e.pos[1]), rel=False)
+                        polyline.line_to((e.pos[0], width-e.pos[1]), rel=False)
                 elif e.button == 3:#right button
-                    polyline.move_to((e.pos[0], 480-e.pos[1]), rel=False)
+                    polyline.move_to((e.pos[0], width-e.pos[1]), rel=False)
 
-        VG.clear((0, 0), (640, 480))
+        VG.clear((0, 0), (width, height))
 
-        with stroke_style:
-            polyline.draw(VG_STROKE_PATH)
+        polyline.draw(VG_STROKE_PATH)
 
         pygame.display.flip()
 

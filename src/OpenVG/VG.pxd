@@ -1,3 +1,6 @@
+cdef extern from "stdlib.h":
+    ctypedef long size_t
+
 cdef extern from "VG/openvg.h":
     ctypedef void* VGHandle
     ctypedef VGHandle VGPath
@@ -8,6 +11,8 @@ cdef extern from "VG/openvg.h":
 cdef class Path:
     cdef VGPath handle
     cdef public object style
+    cdef readonly size_t datasize
+    cdef int (*datafunc)(object, int, void*) except -1
     cdef object __weakref__
 
 cdef class Paint:

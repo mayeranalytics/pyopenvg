@@ -41,7 +41,14 @@ def main():
 
         VG.clear((0, 0), (640, 480))
         morph.clear()
-        VG.interpolate(paths[i % len(paths)], paths[(i+1) % len(paths)], dt/float(MORPH_TIME), morph)
+
+        start = paths[i % len(paths)]
+        end = paths[(i+1) % len(paths)]
+        
+        VG.interpolate(start, end, morph, dt/float(MORPH_TIME))
+
+        morph.style = paths[i % len(paths)].style
+        morph.style[VG_STROKE_LINE_WIDTH] = 0.5
 
         VG.set(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE)
         VG.load_identity()
