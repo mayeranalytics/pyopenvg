@@ -37,6 +37,7 @@ def main():
 
         VG.set(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE)
         VG.load_identity()
+        VG.translate(160, 120)
         
         g.draw()
         
