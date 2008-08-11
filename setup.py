@@ -3,6 +3,7 @@ import Pyrex.Distutils
 import os
 
 libraries = ["libOpenVG"]
+library_dirs = ["."]
 include_dirs = [".\include"]
 
 #Pyrex cannot detect the change in included files
@@ -20,11 +21,11 @@ setup(name = "PyOpenVG",
       py_modules = ["OpenVG.constants"],
       ext_modules = [Extension("VG",  ["src/OpenVG/VG.pyx"],
                                libraries=libraries,
-                               library_dirs=["."],
+                               library_dirs=library_dirs,
                                include_dirs=include_dirs),
                      Extension("VGU", ["src/OpenVG/VGU.pyx"],
                                libraries=libraries,
-                               library_dirs=["."],
+                               library_dirs=library_dirs,
                                include_dirs=include_dirs)],
       cmdclass = {"build_ext": Pyrex.Distutils.build_ext}
 )
