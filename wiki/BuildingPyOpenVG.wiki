@@ -1,0 +1,19 @@
+#summary How to build and install PyOpenVG
+#labels Phase-Deploy
+
+= Introduction =
+PyOpenVG has two dependencies:
+  * [http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/ Pyrex], which the extension modules depend upon.
+  * [http://sourceforge.net/projects/shivavg ShivaVG] for the OpenVG implementation (in theory, any implementation could be substituted, but PyOpenVG is dependent on ShivaVG specific extensions to create and destroy contexts because EGL support on non-mobile platforms is limited.)
+
+= Details =
+Installing Pyrex itself is fairly straightforward. You can either download it from directly from the Pyrex homepage and run "python setup.py install" or you can use the package manager of your choice.
+
+Building libOpenVG with ShivaVG is straightforward if you are building on Linux with the GNU toolchain or on Windows with Visual Studio 2005 (Express) or newer. Unfortunately, building with MSYS and MinGW doesn't seem to work.
+
+The setup.py needs to be modified to include wherever you put libOpenVG in the library search paths. So if you installed libOpenVG to "C:\lib", then you would change the line:
+library_dirs = ["."]
+to
+library_dirs = ["C:\lib"]
+
+From here on, running "python setup.py build" should work correctly and with luck you should have a compiled copy of PyOpenVG.
