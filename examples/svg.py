@@ -197,13 +197,13 @@ def parse_style_string(data):
                 do_fill = False
             else:
                 do_fill = True
-                style[VG_FILL_PATH] = parse_color_string(value)
+                style.fill_paint = parse_color_string(value)
         elif name == "stroke":
             if value == "none":
                 do_stroke = False
             else:
                 do_stroke = True
-                style[VG_STROKE_PATH] = parse_color_string(value)
+                style.stroke_paint = parse_color_string(value)
         elif name == "stroke-width":
             style[VG_STROKE_LINE_WIDTH] = parse_number_string(value)
         elif name == "stroke-linecap":

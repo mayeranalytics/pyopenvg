@@ -39,11 +39,6 @@ segments = [(VG_MOVE_TO,     (  0, 50)),
             (VG_LINE_TO_REL, ( 45,  0)),
             (VG_CLOSE_PATH, ())]
 p.extend(segments)
-stroke_paint = VG.ColorPaint((0.5, 0.2, 0.8, 0.6))
-VG.set_paint(stroke_paint, VG_STROKE_PATH)
-
-fill_paint = VG.ColorPaint((0.3, 1.0, 0.0, 0.6))
-VG.set_paint(fill_paint, VG_FILL_PATH)
 
 stroke_style = VG.Style(VG_STROKE_DASH_PATTERN = (5, 10),
                         VG_STROKE_DASH_PHASE_RESET = True,
@@ -51,7 +46,10 @@ stroke_style = VG.Style(VG_STROKE_DASH_PATTERN = (5, 10),
 
                         VG_STROKE_LINE_WIDTH = 5.0,
                         VG_STROKE_JOIN_STYLE = VG_JOIN_MITER,
-                        VG_STROKE_CAP_STYLE = VG_CAP_ROUND)
+                        VG_STROKE_CAP_STYLE = VG_CAP_ROUND,
+
+                        stroke_paint = VG.ColorPaint((0.5, 0.2, 0.8, 0.6)),
+                        fill_paint = VG.ColorPaint((0.3, 1.0, 0.0, 0.6)))
 
 win.set_visible()
 while not win.has_exit:
@@ -64,8 +62,7 @@ while not win.has_exit:
     VG.scale(3.0, 3.0)
 
     with stroke_style:
-        p.draw(VG_FILL_PATH)
-        p.draw(VG_STROKE_PATH)
+        p.draw(VG_STROKE_PATH | VG_FILL_PATH)
     
 
     win.flip()

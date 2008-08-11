@@ -48,10 +48,10 @@ def main():
     
     
     control_style = VG.Style(VG_STROKE_LINE_WIDTH = 4.0,
-                             VG_STROKE_PATH = VG.ColorPaint((0.5, 0.5, 0.5, 1.0)),
-                             VG_FILL_PATH = VG.ColorPaint((1.0, 1.0, 1.0, 1.0)))
+                             stroke_paint = VG.ColorPaint((0.5, 0.5, 0.5, 1.0)),
+                             fill_paint = VG.ColorPaint((1.0, 1.0, 1.0, 1.0)))
     bezier.style = VG.Style(VG_STROKE_LINE_WIDTH = 4.0,
-                            VG_STROKE_PATH = VG.ColorPaint((1.0, 0.0, 0.0, 1.0)))
+                            stroke_paint = VG.ColorPaint((1.0, 0.0, 0.0, 1.0)))
 
     clock = pygame.time.Clock()
 
