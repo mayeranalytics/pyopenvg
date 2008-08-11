@@ -240,7 +240,7 @@ def set_paint(Paint paint, mode):
     if paint is None:
         vgSetPaint(VG_INVALID_HANDLE, mode)
     else:
-        vgSetPaint((<Paint>paint).handle, mode)
+        vgSetPaint(paint.handle, mode)
     check_error()
     
     if mode & VG_STROKE_PATH:
@@ -330,7 +330,7 @@ Context.interpolate = staticmethod(interpolate)
 
 from constants import param_table
 class Style(object):
-    def __init__(self, **params):
+    def __init__(self, stroke_paint=None, fill_paint=None, **params):
         self.params = {}
         self.old_params = {}
 
@@ -340,11 +340,8 @@ class Style(object):
         self.old_stroke_paint = None
         self.old_fill_paint = None
 
-        if "VG_STROKE_PATH" in params:
-            self.stroke_paint = params.pop("VG_STROKE_PATH")
-            
-        if "VG_FILL_PATH" in params:
-            self.fill_paint = params.pop("VG_FILL_PATH")
+        self.stroke_paint = stroke_paint 
+        self.fill_paint = fill_paint
         
         for name, value in params.items():
             param_type = param_table[name]
@@ -384,41 +381,29 @@ class Style(object):
         self.disable()
 
     def __getitem__(self, name):
-        if name == VG_STROKE_PATH:
-            return self.stroke_paint
-        elif name == VG_FILL_PATH:
-            return self.fill_paint
-        else:
-            return self.params[name]
+        return self.params[name]
 
     def __setitem__(self, name, value):
-        if name == VG_STROKE_PATH:
-            self.stroke_paint = value
-        elif name == VG_FILL_PATH:
-            self.fill_paint = value
-        else:
-            if name not in param_table.values():
-                raise KeyError("Invalid parameter type %r" % name)
-            self.params[name] = value
+        if name not in param_table.values():
+            raise KeyError("Invalid parameter type %r" % name)
+        self.params[name] = value
 
     def __delitem__(self, name):
-        if name == VG_STROKE_PATH:
-            self.stroke_paint = None
-        elif name == VG_FILL_PATH:
-            self.fill_paint = None
-        else:
-            del self.params[name]
+        del self.params[name]
 
     def __iter__(self):
         return iter(self.params)
 
     def __add__(self, other):       
         style = object.__new__(Style)
+
+        style.stroke_paint = None
         if self.stroke_paint:
             style.stroke_paint = self.stroke_paint
         if other.stroke_paint:
             style.stroke_paint = other.stroke_paint
 
+        style.fill_paint = None
         if self.fill_paint:
             style.fill_paint = self.fill_paint
         if other.fill_paint:
