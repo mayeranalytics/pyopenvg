@@ -130,7 +130,7 @@ cdef class Path:
             raise VGError(VG_PATH_CAPABILITY_ERROR, "VG_PATH_CAPABILITY_PATH_LENGTH must be enabled")
 
         if num_segments is None:
-            num_segments = self.num_segments
+            num_segments = self.num_segments - start
 
         L = vgPathLength(self.handle, start, num_segments)
         check_error()
@@ -139,7 +139,7 @@ cdef class Path:
     def get_point(self, distance, start=0, num_segments=None):
         cdef VGfloat x, y, tangentX, tangentY
         if num_segments is None:
-            num_segments = self.num_segments
+            num_segments = self.num_segments - start
 
         vgPointAlongPath(self.handle, start, num_segments, distance,
                          &x, &y, &tangentX, &tangentY)
