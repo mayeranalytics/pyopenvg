@@ -1,10 +1,46 @@
 #summary Explanation of the methods of the VG.Path class
+#labels Featured
 
 = Introduction =
 
 The Path class wraps a VGPath handle and provides the functionality needed to create, transform, and draw paths.
 
 Note: Path objects have a style attribute which can be used to automatically set the corresponding context parameters when drawing and then restore the old parameters.
+
+= Properties =
+*format*
+
+The path format used by OpenVG. Normally this is 0.
+
+*datatype*
+
+The datatype that path coordinates are stored as. Usually this will be VG_PATH_DATATYPE_F.
+
+*scale*
+
+The scaling factor applied to all incoming path coordinates
+
+*bias*
+
+The bias (offset) applied to all incoming path coordinates
+
+*num_segments*
+
+The number of segments in the path
+
+*num_coords*
+
+The number of coordinates that define the path
+
+*capabilities*
+
+The bitwise OR of the capabilities supported by the path. Normally VG_PATH_CAPABILITY_ALL.
+Capabilities can be removed by using "path.capabilities &= ~(capability1 | capability2 | capability3)"
+
+Example:
+{{{
+    path.capabilities &= ~(VG_PATH_CAPABILITY_TRANSFORM_TO | VG_PATH_CAPBILITY_TRANSFORM_FROM)
+}}}
 
 = Methods =
 *{{{__}}}init{{{__}}}(format=0, datatype=VG_PATH_DATATYPE_F, scale=1.0, bias=0, segment_hint=0, coord_hint=0, capabilities=VG_PATH_CAPABILITY_ALL)*
@@ -67,3 +103,49 @@ Example:
                     ( 50.0,  0.0),
                     (-50.0,  0.0)])
 }}}
+
+*transform(dest=None)*
+
+Path.transform(dest) appends a version of the path with the segments transformed by the current matrix to dest. If dest is None, then a new path is created and returned with the transformed segments. This does *not* modify the original path.
+
+Example:
+{{{
+    #Translate to the center, then rotate 60 degrees, then create a copy of the path with
+    #this transformation applied
+    VG.translate(320, 240)
+    VG.rotate(60)
+    path = path.transform()
+}}}
+
+*get_point(distance, start=0, num_segments=None)*
+
+Path.get_point(distance, start, num_segments) returns the point and its tangent vector that one would get by starting at the end point of the path segment start and moving along the subpath defined by the next num_segments segments (or the entire path if None) and travelling distance units.
+
+*length(start=0, num_segments=None*
+
+Path.length(start, num_segments) returns the length of the subpath starting with the start-th segment and ending num_segments later (or the rest of the path if None). Path.length() with no arguments will return the length of the entire path.
+
+*draw(paint_modes, style=None)*
+
+Path.draw(paint_modes, style) draws the path to the screen.
+  * paint_modes is the bitwise OR of VG_FILL_PATH or VG_STROKE_PATH. If paint_modes is VG_FILL_PATH, only the fill will be drawn. If paint_modes is VG_STROKE_PATH then only the stroke will be drawn. If paint_modes is VG_FILL_PATH | VG_STROKE_PATH, then both will be drawn.
+  * style is an optional argument, which if supplied stores the style information that the path will use to draw path. It will be combined with the path's style object if any. It should be an instance of the [StyleClass VG.Style] class or a subclass.
+
+The following methods simply append the corresponding segment command to the path:
+  * *move_to(p, rel=False)* - moves the path to point p
+  * *line_to(p, rel=False)* - draws a line to point p
+  * *hline_to(x, rel=False)* - draws a horizontal line to x
+  * *vline_to(y, rel=False)* - draws a vertical line to y
+  * *quad_to(p1, p2, rel=False)* - draws a quadratic Bezier curve to p2 with control point p1
+  * *squad_to(p2, rel=False)* - draws a smooth quadratic Bezier curve to p2 using the reflection of the previous control point across the previous end point as the control point
+  * *cubic_to(p1, p2, p3, rel=False)* - draws a cubic Bezier curve to p3 with control points p1 and p2
+  * *scubic_to(p2, p3, rel=False)* - draws a smooth cubic Bezier curve to p3 with control point p2 and the reflection of the previous control point across the previous end point.
+  * *arc_from()* - still under development. Do not use
+  * *close()* - closes the current subpath (a line will be draw to the beginning of the subpath if stroked)
+
+
+= Other functions =
+*interpolate(start, end, dest, amount)*
+
+VG.interpolate(start, end, dest, amount) appends the result of interpolating or extrapolating (if amount is outside of [0.0,1.0]) amount between start and end. If dest is None, a new path will be created with the interpolated path segments appended. In order for two paths to be interpolated, they must have the exact same series of commands.
+See the [http://code.google.com/p/pyopenvg/source/browse/trunk/examples/vg_pygame_interpolate.py Interpolation example] to see an example of how to do interpolation.
