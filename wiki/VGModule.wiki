@@ -1,0 +1,118 @@
+#summary A brief overview of the functions and classes provided in OpenVG.VG
+#labels Featured
+
+= Context Management =
+
+As EGL support on non-mobile platforms is lacking, PyOpenVG depends on ShivaVG's createContextSH and destroyContextSH extensions to create an OpenVG context. These are exposed in VG.create_context(dimensions) and VG.destroy_context(). 
+
+*create_context(dimensions)*
+
+Creates a OpenVG context with the supplied dimensions.
+
+VG.create_context(dimensions) must be called before instantiating any PyOpenVG instances (except for Context objects and Style objects, which are regular python objects) or calling any other VG or VGU functions.
+
+*resize_context(dimensions)*
+
+Resizes the current OpenVG context.
+
+*destroy_context()*
+
+Destroys the current OpenVG context.
+
+== Getting/Setting Parameters ==
+
+Context parameters (such as stroke width, dashing, scissoring, etc) are accessed through the get and set functions. These functions abstract away the details of remembering whether the parameter is a float or an int or how many parameters it's supposed to return.
+However, for this reason it is not recommended that you use {{{from OpenVG.VG import *}}}. Doing so would shadow the builtin set type. If you must do so, use {{{from OpenVG import VG}}} and alias VG.get and VG.set to vgGet and vgSet.
+
+*get(param_type)*
+
+Given a param from the VGParamType enumeration, this returns the corresponding context parameter. See the [http://khronos.org/openvg/ specification and header file] for a full list of context parameters, their behaviors, and default values.
+
+Example:
+{{{
+    color = VG.get(VG_CLEAR_COLOR)
+}}}
+
+*set(param_type, value)* 
+
+Given a param from the VGParamType enumeration, this sets the corresponding context parameter to value.
+
+Example:
+{{{
+   VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
+}}}
+
+== Getting/Setting Paint ==
+
+In OpenVG, filling and stroking is abstracted into [PaintClass Paint] objects, which represent a means of coloring a surface. Each paint object stores the information needed to paint a surface (color, gradient stops, etc). A paint mode can be associated with stroking, filling, or both.
+
+*get_paint(mode)*
+
+VG.get_paint(paint_mode) returns the current paint set for mode (which must be either VG_STROKE_PATH or VG_FILL_PATH) or None if no paint has been set.
+
+*set_paint(paint, mode)*
+
+VG.set_paint(paint, mode) sets the paint for mode (which must be VG_STROKE_PATH, VG_FILL_PATH, or result of bitwise ORing them together) to paint. If paint is None, then the default paint is set (opaque black).
+
+= Graphics Functions =
+
+*clear(corner, dimensions, color=None)*
+
+VG.clear(corner, dimensions, color) clears the area from corner (the bottom left corner) with the dimensions supplied. If color is not None, then that RGBA 4-tuple is used as the clear color. Otherwise the screen is clear with VG_CLEAR_COLOR.
+
+*flush()*
+
+VG.flush() tells OpenVG to hurry up and complete all pending drawing requests, but does not guarantee that all pending requests will be completed.
+
+*finish()*
+
+VG.finish tells OpenVG to block until all pending drawing requests are complete.
+
+= Transformations =
+
+== Matrix manipulation ==
+
+The matrix mode can be set using VG.set(VG_MATRIX_MODE, mode), where mode is from
+
+{{{
+typedef enum {
+  VG_MATRIX_PATH_USER_TO_SURFACE              = 0x1400,
+  VG_MATRIX_IMAGE_USER_TO_SURFACE             = 0x1401,
+  VG_MATRIX_FILL_PAINT_TO_USER                = 0x1402,
+  VG_MATRIX_STROKE_PAINT_TO_USER              = 0x1403
+} VGMatrixMode;
+}}}
+
+*get_matrix()*
+
+VG.get_matrix() returns the flattened 3x3 transformation matrix for the current matrix mode.
+
+*load_matrix(M)*
+
+VG.load_matrix(M) loads M (which must be 9 elements long; affine matrices must be padded) as the transformation matrix for the current matrix mode
+
+*load_identity()*
+
+VG.load_identity() loads the identity matrix as the transformation matrix for the current matrix mode.
+
+*mult_matrix(M)*
+
+VG.mult_matrix(M) multiplies the current transformation matrix by M.
+
+== General Transformation Functions ==
+
+*translate(tx, ty)*
+
+VG.translate(tx, ty) translates the drawing surface by (tx, ty) pixels
+
+*scale(sx, sy)*
+
+VG.scale(sx, sy) scales the drawing surface time sx in the x direction and sy in the y direction
+
+*rotate(angle)*
+
+VG.rotate(angle) rotates the drawing surface by angle degrees
+
+*shear(shx, shy)*
+
+VG.shear(shx, shy) shears the drawing surface by shx, shy
