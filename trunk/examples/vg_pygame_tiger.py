@@ -1,10 +1,8 @@
 from __future__ import with_statement
 
 import pygame
-import re
 import xml.etree.ElementTree as ET
 
-from OpenGL.GL import *
 from OpenVG import VG
 from OpenVG.constants import *
 

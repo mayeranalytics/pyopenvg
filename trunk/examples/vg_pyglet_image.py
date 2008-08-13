@@ -1,5 +1,6 @@
-from pyglet.gl import *
+
 from pyglet import window
+
 import Image
 from OpenVG import VG
 from OpenVG.constants import *

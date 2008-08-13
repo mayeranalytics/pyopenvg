@@ -2,7 +2,6 @@ from __future__ import with_statement
 
 import pygame
 
-from OpenGL.GL import *
 from OpenVG import VG
 from OpenVG import VGU
 from OpenVG.constants import *
