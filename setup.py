@@ -2,31 +2,24 @@ from distutils.core import setup, Extension
 import Pyrex.Distutils
 import os
 
-libraries = ["libOpenVG"]
-library_dirs = ["."]
-include_dirs = [".\include"]
+freetype_root = r"C:\Program Files\Freetype"
 
-#Pyrex cannot detect the change in included files
-#so it will not normally regnerate the .c
-if os.path.exists(os.path.join("src", "OpenVG", "VG.c")):
-    os.remove(os.path.join("src", "OpenVG", "VG.c"))
+libraries = ["freetype"]
+library_dirs = [os.path.join(freetype_root, "lib"),
+                os.path.join(freetype_root, "bin")]
+include_dirs = ["include",
+                os.path.join(freetype_root, "include"),
+                os.path.join(freetype_root, "include", "freetype2")]
 
-setup(name = "PyOpenVG",
+setup(name = "PyFreetype",
       version = "0.0.1",
-      description = "A Python wrapper for the OpenVG library",
-      license = "BSD",
-      ext_package = "OpenVG",
-      packages = ["OpenVG"],
-      package_dir = {"OpenVG":"src/OpenVG"},
-      py_modules = ["OpenVG.constants"],
-      ext_modules = [Extension("VG",  ["src/OpenVG/VG.pyx"],
-                               libraries=libraries,
-                               library_dirs=library_dirs,
-                               include_dirs=include_dirs),
-                     Extension("VGU", ["src/OpenVG/VGU.pyx"],
+      packages = ["FT"],
+      package_dir = {"FT": "src"},
+      py_modules = ["FT.constants"],
+      ext_modules = [Extension("FT.freetype",  ["src/freetype.pyx"],
                                libraries=libraries,
                                library_dirs=library_dirs,
                                include_dirs=include_dirs)],
-      cmdclass = {"build_ext": Pyrex.Distutils.build_ext}
-)
+      
+      cmdclass = {"build_ext": Pyrex.Distutils.build_ext})
 
