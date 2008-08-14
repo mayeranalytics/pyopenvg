@@ -1,0 +1,27 @@
+#summary An explanation of the differences between Paint, ColorPaint, GradientPaint, and PatternPaint.
+#labels Featured,Documentation
+
+= Introduction =
+
+In OpenVG, VGPaint objects determine how paths are stroked and filled. A given paint object has many parameters, but only those relevant to the type of paint are used (VG_PAINT_COLOR is only applicable to paint objects of type VG_PAINT_TYPE_COLOR). Instead of having one monolithic paint class which allows the user to set parameters that are not used by the type of paint, subclasses of the base Paint class implement the functionality relevant to each paint type: ColorPaint handles solid colors, GradientPaint handles radial and linear gradients of color, and PatternPaint handles patterns based on images.
+
+= ColorPaint =
+
+The simplest of the paint types, ColorPaint represents a solid color such as red or blue. It takes a single parameter, color which can be a 3-tuple of colors in the RGB format (from 0.0 to 1.0) or a 4-tuple of the colors and alpha.
+
+Example:
+{{{
+    #Make the stroke paint red and the fill paint translucent green
+    red = VG.ColorPaint((1.0, 0.0, 0.0))
+    translucent_green = VG.ColorPaint((0.0, 1.0, 0.0, 0.5))
+    VG.set_paint(red, VG_STROKE_PATH)
+    VG.set_paint(translucent_green, VG_FILL_PATH)
+}}}
+
+= GradientPaint =
+
+The GradientPaint class can represent either a linear or radial gradient. Documentation is not yet complete concerning GradientPaint.
+
+= PatternPaint =
+
+PatternPaint is not yet fully supported as the Image support is not yet complete.
