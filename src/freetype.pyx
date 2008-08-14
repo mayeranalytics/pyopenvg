@@ -143,7 +143,7 @@ cdef class Face:
         if error:
             raise FreeTypeError(error)
         
-        error = FT_Get_Glyph(self.handle[0].glyph, &handle)
+        error = FT_Get_Glyph(self.handle.glyph, &handle)
         if error:
             raise FreeTypeError(error)
         return Glyph(<long>handle)
@@ -154,7 +154,7 @@ cdef class Face:
         if error:
             raise FreeTypeError(error)
 
-        error = FT_Get_Glyph(self.handle[0].glyph, &handle)
+        error = FT_Get_Glyph(self.handle.glyph, &handle)
         if error:
             raise FreeTypeError(error)
         return Glyph(<long>handle)
@@ -182,7 +182,7 @@ cdef class Face:
     property family_name:
         def __get__(self):
             cdef char *name
-            name = self.handle[0].family_name
+            name = self.handle.family_name
             if name == NULL:
                 return ""
             else:
@@ -191,7 +191,7 @@ cdef class Face:
     property style_name:
         def __get__(self):
             cdef char *name
-            name = self.handle[0].style_name
+            name = self.handle.style_name
             if name == NULL:
                 return ""
             else:
@@ -199,8 +199,24 @@ cdef class Face:
 
     property units_per_EM:
         def __get__(self):
-            return self.handle[0].units_per_EM
+            return self.handle.units_per_EM
 
+    property x_ppem:
+        def __get__(self):
+            return self.handle.size.metrics.x_ppem
+
+    property y_ppem:
+        def __get__(self):
+            return self.handle.size.metrics.y_ppem
+
+    property x_scale:
+        def __get__(self):
+            return self.handle.size.metrics.x_scale
+
+    property y_scale:
+        def __get__(self):
+            return self.handle.size.metrics.y_scale
+    
 cdef class Glyph:
     cdef object __weakref__
     cdef FT_Glyph handle
@@ -213,59 +229,59 @@ cdef class Glyph:
         error = FT_Glyph_Copy(<FT_Glyph>handle, &self.handle)
         if error:
             raise FreeTypeError(error)
-        self.library = _library_table[<long>(self.handle[0].library)]
+        self.library = _library_table[<long>(self.handle.library)]
 
     def __dealloc__(self):
         FT_Done_Glyph(self.handle)
 
     property format:
         def __get__(self):
-            return self.handle[0].format
+            return self.handle.format
 
     property outline:
         def __get__(self):
             cdef long handle
-            if self.handle[0].format != FT_GLYPH_FORMAT_OUTLINE:
+            if self.handle.format != FT_GLYPH_FORMAT_OUTLINE:
                 raise ValueError("Only glyphs of format FT_GLYPH_FORMAT_OUTLINE have an \"outline\" attribute")
-            handle = <long>(&(<FT_OutlineGlyph>self.handle)[0].outline)
+            handle = <long>(&(<FT_OutlineGlyph>self.handle).outline)
             return Outline(self.library, handle)
 
     property advance:
         def __get__(self):
-            return (self.handle[0].advance.x, self.handle[0].advance.y)
+            return (self.handle.advance.x, self.handle.advance.y)
 
 
 cdef int call_move_to(FT_Vector *to, void *user):
-    (<object>user)[0]((to[0].x, to[0].y))
+    (<object>user)[0]((to.x, to.y))
     return 0
 
 cdef int call_line_to(FT_Vector *to, void *user):
-    (<object>user)[1]((to[0].x, to[0].y))
+    (<object>user)[1]((to.x, to.y))
     return 0
 
 cdef int call_conic_to(FT_Vector *control, FT_Vector *to, void *user):
-    (<object>user)[2]((control[0].x, control[0].y),(to[0].x, to[0].y))
+    (<object>user)[2]((control.x, control.y),(to.x, to.y))
     return 0
 
 cdef int call_cubic_to(FT_Vector *control1, FT_Vector *control2, FT_Vector *to, void *user):
-    (<object>user)[3]((control1[0].x, control1[0].y),(control2[0].x, control2[0].y),(to[0].x, to[0].y))
+    (<object>user)[3]((control1.x, control1.y),(control2.x, control2.y),(to.x, to.y))
     return 0
 
 ##cdef int print_move_to(FT_Vector *to, void *user):
-##    print (to[0].x, to[0].y)
+##    print (to.x, to.y)
 ##    print "moo:", <object>user
 ##    return 0
 ##
 ##cdef int print_line_to(FT_Vector *to, void *user):
-##    print (to[0].x, to[0].y)
+##    print (to.x, to.y)
 ##    return 0
 ##
 ##cdef int print_conic_to(FT_Vector *control, FT_Vector *to, void *user):
-##    print (control[0].x, control[0].y), (to[0].x, to[0].y)
+##    print (control.x, control.y), (to.x, to.y)
 ##    return 0
 ##
 ##cdef int print_cubic_to(FT_Vector *control1, FT_Vector *control2, FT_Vector *to, void *user):
-##    print (control1[0].x, control1[0].y), (control2[0].x, control2[0].y), (to[0].x, to[0].y)
+##    print (control1.x, control1.y), (control2.x, control2.y), (to.x, to.y)
 ##    return 0
 
 cdef class Outline:
@@ -274,14 +290,14 @@ cdef class Outline:
     cdef Library library
 
     def __init__(self, Library library not None, long handle):
-        cdef FT_Outline src
-        src = (<FT_Outline*>handle)[0]
+        cdef FT_Outline *src
+        src = (<FT_Outline*>handle)
         
         error = FT_Outline_New(library.handle, src.n_points, src.n_contours, &self.data)
         if error:
             raise FreeTypeError(error)
 
-        error = FT_Outline_Copy(&src, &self.data)
+        error = FT_Outline_Copy(src, &self.data)
         if error:
             raise FreeTypeError(error)
 
