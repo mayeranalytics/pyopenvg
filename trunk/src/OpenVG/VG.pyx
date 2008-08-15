@@ -75,27 +75,6 @@ def clear(corner, dimensions, color=None):
 
     check_error()
 
-def blit(src, dest_pos, src_pos, dimensions):
-    if isinstance(src, Image):        
-        vgSetPixels(dest_pos[0], dest_pos[1],
-                    (<Image>src).handle, src_pos[0], src_pos[1],
-                    dimensions[0], dimensions[1])
-    else:
-        raise NotImplementedError
-    check_error()
-
-def blit_to(Image dest not None, dest_pos, src_pos, dimensions):
-    vgGetPixels(dest.handle, dest_pos[0], dest_pos[1],
-                src_pos[0], src_pos[1],
-                dimensions[0], dimensions[1])
-    check_error()
-
-def copy_pixels(dest_pos, src_pos, dimensions):
-    vgCopyPixels(dest_pos[0], dest_pos[1],
-                 src_pos[0], src_pos[1],
-                 dimensions[0], dimensions[1])
-    check_error()
-
 FLOAT_PARAMS = (VG_STROKE_LINE_WIDTH, VG_STROKE_MITER_LIMIT,
                 VG_STROKE_DASH_PHASE)
 VECTOR_PARAMS = (VG_SCISSOR_RECTS, VG_STROKE_DASH_PATTERN,
@@ -248,16 +227,6 @@ def set_paint(Paint paint, mode):
     if mode & VG_FILL_PATH:
         Context.singleton.fill_paint = paint
 
-
-cdef object lookup_image(VGImage handle):
-    cdef Image im
-    if (<long>handle) in _image_table:
-        return _image_table[<long>handle]
-    else:
-        im = Image.__new__(Image)
-        im.handle = handle
-        return im
-
 cdef object lookup_paint(VGPaint handle):
     cdef Paint paint
     if (<long>handle) in _paint_table:
@@ -275,6 +244,12 @@ cdef object lookup_paint(VGPaint handle):
             paint._pattern = None
         paint.handle = handle
         return paint
+
+def get_string(string_id):
+    cdef char *s
+    s = <char*>vgGetString(string_id)
+    check_error()
+    return s
 
 class Context(object):
     def __init__(self, dimensions):
@@ -312,9 +287,12 @@ Context.singleton = None
 Context.get_error = staticmethod(get_error)
 Context.get = staticmethod(get)
 Context.set = staticmethod(set)
+Context.get_string = staticmethod(get_string)
+Context.get_paint = staticmethod(get_paint)
+Context.set_paint = staticmethod(set_paint)
 Context.clear = staticmethod(clear)
 Context.blit = staticmethod(blit)
-Context.blit_to = staticmethod(blit_to)
+Context.blit_to_image = staticmethod(blit_to_image)
 Context.copy_pixels = staticmethod(copy_pixels)
 Context.flush = staticmethod(flush)
 Context.finish = staticmethod(finish)

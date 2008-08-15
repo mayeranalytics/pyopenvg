@@ -37,7 +37,9 @@ cdef class Path:
     def __dealloc__(self):
         vgDestroyPath(self.handle)
 
-    def clear(self, capabilities=VG_PATH_CAPABILITY_ALL):
+    def clear(self, capabilities=None):
+        if capabilities is None:
+            capabilties = self.capabilities
         vgClearPath(self.handle, capabilities)
         check_error()
 
