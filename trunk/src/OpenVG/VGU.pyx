@@ -17,14 +17,30 @@ def line(Path path not None, p1, p2):
     if error_code != VGU_NO_ERROR:
         raise VGUError(error_code)
 
-def rect(Path path not None, corner, dimensions):
-    error_code = vguRect(path.handle, corner[0], corner[1],
+def polygon(Path path not None, points, closed=True):
+    cdef VGfloat *p
+    cdef VGint count
+
+    count = len(points)
+    p = malloc(sizeof(VGfloat) * count * 2)
+    for i from 0 <= i < count:
+        p[2*i] = points[i][0]
+        p[2*i+1] = points[i][1]
+    
+    error_code = vguPolygon(path.handle, p, count, closed)
+    free(<void*>p)
+
+    if error_code != VGU_NO_ERROR:
+        raise VGUError(error_code)
+    
+def rect(Path path not None, pos, dimensions):
+    error_code = vguRect(path.handle, pos[0], pos[1],
                          dimensions[0], dimensions[1])
     if error_code != VGU_NO_ERROR:
         raise VGUError(error_code)
 
-def round_rect(Path path not None, corner, dimensions, arc_width, arc_height):
-    error_code = vguRoundRect(path.handle, corner[0], corner[1],
+def round_rect(Path path not None, pos, dimensions, arc_width, arc_height):
+    error_code = vguRoundRect(path.handle, pos[0], pos[1],
                               dimensions[0], dimensions[1],
                               arc_width, arc_height)
     if error_code != VGU_NO_ERROR:
@@ -36,10 +52,10 @@ def ellipse(Path path not None, center, dimensions):
     if error_code != VGU_NO_ERROR:
         raise VGUError(error_code)
 
-def arc(Path path not None, corner, dimensions, start_angle, angle_extent, arc_type):
+def arc(Path path not None, pos, dimensions, start_angle, angle_extent, arc_type):
     if arc_type not in (VGU_ARC_OPEN, VGU_ARC_CHORD, VGU_ARC_PIE):
         raise ValueError("Invalid arc type %r" % arc_type)
-    error_code = vguArc(path.handle, corner[0], corner[1],
+    error_code = vguArc(path.handle, pos[0], pos[1],
                         dimensions[0], dimensions[1],
                         start_angle, angle_extent, arc_type)
     if error_code != VGU_NO_ERROR:
