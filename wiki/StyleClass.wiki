@@ -1,5 +1,5 @@
 #summary An explanation of how to use Style objects
-#labels Featured
+#labels Featured,Documentation
 
 = Introduction =
 
@@ -50,6 +50,21 @@ For one-off things, you can also pass a style parameter to path.draw
     style = VG.Style(stroke_paint=stroke_paint, VG_STROKE_LINE_WIDTH=5.0)
     path.draw(VG_STROKE_PATH, style=style)
 }}}
+
+= Getting and setting style parameters =
+
+You can get or set any style parameter (such as VG_STROKE_DASH_PATTERN) by using style[VG_STROKE_DASH_PATTERN]. The only exception is that paint must be accessed directly through style.stroke_paint and style.fill_paint.
+
+Example:
+{{{
+    style = VG.Style(stroke_paint=VG.ColorPaint((1.0, 0.0, 0.0)), #red stroke paint
+                     VG_STROKE_DASH_PATTERN = (5, 10))            #dash pattern of 5 on, 10 off
+    print style[VG_STROKE_DASH_PATTERN] #should print (5, 10)
+    
+    #Set the fill paint to purple
+    style.fill_paint = VG.ColorPaint((1.0, 0.0, 1.0)) 
+}}}
+
 
 = Caveats =
 
