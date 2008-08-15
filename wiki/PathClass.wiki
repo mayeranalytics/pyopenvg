@@ -1,5 +1,5 @@
 #summary Explanation of the methods of the VG.Path class
-#labels Featured
+#labels Featured,Documentation
 
 = Introduction =
 
