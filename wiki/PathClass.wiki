@@ -39,7 +39,7 @@ Capabilities can be removed by using "path.capabilities &= ~(capability1 | capab
 
 Example:
 {{{
-    path.capabilities &= ~(VG_PATH_CAPABILITY_TRANSFORM_TO | VG_PATH_CAPBILITY_TRANSFORM_FROM)
+path.capabilities &= ~(VG_PATH_CAPABILITY_TRANSFORM_TO | VG_PATH_CAPBILITY_TRANSFORM_FROM)
 }}}
 
 = Methods =
@@ -62,8 +62,8 @@ Path.append(segment) appends a single path segment to the path. segment must be 
 
 Example:
 {{{
-    path = VG.Path()
-    path.append((VG_MOVE_TO_ABS, (10.0, 10.0)))
+path = VG.Path()
+path.append((VG_MOVE_TO_ABS, (10.0, 10.0)))
 }}}
 
 *extend(segments)*
@@ -72,13 +72,13 @@ Path.extend(segments) works just like you would expect list.extend to. It takes 
 
 Example:
 {{{
-    path = VG.Path()
-    segments = [(VG_MOVE_TO_ABS, ( 10.0, 10.0)),
-                (VG_LINE_TO_REL, (  0.0, 20.0)),
-                (VG_LINE_TO_REL, ( 20.0,  0.0)),
-                (VG_LINE_TO_REL, (-10.0,  0.0)),
-                (VG_CLOSE_PATH, ())]
-    path.extend(segments)
+path = VG.Path()
+segments = [(VG_MOVE_TO_ABS, ( 10.0, 10.0)),
+            (VG_LINE_TO_REL, (  0.0, 20.0)),
+            (VG_LINE_TO_REL, ( 20.0,  0.0)),
+            (VG_LINE_TO_REL, (-10.0,  0.0)),
+            (VG_CLOSE_PATH, ())]
+path.extend(segments)
 }}}
 
 *modify(index, data)*
@@ -87,21 +87,21 @@ Path.modify(index, data) sets the segment data for segments starting at index to
 
 Example:
 {{{
-    #Create a path, then translate it and grow it
-    path = VG.Path()
-    segments = [(VG_MOVE_TO_ABS, ( 10.0, 10.0)),
-                (VG_LINE_TO_REL, (  0.0, 20.0)),
-                (VG_LINE_TO_REL, ( 20.0,  0.0)),
-                (VG_LINE_TO_REL, (-20.0,  0.0)),
-                (VG_CLOSE_PATH, ())]
-    path.extend(segments)
+#Create a path, then translate it and grow it
+path = VG.Path()
+segments = [(VG_MOVE_TO_ABS, ( 10.0, 10.0)),
+            (VG_LINE_TO_REL, (  0.0, 20.0)),
+            (VG_LINE_TO_REL, ( 20.0,  0.0)),
+            (VG_LINE_TO_REL, (-20.0,  0.0)),
+            (VG_CLOSE_PATH, ())]
+path.extend(segments)
 
-    #This changes the initial VG_MOVE_TO_ABS to 100.0,100.0 instead of 10.0,10.0
-    path.modify(0, [(100.0, 100.0)])
-    #This changes the VG_LINE_TO_RELs to move further
-    path.modify(1, [(  0.0, 50.0),
-                    ( 50.0,  0.0),
-                    (-50.0,  0.0)])
+#This changes the initial VG_MOVE_TO_ABS to 100.0,100.0 instead of 10.0,10.0
+path.modify(0, [(100.0, 100.0)])
+#This changes the VG_LINE_TO_RELs to move further
+path.modify(1, [(  0.0, 50.0),
+                ( 50.0,  0.0),
+                (-50.0,  0.0)])
 }}}
 
 *transform(dest=None)*
@@ -110,11 +110,11 @@ Path.transform(dest) appends a version of the path with the segments transformed
 
 Example:
 {{{
-    #Translate to the center, then rotate 60 degrees, then create a copy of the path with
-    #this transformation applied
-    VG.translate(320, 240)
-    VG.rotate(60)
-    path = path.transform()
+#Translate to the center, then rotate 60 degrees, then create a copy of the path with
+#this transformation applied
+VG.translate(320, 240)
+VG.rotate(60)
+path = path.transform()
 }}}
 
 *get_point(distance, start=0, num_segments=None)*
