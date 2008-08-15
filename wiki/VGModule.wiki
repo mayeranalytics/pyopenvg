@@ -30,7 +30,7 @@ Given a param from the VGParamType enumeration, this returns the corresponding c
 
 Example:
 {{{
-    color = VG.get(VG_CLEAR_COLOR)
+color = VG.get(VG_CLEAR_COLOR)
 }}}
 
 *set(param_type, value)* 
@@ -39,7 +39,7 @@ Given a param from the VGParamType enumeration, this sets the corresponding cont
 
 Example:
 {{{
-   VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
+VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
 }}}
 
 == Getting/Setting Paint ==
