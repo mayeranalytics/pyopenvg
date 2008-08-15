@@ -14,11 +14,11 @@ The simplest of the paint types, !ColorPaint represents a solid color such as re
 
 Example:
 {{{
-    #Make the stroke paint red and the fill paint translucent green
-    red = VG.ColorPaint((1.0, 0.0, 0.0))
-    translucent_green = VG.ColorPaint((0.0, 1.0, 0.0, 0.5))
-    VG.set_paint(red, VG_STROKE_PATH)
-    VG.set_paint(translucent_green, VG_FILL_PATH)
+#Make the stroke paint red and the fill paint translucent green
+red = VG.ColorPaint((1.0, 0.0, 0.0))
+translucent_green = VG.ColorPaint((0.0, 1.0, 0.0, 0.5))
+VG.set_paint(red, VG_STROKE_PATH)
+VG.set_paint(translucent_green, VG_FILL_PATH)
 }}}
 
 = !GradientPaint =
@@ -37,31 +37,31 @@ Each color stop consists of a tuple of the form (offset, color). For any given p
 
 Example:
 {{{
-    #Create a linear gradient going from white to red to green to blue
-    paint = VG.GradientPaint([(0,0), (250,0)], linear=True)
+#Create a linear gradient going from white to red to green to blue
+paint = VG.GradientPaint([(0,0), (250,0)], linear=True)
    
-    #Set the color stops
-    paint.stops = [(0.0,  (0.0, 0.0, 0.0, 1.0)), #white
-                   (0.333,(1.0, 0.0, 0.0, 1.0)), #red
-                   (0.666,(0.0, 1.0, 0.0, 1.0)), #green
-                   (1.0,  (0.0, 0.0, 1.0, 1.0))] #blue
+#Set the color stops
+paint.stops = [(0.0,  (0.0, 0.0, 0.0, 1.0)), #white
+               (0.333,(1.0, 0.0, 0.0, 1.0)), #red
+               (0.666,(0.0, 1.0, 0.0, 1.0)), #green
+               (1.0,  (0.0, 0.0, 1.0, 1.0))] #blue
 
-    #Set the spread mode to reflect because it's prettier
-    paint.spread_mode = VG_COLOR_RAMP_SPREAD_REFLECT
+#Set the spread mode to reflect because it's prettier
+paint.spread_mode = VG_COLOR_RAMP_SPREAD_REFLECT
 }}}
 If drawn on a 250x100 rectangle, this would result in:
  [http://chart.apis.google.com/chart?chs=250x100&chf=bg,lg,0,ffffff,0,ff0000,0.333,00ff00,0.666,0000ff,1&cht=bhs&ftype=chart.png]
 
 Example:
 {{{
-    #Create a simple radial gradient going with center == focus
-    paint = VG.GradientPaint([(50,50), (50,50), 50], linear=False)
+#Create a simple radial gradient going with center == focus
+paint = VG.GradientPaint([(50,50), (50,50), 50], linear=False)
 
-    #Set the color stops
-    paint.stops = [(0.0,  (0.0, 0.0, 0.0, 1.0)), #white
-                   (0.333,(1.0, 0.0, 0.0, 1.0)), #red
-                   (0.666,(0.0, 1.0, 0.0, 1.0)), #green
-                   (1.0,  (0.0, 0.0, 1.0, 1.0))] #blue
+#Set the color stops
+paint.stops = [(0.0,  (0.0, 0.0, 0.0, 1.0)), #white
+               (0.333,(1.0, 0.0, 0.0, 1.0)), #red
+               (0.666,(0.0, 1.0, 0.0, 1.0)), #green
+               (1.0,  (0.0, 0.0, 1.0, 1.0))] #blue
 }}}
 = !PatternPaint =
 == Properties ==
