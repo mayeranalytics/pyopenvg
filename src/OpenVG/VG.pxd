@@ -25,4 +25,6 @@ cdef class PatternPaint(Paint):
 
 cdef class Image:
     cdef VGImage handle
+    cdef readonly int width, height
+    cdef object format
     cdef object __weakref__

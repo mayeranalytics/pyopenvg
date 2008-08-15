@@ -86,31 +86,31 @@ cdef class GradientPaint(Paint):
             cdef VGfloat gradient[5]
             vgGetParameterfv(self.handle, VG_PAINT_RADIAL_GRADIENT, 5, gradient)
             check_error()
-            return ((gradient[0], gradient[1]), gradient[2], (gradient[3], gradient[4]))
+            return ((gradient[0], gradient[1]), (gradient[2], gradient[3]), gradient[4])
         def __set__(self, value):
             cdef VGfloat gradient[5]
             gradient[0] = value[0][0]
             gradient[1] = value[0][1]
-            gradient[2] = value[1]
-            gradient[3] = value[2][0]
-            gradient[4] = value[2][1]
+            gradient[2] = value[1][0]
+            gradient[3] = value[1][1]
+            gradient[4] = value[2]
             vgSetParameterfv(self.handle, VG_PAINT_RADIAL_GRADIENT, 5, gradient)
             check_error()
 
-    property ramp_spread_mode:
+    property spread_mode:
         def __get__(self):
             return vgGetParameteri(self.handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE)
         def __set__(self, value):
             vgSetParameteri(self.handle, VG_PAINT_COLOR_RAMP_SPREAD_MODE, value)
 
-    property ramp_stops:
+    property stops:
         def __get__(self):
             cdef VGfloat *values
             cdef object stops
             count = vgGetParameterVectorSize(self.handle, VG_PAINT_COLOR_RAMP_STOPS)
             values = <VGfloat*>malloc(sizeof(VGfloat) * count)
 
-            vgGetParameterfv(self.handle, VG_PAINT_COLOR_RAMPS_STOPS, count, values)
+            vgGetParameterfv(self.handle, VG_PAINT_COLOR_RAMP_STOPS, count, values)
             stops = []
             for i from 0 <= i < count/5:
                 stop = (values[i*5],
@@ -130,11 +130,11 @@ cdef class GradientPaint(Paint):
                 values[i*5+2] = stops[i][1][1]
                 values[i*5+3] = stops[i][1][2]
                 values[i*5+4] = stops[i][1][3]
-            vgSetParameterfv(self.handle, VG_PAINT_COLOR_RAMPS_STOPS, count, values)
+            vgSetParameterfv(self.handle, VG_PAINT_COLOR_RAMP_STOPS, count, values)
             free(<void*>values)
             check_error()
 
-    property ramp_premultiplied:
+    property premultiplied:
         def __get__(self):
             return vgGetParameteri(self.handle, VG_COLOR_RAMP_PREMULTIPLIED)
         def __set__(self, value):
