@@ -1,5 +1,5 @@
 #summary A brief overview of the functions and classes provided in OpenVG.VG
-#labels Featured
+#labels Featured,Documentation
 
 = Context Management =
 
@@ -53,6 +53,16 @@ VG.get_paint(paint_mode) returns the current paint set for mode (which must be e
 *set_paint(paint, mode)*
 
 VG.set_paint(paint, mode) sets the paint for mode (which must be VG_STROKE_PATH, VG_FILL_PATH, or result of bitwise ORing them together) to paint. If paint is None, then the default paint is set (opaque black).
+
+== Querying OpenVG properties ==
+
+OpenVG exposes implementation-specific information such as the vendor, version, renderer, and extensions through the vgGetString function.
+
+*get_string(string_id)*
+
+VG.get_string(string_id) returns the corresponding string information. Valid values include VG_VENDOR, VG_RENDERER, VG_VERSION, and VG_EXTENSIONS. This may not be called before the context has been created.
+
+
 
 = Graphics Functions =
 
