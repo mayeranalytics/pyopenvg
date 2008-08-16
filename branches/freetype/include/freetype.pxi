@@ -314,7 +314,7 @@ cdef extern from "pyfreetype.h":
         pass
     ctypedef FT_SubGlyphRec_* FT_SubGlyph
 
-    ctypedef struct FT_GlyphSlotRec:
+    cdef struct FT_GlyphSlotRec_:
         FT_Library        library
         FT_Face           face
         FT_GlyphSlot      next
@@ -340,10 +340,13 @@ cdef extern from "pyfreetype.h":
 
         FT_Pos            lsb_delta, rsb_delta
 
+    ctypedef FT_GlyphSlotRec_ FT_GlyphSlotRec
+
     FT_Error FT_Init_FreeType(FT_Library *lib)
     FT_Error FT_Done_FreeType(FT_Library lib)
 
     FT_Error FT_New_Face(FT_Library lib, char *path, FT_Long face_index, FT_Face *face)
+    FT_Error FT_Attach_File(FT_Face face, char *path)
     FT_Error FT_Done_Face(FT_Face face)
 
     ctypedef enum FT_Size_Request_Type:

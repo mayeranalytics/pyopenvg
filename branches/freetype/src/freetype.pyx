@@ -139,6 +139,7 @@ cdef class Face:
 
     def load_glyph(self, index, flags=FT_LOAD_DEFAULT):
         cdef FT_Glyph handle
+
         error = FT_Load_Glyph(self.handle, index, flags)
         if error:
             raise FreeTypeError(error)
@@ -146,18 +147,49 @@ cdef class Face:
         error = FT_Get_Glyph(self.handle.glyph, &handle)
         if error:
             raise FreeTypeError(error)
-        return Glyph(<long>handle)
 
-    def load_char(self, object s, flags=FT_LOAD_DEFAULT):
+        adv = (self.handle.glyph.linearHoriAdvance,
+               self.handle.glyph.linearVertAdvance)
+        
+        return Glyph(<long>handle, adv, index)
+    
+    def load_char(self, object c, flags=FT_LOAD_DEFAULT):
         cdef FT_Glyph handle
-        error = FT_Load_Char(self.handle, ord(s[0]), flags)
+        cdef FT_ULong char_code
+        cdef FT_UInt index
+
+        if isinstance(c, str):
+            char_code = ord(c[0])
+        else:
+            char_code = c
+        
+        error = FT_Load_Char(self.handle, char_code, flags)
         if error:
             raise FreeTypeError(error)
 
         error = FT_Get_Glyph(self.handle.glyph, &handle)
         if error:
             raise FreeTypeError(error)
-        return Glyph(<long>handle)
+        
+        adv = (self.handle.glyph.linearHoriAdvance,
+               self.handle.glyph.linearVertAdvance)
+        
+        index = FT_Get_Char_Index(self.handle, char_code)
+        glyph = Glyph(<long>handle, adv, index)
+        
+        return glyph
+
+    def get_char_index(self, object c):
+        cdef FT_ULong char_code
+        if isinstance(c, str):
+            char_code = ord(c[0])
+        else:
+            char_code = c
+            
+        index = FT_Get_Char_Index(self.handle, char_code)
+        if index == 0:
+            raise ValueError("undefined character %s" % c)
+        return index
 
     def get_glyphs(self, flags=FT_LOAD_DEFAULT):
         cdef FT_ULong char_code
@@ -178,6 +210,21 @@ cdef class Face:
         error = FT_Set_Char_Size(self.handle, width, height, hres, vres)
         if error:
             raise FreeTypeError(error)
+
+    def attach_file(self, path):
+        error = FT_Attach_File(self.handle, path)
+        if error:
+            raise FreeTypeError(error)
+
+    def get_kerning(self, left_index, right_index, mode=FT_KERNING_DEFAULT):
+        cdef FT_Vector kerning
+        if not self.has_kerning:
+            raise ValueError("%r does not support kerning" % self)
+        
+        error = FT_Get_Kerning(self.handle, left_index, right_index, mode, &kerning)
+        if error:
+            raise FreeTypeError(error)
+        return (kerning.x, kerning.y)
 
     property family_name:
         def __get__(self):
@@ -216,20 +263,54 @@ cdef class Face:
     property y_scale:
         def __get__(self):
             return self.handle.size.metrics.y_scale
+
+    property has_horizontal:
+        def __get__(self):
+            return bool(self.handle.face_flags & FT_FACE_FLAG_HORIZONTAL)
+        
+    property has_vertical:
+        def __get__(self):
+            return bool(self.handle.face_flags & FT_FACE_FLAG_VERTICAL)
+        
+    property has_kerning:
+        def __get__(self):
+            return bool(self.handle.face_flags & FT_FACE_FLAG_KERNING)
+        
+    property is_scalable:
+        def __get__(self):
+            return bool(self.handle.face_flags & FT_FACE_FLAG_SCALABLE)
+        
+    property has_glyph_names:
+        def __get__(self):
+            return bool(self.handle.face_flags & FT_FACE_FLAG_GLYPH_NAMES)
+        
+    property face_flags:
+        def __get__(self):
+            return self.handle.face_flags
+        
+    property style_flags:
+        def __get__(self):
+            return self.handle.style_flags
     
 cdef class Glyph:
     cdef object __weakref__
     cdef FT_Glyph handle
     cdef Library library
+    
+    cdef readonly object advance
+    cdef readonly FT_UInt index
+    
     def __cinit__(self, *args, **kwargs):
         self.handle = NULL
-        self.library = None
+        self.index = 0
 
-    def __init__(self, long handle):
+    def __init__(self, long handle, object advance, FT_UInt index):
         error = FT_Glyph_Copy(<FT_Glyph>handle, &self.handle)
         if error:
             raise FreeTypeError(error)
         self.library = _library_table[<long>(self.handle.library)]
+        self.advance = advance
+        self.index = index
 
     def __dealloc__(self):
         FT_Done_Glyph(self.handle)
@@ -246,9 +327,17 @@ cdef class Glyph:
             handle = <long>(&(<FT_OutlineGlyph>self.handle).outline)
             return Outline(self.library, handle)
 
-    property advance:
+    property cbox:
         def __get__(self):
-            return (self.handle.advance.x, self.handle.advance.y)
+            cdef FT_Outline *handle
+            cdef FT_BBox cbox
+            
+            if self.handle.format != FT_GLYPH_FORMAT_OUTLINE:
+                raise ValueError("Only glyphs of format FT_GLYPH_FORMAT_OUTLINE have a \"bbox\" attribute")
+            handle = &((<FT_OutlineGlyph>self.handle).outline)
+
+            FT_Outline_Get_Cbox(handle, &cbox)
+            return (cbox.xMin, cbox.yMin, cbox.xMax, cbox.yMax)
 
 
 cdef int call_move_to(FT_Vector *to, void *user):
