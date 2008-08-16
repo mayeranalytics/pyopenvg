@@ -39,7 +39,7 @@ cdef class Path:
 
     def clear(self, capabilities=None):
         if capabilities is None:
-            capabilties = self.capabilities
+            capabilities = self.capabilities
         vgClearPath(self.handle, capabilities)
         check_error()
 
