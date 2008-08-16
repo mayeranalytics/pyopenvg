@@ -45,12 +45,12 @@ def main(width, height):
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 if e.button == 1: #left button
                     if first_click:
-                        polyline.move_to((e.pos[0], width-e.pos[1]), rel=False)
+                        polyline.move_to((e.pos[0], height-e.pos[1]), rel=False)
                         first_click = False
                     else:
-                        polyline.line_to((e.pos[0], width-e.pos[1]), rel=False)
+                        polyline.line_to((e.pos[0], height-e.pos[1]), rel=False)
                 elif e.button == 3:#right button
-                    polyline.move_to((e.pos[0], width-e.pos[1]), rel=False)
+                    polyline.move_to((e.pos[0], height-e.pos[1]), rel=False)
 
         VG.clear((0, 0), (width, height))
 
@@ -59,4 +59,4 @@ def main(width, height):
         pygame.display.flip()
 
 if __name__ == '__main__':
-    main()
+    main(640, 480)

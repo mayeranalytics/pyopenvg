@@ -1,5 +1,6 @@
 from __future__ import with_statement
 
+from pyglet.gl import Config
 from pyglet import window
 
 from OpenVG import VG
