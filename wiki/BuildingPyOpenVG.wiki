@@ -16,9 +16,13 @@ Building libOpenVG with ShivaVG is straightforward if you are building on Linux 
 Users of 64-bit systems may have to tweak some of the DEFs in freetype.pxi to reflect the appropriate type sizes.
 
 The setup.py needs to be modified to include wherever you put libOpenVG in the library search paths. So if you installed libOpenVG to "C:\lib", then you would change the line:
+{{{
 library_dirs = ["."]
+}}}
 to
+{{{
 library_dirs = ["C:\lib"]
+}}}
 Additionally, the freetype_root variable must be set to point to wherever your freetype installation directory happens to be.
 
 From here on, running "python setup.py build" should work correctly and with luck you should have a compiled copy of PyOpenVG.
