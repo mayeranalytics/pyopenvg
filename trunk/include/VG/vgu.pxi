@@ -15,6 +15,10 @@ cdef extern from "VG/vgu.h":
     VGUErrorCode vguLine(VGPath path,
 			 VGfloat x0, VGfloat y0,
 			 VGfloat x1, VGfloat y1)
+
+    VGUErrorCode vguPolygon(VGPath path, VGfloat *points, VGint count,
+                            VGboolean closed)
+
     VGUErrorCode vguRect(VGPath path,
 			 VGfloat x, VGfloat y,
 			 VGfloat width, VGfloat height)
@@ -50,7 +54,7 @@ cdef extern from "VG/vgu.h":
                                           VGfloat dx1, VGfloat dy1,
                                           VGfloat dx2, VGfloat dy2,
                                           VGfloat dx3, VGfloat dy3,
-                                                                                          VGfloat sx0, VGfloat sy0,
+                                          VGfloat sx0, VGfloat sy0,
                                           VGfloat sx1, VGfloat sy1,
                                           VGfloat sx2, VGfloat sy2,
                                           VGfloat sx3, VGfloat sy3,

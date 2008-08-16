@@ -1,3 +1,4 @@
+include "stdlib.pxi"
 include "VG/vgu.pxi"
 from VG cimport class Path
 from VG import VGError
@@ -22,7 +23,7 @@ def polygon(Path path not None, points, closed=True):
     cdef VGint count
 
     count = len(points)
-    p = malloc(sizeof(VGfloat) * count * 2)
+    p = <VGfloat*>malloc(sizeof(VGfloat) * count * 2)
     for i from 0 <= i < count:
         p[2*i] = points[i][0]
         p[2*i+1] = points[i][1]
@@ -106,5 +107,6 @@ def compute_warp_quad_to_quad(quad1, quad2):
 
 
 __all__ = ["VGUError", "line", "rect", "round_rect", "ellipse", "arc",
+           "polygon",
            "compute_warp_quad_to_square", "compute_warp_square_to_quad",
            "compute_warp_quad_to_quad"]
