@@ -336,7 +336,7 @@ cdef class Glyph:
                 raise ValueError("Only glyphs of format FT_GLYPH_FORMAT_OUTLINE have a \"bbox\" attribute")
             handle = &((<FT_OutlineGlyph>self.handle).outline)
 
-            FT_Outline_Get_Cbox(handle, &cbox)
+            FT_Outline_Get_CBox(handle, &cbox)
             return (cbox.xMin, cbox.yMin, cbox.xMax, cbox.yMax)
 
 
