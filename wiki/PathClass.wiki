@@ -52,9 +52,9 @@ For the most part, there is no reason to pass the constructor any values besides
   * segment_hint and coord_hint are hints to OpenVG telling it how much space it might need to allocate for a given path. Setting these might help performance a little, but probably won't make a difference.
   * capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you'll want to stick with VG_PATH_CAPABILITY_ALL.
 
-*clear(capabilities=VG_PATH_CAPABILITY_ALL)*
+*clear(capabilities=None)*
 
-Path.clear(capabilities) will empty the path, removing all segments. Additionally, the path capabilities will be reduced to the passed in capabilities parameter. New capabilities cannot be added.
+Path.clear(capabilities) will empty the path, removing all segments. Additionally, the handle will refer to a path with the specified capabilities (which default to the old path's capabilities if None is passed) and the same datatype and format. This may be faster than creating and destroying many short-lived paths of the same format.
 
 *append(segment)*
 
