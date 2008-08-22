@@ -155,15 +155,13 @@ cdef class Path:
             style = self.style
 
         if style is not None:
-            try:
-                style.enable()
-                vgDrawPath(self.handle, paint_modes)
-                check_error()
-            finally:
-                style.disable()
+            style.enable()
+            vgDrawPath(self.handle, paint_modes)
+            style.disable()
         else:
             vgDrawPath(self.handle, paint_modes)
-            check_error()
+
+        check_error()
 
     def close(self):
         self.append((VG_CLOSE_PATH, ()))

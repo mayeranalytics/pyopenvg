@@ -1,3 +1,26 @@
+cdef extern from "Python.h":
+    ctypedef int Py_intptr_t
+    int PyCObject_Check(object p)
+    void* PyCObject_AsVoidPtr(object self)
+    void* PyCObject_GetDesc(object self)
+    object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc, void (*destr)(void *, void *))
+
+
+ctypedef struct PyArrayInterface:
+    int two              # contains the integer 2 -- simple sanity check
+    int nd               # number of dimensions
+    char typekind        # kind in array --- character code of typestr
+    int itemsize         # size of each element
+    int flags            # flags indicating how the data should be interpreted
+                         #   must set ARR_HAS_DESCR bit to validate descr
+    Py_intptr_t *shape   # A length-nd array of shape information
+    Py_intptr_t *strides # A length-nd array of stride information
+    void *data           # A pointer to the first element of the array
+    void *descr          # NULL or data-description (same as descr key
+                         #       of __array_interface__) -- must set ARR_HAS_DESCR
+                         #       flag or this will be ignored.
+
+
 cdef class Image:
     def __init__(self, format, dimensions, quality=VG_IMAGE_QUALITY_BETTER):
         self.handle = vgCreateImage(format, dimensions[0], dimensions[1], quality)
@@ -23,6 +46,22 @@ cdef class Image:
         check_error(VG_IMAGE_IN_USE_ERROR="%r is currently a rendering target" % self,
                     VG_UNSUPPORTED_IMAGE_FORMAT_ERROR="invalid format",
                     VG_ILLEGAL_ARGUMENT_ERROR="invalid width/height or data is NULL or data is misaligned")
+
+    def load_array(self, array, format, pos, dimensions):
+        cdef PyArrayInterface *interface
+        if not hasattr(array, "__array_struct__"):
+            raise ValueError("Array object must implement __array_struct__")
+
+        interface = <PyArrayInterface*>PyCObject_GetDesc(array.__array_struct__)
+        if interface.two != 2:
+            raise ValueError("__array_struct__.two did not equal to 2")
+
+        if interface.nd != 2:
+            raise NotImplementedError("Only 2D arrays are supported")
+
+        vgImageSubData(self.handle, interface.data, interface.strides[0],
+                       format, pos[0], pos[1], dimensions[0], dimensions[1])
+        check_error()
 
     def fromiter(self, it, pos, dimensions, alpha=False):
         cdef VGubyte *data
@@ -59,14 +98,12 @@ cdef class Image:
     def clear(self, pos, dimensions, color=None):
         if color is not None:
             old_color = get(VG_CLEAR_COLOR)
-            try:
-                vgClearImage(self.handle, pos[0], pos[1], dimensions[0], dimensions[1])
-                check_error()
-            finally:
-                set(VG_CLEAR_COLOR, color)
+            vgClearImage(self.handle, pos[0], pos[1], dimensions[0], dimensions[1])
+            set(VG_CLEAR_COLOR, color)
         else:
             vgClearImage(self.handle, pos[0], pos[1], dimensions[0], dimensions[1])
-            check_error()
+
+        check_error()
 
     def make_child(self, pos, dimensions):
         cdef VGImage handle
@@ -91,15 +128,13 @@ cdef class Image:
     def draw(self, mode=None):
         if mode is not None:
             old_mode = get(VG_IMAGE_MODE)
-            try:
-                set(VG_IMAGE_MODE, mode)
-                vgDrawImage(self.handle)
-                check_error()
-            finally:
-                set(VG_IMAGE_MODE, old_mode)
+            set(VG_IMAGE_MODE, mode)
+            vgDrawImage(self.handle)
+            set(VG_IMAGE_MODE, old_mode)
         else:
             vgDrawImage(self.handle)
-            check_error()
+
+        check_error()
     
 ##    property format:
 ##        def __get__(self):
