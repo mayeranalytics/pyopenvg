@@ -65,11 +65,9 @@ def clear(corner, dimensions, color=None):
         raise ValueError("width and height must be positive")
     if color is not None:
         old_color = get(VG_CLEAR_COLOR)
-        try:
-            set(VG_CLEAR_COLOR, color)
-            vgClear(corner[0], corner[1], dimensions[0], dimensions[1])
-        finally:
-            set(VG_CLEAR_COLOR, old_color)
+        set(VG_CLEAR_COLOR, color)
+        vgClear(corner[0], corner[1], dimensions[0], dimensions[1])
+        set(VG_CLEAR_COLOR, old_color)
     else:
         vgClear(corner[0], corner[1], dimensions[0], dimensions[1])
 
@@ -227,23 +225,23 @@ def set_paint(Paint paint, mode):
     if mode & VG_FILL_PATH:
         Context.singleton.fill_paint = paint
 
-cdef object lookup_paint(VGPaint handle):
-    cdef Paint paint
-    if (<long>handle) in _paint_table:
-        return _paint_table[<long>handle]
-    else:
-        paint_type = vgGetParameteri(handle, VG_PAINT_TYPE)
-        check_error()
-        if paint_type == VG_PAINT_TYPE_COLOR:
-            paint = Paint.__new__(ColorPaint)
-        elif paint_type == VG_PAINT_TYPE_LINEAR_GRADIENT or \
-             paint_type == VG_PAINT_TYPE_RADIAL_GRADIENT:
-            paint = Paint.__new__(GradientPaint)
-        else:
-            paint = Paint.__new__(PatternPaint)
-            paint._pattern = None
-        paint.handle = handle
-        return paint
+##cdef object lookup_paint(VGPaint handle):
+##    cdef Paint paint
+##    if (<long>handle) in _paint_table:
+##        return _paint_table[<long>handle]
+##    else:
+##        paint_type = vgGetParameteri(handle, VG_PAINT_TYPE)
+##        check_error()
+##        if paint_type == VG_PAINT_TYPE_COLOR:
+##            paint = Paint.__new__(ColorPaint)
+##        elif paint_type == VG_PAINT_TYPE_LINEAR_GRADIENT or \
+##             paint_type == VG_PAINT_TYPE_RADIAL_GRADIENT:
+##            paint = Paint.__new__(GradientPaint)
+##        else:
+##            paint = Paint.__new__(PatternPaint)
+##            paint._pattern = None
+##        paint.handle = handle
+##        return paint
 
 def get_string(string_id):
     cdef char *s
