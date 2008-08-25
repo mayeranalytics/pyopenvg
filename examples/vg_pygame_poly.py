@@ -8,7 +8,7 @@ from OpenVG.constants import *
 def main(width, height):
     pygame.init()
     
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 16)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
     pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
     srf = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Polyline test")

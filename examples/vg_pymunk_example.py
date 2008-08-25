@@ -10,7 +10,7 @@ from OpenVG.constants import *
 
 def setup(name, width, height, flags=pygame.DOUBLEBUF):
     pygame.init()
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 16)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
     pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
 
     screen = pygame.display.set_mode((width, height), pygame.OPENGL | flags)
