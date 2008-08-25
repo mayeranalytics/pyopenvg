@@ -13,7 +13,7 @@ screen = window.get_platform().get_default_display().get_default_screen()
 template = Config()
 template.depth_size = 24
 template.double_buffer = True
-template.stencil_size = 16
+template.stencil_size = 8
 
 config = screen.get_best_config(template)
 
