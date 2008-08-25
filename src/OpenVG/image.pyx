@@ -5,6 +5,9 @@ cdef extern from "Python.h":
     void* PyCObject_GetDesc(object self)
     object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc, void (*destr)(void *, void *))
 
+    int PyString_Check(object o)
+    char* PyString_AS_STRING(object s)
+    char* PyString_AsString(object s)
 
 ctypedef struct PyArrayInterface:
     int two              # contains the integer 2 -- simple sanity check
@@ -20,6 +23,23 @@ ctypedef struct PyArrayInterface:
                          #       of __array_interface__) -- must set ARR_HAS_DESCR
                          #       flag or this will be ignored.
 
+##def format_size(format):
+##    if format < 0 or format > VG_lABGR_8888_PRE:
+##        raise ValueError("Unknown format %s" % format)
+##
+##    format &= ~(1 << 6 | 1 << 7) #clear channel order bits
+##    if VG_sRGBX_8888 <= format <= VG_sRGBA_8888_PRE:
+##        return 4
+##    elif VG_sRGB_565 <= format <= VG_sRGBA_4444:
+##        return 2
+##    elif VG_lRGBX_8888 <= format <= VG_lRGBA_8888:
+##        return 4
+##    elif format == VG_sL_8 or format == VG_lL_8 or format == VG_A_8:
+##        return 1
+##    elif format == VG_BW_1:
+##        return -1
+##    else:
+##        raise ValueError("Unknown format")
 
 cdef class Image:
     def __init__(self, format, dimensions, quality=VG_IMAGE_QUALITY_BETTER):
@@ -38,30 +58,52 @@ cdef class Image:
         del _image_table[<long>self.handle]
         vgDestroyImage(self.handle)
 
-    def sub_data(self, char *data, stride, format, corner, dimensions):
-        vgImageSubData(self.handle, <void*>data,
-                       stride, format,
-                       corner[0], corner[1],
-                       dimensions[0], dimensions[1])
+    def sub_data(self, object data, stride, format, corner, dimensions, flip=False):
+        cdef char *p
+        p = PyString_AsString(data)
+
+        if not flip:
+            vgImageSubData(self.handle, <void*>p,
+                           stride, format,
+                           corner[0], corner[1],
+                           dimensions[0], dimensions[1])
+        else:
+            vgImageSubData(self.handle, <void*>(&p[stride*(dimensions[1]-1)]),
+                           -stride, format,
+                           corner[0], corner[1],
+                           dimensions[0], dimensions[1])
         check_error(VG_IMAGE_IN_USE_ERROR="%r is currently a rendering target" % self,
                     VG_UNSUPPORTED_IMAGE_FORMAT_ERROR="invalid format",
                     VG_ILLEGAL_ARGUMENT_ERROR="invalid width/height or data is NULL or data is misaligned")
 
-    def load_array(self, array, format, pos, dimensions):
-        cdef PyArrayInterface *interface
-        if not hasattr(array, "__array_struct__"):
-            raise ValueError("Array object must implement __array_struct__")
-
-        interface = <PyArrayInterface*>PyCObject_GetDesc(array.__array_struct__)
-        if interface.two != 2:
-            raise ValueError("__array_struct__.two did not equal to 2")
-
-        if interface.nd != 2:
-            raise NotImplementedError("Only 2D arrays are supported")
-
-        vgImageSubData(self.handle, interface.data, interface.strides[0],
-                       format, pos[0], pos[1], dimensions[0], dimensions[1])
-        check_error()
+##    def load_array(self, array, format, pos, dimensions, padded=False):
+##        cdef PyArrayInterface *interface
+##        cdef void *data
+##        if not hasattr(array, "__array_struct__"):
+##            raise ValueError("Array object must implement __array_struct__")
+##
+##        interface = <PyArrayInterface*>PyCObject_GetDesc(array.__array_struct__)
+##        if interface.two != 2:
+##            raise ValueError("__array_struct__.two did not equal to 2")
+##
+##        if interface.nd != 2:
+##            raise NotImplementedError("Only 2D arrays are supported")
+##
+##        if padded or (format & ~(1 << 6 | 1 << 7)) in (VG)):
+##            data = interface.data
+##        else:
+##            count = interface.shapes[0] * interface.shapes[1]
+##            size = format_size(format)
+##            if size == 1: #Not RGB{A,X} data
+##                data = malloc(count)
+##            elif size == -1: #B & W bitmap
+##                pass
+##            else:
+##                data = malloc( * count
+##
+##        vgImageSubData(self.handle, interface.data, interface.strides[0],
+##                       format, pos[0], pos[1], dimensions[0], dimensions[1])
+##        check_error()
 
     def fromiter(self, it, pos, dimensions, alpha=False):
         cdef VGubyte *data
