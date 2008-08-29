@@ -264,6 +264,24 @@ cdef class Face:
         def __get__(self):
             return self.handle.size.metrics.y_scale
 
+    property max_advance_width:
+        def __get__(self):
+            return self.handle.max_advance_width
+
+    property max_advance_height:
+        def __get__(self):
+            return self.handle.max_advance_height
+
+##    property text_height:
+##        def __get__(self):
+##            return self.handle.text_height
+
+    property bbox:
+        def __get__(self):
+            cdef FT_BBox bbox
+            bbox = self.handle.bbox
+            return (bbox.xMin, bbox.yMin, bbox.xMax, bbox.yMax)
+
     property has_horizontal:
         def __get__(self):
             return bool(self.handle.face_flags & FT_FACE_FLAG_HORIZONTAL)
