@@ -7,7 +7,7 @@ from FT.constants import *
 library = Library()
 
 class Font(object):
-    def __init__(self, path, size, dpi=72):
+    def __init__(self, path, size, dpi=72, preload=True):
         self.path = path
         self.size = size
         self.face = Face(library, path)
@@ -18,11 +18,10 @@ class Font(object):
         self.glyph_table = {}
         self.path_table = {}
 
-        flags = FT_LOAD_NO_SCALE | FT_LOAD_LINEAR_DESIGN
-        for char_code, glyph in self.face.get_glyphs(flags):
-            if char_code > 255:
-                break
-            self.glyph_table[chr(char_code)] = glyph
+        if preload:
+            flags = FT_LOAD_NO_SCALE | FT_LOAD_LINEAR_DESIGN
+            for char_code, glyph in self.face.get_glyphs(flags):
+                self.glyph_table[char_code] = glyph
 
     def build_path(self, text, horizontal=True, do_kerning=True):
         old_matrix = VG.get_matrix()
@@ -34,7 +33,7 @@ class Font(object):
         if do_kerning and horizontal and self.face.has_kerning:
             last_glyph = None
             for char in text:
-                glyph = self.glyph_table[char]
+                glyph = self.get_glyph(char)
                 subpath = self.get_path_for_glyph(glyph)
                 if last_glyph is not None:
                     kerning = self.face.get_kerning(last_glyph.index,
@@ -47,7 +46,7 @@ class Font(object):
                 VG.translate(self.scale*glyph.advance[0], 0.0)
         else:
             for char in text:
-                glyph = self.glyph_table[char]
+                glyph = self.get_glyph(char)
                 subpath = self.get_path_for_glyph(glyph)
                 subpath.transform(path)
                 VG.translate(self.scale*glyph.advance[0]*horizontal,
@@ -66,7 +65,16 @@ class Font(object):
             return path
 
     def get_path_for_char(self, char):
-        return self.get_path_for_glyph(self.glyph_table[char].index)
+        return self.get_path_for_glyph(self.get_glyph(char).index)
+
+    def get_glyph(self, char):
+        if ord(char) in self.glyph_table:
+            return self.glyph_table[ord(char)]
+        else:
+            flags = FT_LOAD_NO_SCALE | FT_LOAD_LINEAR_DESIGN
+            glyph = self.face.load_char(char, flags)
+            self.glyph_table[ord(char)] = glyph
+            return glyph
 
     def compile_paths(self):
         for glyph in self.glyph_table.values():
@@ -74,3 +82,4 @@ class Font(object):
             funcs = (path.move_to, path.line_to, path.quad_to, path.cubic_to)
             glyph.outline.decompose(funcs)
             
+__all__ = ["Font"]
