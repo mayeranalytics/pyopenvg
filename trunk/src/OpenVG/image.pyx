@@ -55,7 +55,6 @@ cdef class Image:
         _image_table[<long>self.handle] = self
 
     def __dealloc__(self):
-        del _image_table[<long>self.handle]
         vgDestroyImage(self.handle)
 
     def sub_data(self, object data, stride, format, corner, dimensions, flip=False):
