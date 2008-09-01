@@ -13,7 +13,7 @@ if sys.platform == "win32":
     openvg_root = r"path\to\shiva-checkout\trunk"
     
     #This is the default install location with the GnuWin32 installer
-    freetype_root = r"C:\Program Files\GnuWin32\Freetype"
+    freetype_root = r"C:\GnuWin32"
 
     #if you run "build_shiva.py" then you can just use the copy
     #of libOpenVG that ends up in lib/
@@ -45,7 +45,7 @@ FT_include_dirs = ["include",
 ##    os.remove(os.path.join("src", "OpenVG", "VG.c"))
 
 setup(name = "PyOpenVG",
-      version = "0.0.2",
+      version = "0.0.3",
       author = "Devan Lai",
       author_email = "devan.lai@gmail.com",
       url = "http://code.google.com/p/pyopenvg/",
