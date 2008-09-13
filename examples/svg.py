@@ -131,10 +131,17 @@ def arg_count(command):
         raise ValueError("Unsupported command type % r" % command)
 
 def parse_number_string(data):
-    if "." in data:
-        return float(data)
+    DPI = 72
+    if data.endswith("pt"):
+        if "." in data:
+            return float(data[:-2])/72.0 * DPI
+        else:
+            return int(data[:-2])/72.0 * DPI
     else:
-        return int(data)
+        if "." in data:
+            return float(data)
+        else:
+            return int(data)
 
 path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
 def parse_path_string(data):
@@ -277,7 +284,7 @@ def parse_transform_string(data):
             else:
                 transforms.append((VG.rotate, (args[0],)))
         else:
-            raise NotImplementedError
+            raise NotImplementedError("transform '%s' is not yet implemented" % action)
     return transform
 
 def path_from_element(element):
@@ -305,5 +312,6 @@ def group_from_element(element):
         elif tag == "path":
             children.append(path_from_element(child))
         else:
-            raise NotImplementedError
+            #raise NotImplementedError("tag '%s' is not yet implemented" % tag)
+            pass
     return Group(children, style, paint_mode, transform)
