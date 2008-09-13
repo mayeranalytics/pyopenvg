@@ -5,6 +5,7 @@ _image_table = weakref.WeakValueDictionary()
 del weakref
 
 include "stdlib.pxi"
+include "Python.pxi"
 include "VG/openvg.pxi"
 
 class VGError(BaseException):
@@ -395,4 +396,6 @@ class Style(object):
         return style
 
 __all__ = ["Path", "Paint", "ColorPaint", "GradientPaint", "PatternPaint",
-           "Image", "Context", "Style" "VGError", "check_error", "interpolate"]
+           "Image", "Context", "Style" "VGError", "check_error", "interpolate",
+           "blit", "blit_buffer", "blit_to_buffer", "blit_to_image",
+           "copy_pixels"]

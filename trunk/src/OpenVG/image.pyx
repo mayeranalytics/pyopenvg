@@ -1,14 +1,3 @@
-cdef extern from "Python.h":
-    ctypedef int Py_intptr_t
-    int PyCObject_Check(object p)
-    void* PyCObject_AsVoidPtr(object self)
-    void* PyCObject_GetDesc(object self)
-    object PyCObject_FromVoidPtrAndDesc(void* cobj, void* desc, void (*destr)(void *, void *))
-
-    int PyString_Check(object o)
-    char* PyString_AS_STRING(object s)
-    char* PyString_AsString(object s)
-
 ctypedef struct PyArrayInterface:
     int two              # contains the integer 2 -- simple sanity check
     int nd               # number of dimensions
@@ -23,23 +12,39 @@ ctypedef struct PyArrayInterface:
                          #       of __array_interface__) -- must set ARR_HAS_DESCR
                          #       flag or this will be ignored.
 
-##def format_size(format):
-##    if format < 0 or format > VG_lABGR_8888_PRE:
-##        raise ValueError("Unknown format %s" % format)
-##
-##    format &= ~(1 << 6 | 1 << 7) #clear channel order bits
-##    if VG_sRGBX_8888 <= format <= VG_sRGBA_8888_PRE:
-##        return 4
-##    elif VG_sRGB_565 <= format <= VG_sRGBA_4444:
-##        return 2
-##    elif VG_lRGBX_8888 <= format <= VG_lRGBA_8888:
-##        return 4
-##    elif format == VG_sL_8 or format == VG_lL_8 or format == VG_A_8:
-##        return 1
-##    elif format == VG_BW_1:
-##        return -1
-##    else:
-##        raise ValueError("Unknown format")
+cdef int format_size(format):
+    if format < 0 or format > VG_lABGR_8888_PRE:
+        raise ValueError("Unknown format %s" % format)
+
+    format &= ~(1 << 6 | 1 << 7) #clear channel order bits
+    if VG_sRGBX_8888 <= format <= VG_sRGBA_8888_PRE:
+        return 32
+    elif VG_sRGB_565 <= format <= VG_sRGBA_4444:
+        return 16
+    elif VG_lRGBX_8888 <= format <= VG_lRGBA_8888:
+        return 32
+    elif format == VG_sL_8 or format == VG_lL_8 or format == VG_A_8:
+        return 8
+    elif format == VG_BW_1:
+        return 1
+    else:
+        raise ValueError("Unknown format")
+
+cdef void* get_read_buffer(object buffer) except NULL:
+    cdef void *p
+    cdef Py_ssize_t buffer_len
+
+    if PyObject_AsReadBuffer(buffer, &p, &buffer_len) != -1:
+        return p
+
+cdef void* get_write_buffer(object buffer, Py_ssize_t min_size) except NULL:
+    cdef void *p
+    cdef Py_ssize_t buffer_len
+
+    if PyObject_AsWriteBuffer(buffer, <void**>&p, &buffer_len) != -1:
+        if buffer_len < min_size:
+            raise ValueError("Buffer %r is too small (length %d needed)" % (buffer, min_size))
+        return p
 
 cdef class Image:
     def __init__(self, format, dimensions, quality=VG_IMAGE_QUALITY_BETTER):
@@ -58,22 +63,35 @@ cdef class Image:
         vgDestroyImage(self.handle)
 
     def sub_data(self, object data, stride, format, corner, dimensions, flip=False):
-        cdef char *p
-        p = PyString_AsString(data)
-
+        cdef void *p
+        p = get_read_buffer(data)
+        
         if not flip:
-            vgImageSubData(self.handle, <void*>p,
+            vgImageSubData(self.handle, p,
                            stride, format,
                            corner[0], corner[1],
                            dimensions[0], dimensions[1])
         else:
-            vgImageSubData(self.handle, <void*>(&p[stride*(dimensions[1]-1)]),
+            vgImageSubData(self.handle, &((<char*>p)[stride*(dimensions[1]-1)]),
                            -stride, format,
                            corner[0], corner[1],
                            dimensions[0], dimensions[1])
         check_error(VG_IMAGE_IN_USE_ERROR="%r is currently a rendering target" % self,
                     VG_UNSUPPORTED_IMAGE_FORMAT_ERROR="invalid format",
                     VG_ILLEGAL_ARGUMENT_ERROR="invalid width/height or data is NULL or data is misaligned")
+
+    def get_sub_data(self, object buffer, area, format, stride=0):
+        cdef void *data
+        cdef Py_ssize_t size
+
+        size = format_size(format) * area[1][0]*area[1][1]/8
+
+        data = get_write_buffer(buffer, size)
+        vgGetImageSubData(self.handle, data, stride, format,
+                          area[0][0], area[0][1],
+                          area[1][0], area[1][1])
+        check_error()
+        
 
 ##    def load_array(self, array, format, pos, dimensions, padded=False):
 ##        cdef PyArrayInterface *interface
@@ -217,18 +235,53 @@ cdef object lookup_image(VGImage handle):
         return im
 
 def blit(Image src not None, dest_pos, area=None):
+    cdef VGint dest_x, dest_y
+    cdef VGint src_x, src_y, width, height
+
+    dest_x, dest_y = dest_pos
+    
     if area is None:
-        area = ((0, 0), (src.width, src.height))
-    vgSetPixels(dest_pos[0], dest_pos[1],
-                src.handle, area[0][0], area[0][1],
-                area[1][0], area[1][1])
+        src_x = src_y = 0
+        width = src.width
+        height = src.height
+    else:
+        (src_x, src_y), (width, height) = area
+
+    if dest_x < 0:
+        src_x -= dest_x
+        width += dest_x
+        dest_x = 0
+
+    if dest_y < 0:
+        src_y -= dest_y
+        height += dest_y
+        dest_y = 0
+        
+    vgSetPixels(dest_x, dest_y,
+                src.handle, src_x, src_y,
+                width, height)
     check_error()
 
-def blit_buffer(object buffer, dest_pos, area, format):
-    raise NotImplementedError
+def blit_buffer(object buffer, dest_pos, dimensions, format, stride=0):
+    cdef void *data
+    
+    data = get_read_buffer(buffer)
+    vgWritePixels(data, stride, format,
+                  dest_pos[0], dest_pos[1],
+                  dimensions[0], dimensions[1])
+    check_error()
 
-def blit_to_buffer(object buffer, area, format):
-    raise NotImplementedError
+def blit_to_buffer(object buffer, object area, format, stride=0):
+    cdef void *data
+    cdef Py_ssize_t size
+
+    size = format_size(format) * area[1][0]*area[1][1]/8
+
+    data = get_write_buffer(buffer, size)
+    vgReadPixels(data, stride, format,
+                 area[0][0], area[0][1],
+                 area[1][0], area[1][1])
+    check_error()
 
 def blit_to_image(Image dest not None, dest_pos, area):
     vgGetPixels(dest.handle, dest_pos[0], dest_pos[1],
@@ -237,7 +290,29 @@ def blit_to_image(Image dest not None, dest_pos, area):
     check_error()
 
 def copy_pixels(dest_pos, area):
-    vgCopyPixels(dest_pos[0], dest_pos[1],
-                 area[0][0], area[0][1],
-                 area[1][0], area[1][1])
+    cdef VGint dest_x, dest_y
+    cdef VGint src_x, src_y, width, height
+
+    dest_x, dest_y = dest_pos
+    
+    if area is None:
+        src_x = src_y = 0
+        width = src.width
+        height = src.height
+    else:
+        (src_x, src_y), (width, height) = area
+
+    if dest_x < 0:
+        src_x -= dest_x
+        width += dest_x
+        dest_x = 0
+
+    if dest_y < 0:
+        src_y -= dest_y
+        height += dest_y
+        dest_y = 0
+    
+    vgCopyPixels(dest_x, dest_y,
+                 src_x, src_y,
+                 width, height)
     check_error()
