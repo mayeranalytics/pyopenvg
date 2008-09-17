@@ -90,7 +90,7 @@ command_table = dict(M=VG_MOVE_TO_ABS, m=VG_MOVE_TO_REL,
                      S=VG_SCUBIC_TO_ABS, s=VG_SCUBIC_TO_REL,
                      Q=VG_QUAD_TO_ABS, q=VG_QUAD_TO_REL,
                      T=VG_SQUAD_TO_ABS, t=VG_SQUAD_TO_REL)
-#No arc support yet. More parsing annoyancese
+#No arc support yet. More parsing annoyances
 
 class Group(object):
     def __init__(self, children, style, paint_mode, transform=None):
