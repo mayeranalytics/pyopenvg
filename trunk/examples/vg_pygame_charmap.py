@@ -22,12 +22,12 @@ def main(width, height, font_path, size):
     the_path = VG.Path()
 
     message = font.build_path("left click and drag to move")
-    x1, y1, x2, y2 = message.bounds()
-    VG.translate(width/2.0-(x2-x1)/2.0, height-(y2-y1))
+    (x, y), (w, h) = message.bounds()
+    VG.translate(width/2.0-w/2.0, height-h)
     message.transform(the_path)
 
     VG.load_identity()
-    VG.translate(0-xmin, height-ymax-(y2-y1))
+    VG.translate(0-xmin, height-ymax-h)
     boxes_per_line = int(width/float(xmax-xmin))
     i = 0
     for char_code, glyph in sorted(font.glyph_table.items()):

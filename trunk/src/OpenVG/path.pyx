@@ -119,13 +119,13 @@ cdef class Path:
         cdef VGfloat minX, minY, width, height
         vgPathBounds(self.handle, &minX, &minY, &width, &height)
         check_error()
-        return (minX, minY, width, height)
+        return (minX, minY), (width, height)
 
     def transformed_bounds(self):
         cdef VGfloat minX, minY, width, height
         vgPathTransformedBounds(self.handle, &minX, &minY, &width, &height)
         check_error()
-        return (minX, minY, width, height)
+        return (minX, minY), (width, height)
 
     def length(self, start=0, num_segments=None):
         if not self.capabilities & VG_PATH_CAPABILITY_PATH_LENGTH:
@@ -173,10 +173,10 @@ cdef class Path:
         self.append((VG_LINE_TO | rel, p))
 
     def hline_to(self, x, rel=False):
-        self.append((VG_HLINE_TO | rel, x))
+        self.append((VG_HLINE_TO | rel, (x,)))
 
     def vline_to(self, y, rel=False):
-        self.append((VG_VLINE_TO | rel, y))
+        self.append((VG_VLINE_TO | rel, (y,)))
 
     def quad_to(self, p1, p2, rel=False):
         data = (p1[0],p1[1], p2[0],p2[1])

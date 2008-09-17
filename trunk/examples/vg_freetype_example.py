@@ -7,6 +7,11 @@ from OpenVG.font import Font
 from OpenVG.constants import *
 
 
+def rotate_about(p, angle):
+    VG.translate(p[0], p[1])
+    VG.rotate(angle)
+    VG.translate(-p[0], -p[1])
+
 def main(width, height, message, rpm=20):
     pygame.init()
     
@@ -21,18 +26,16 @@ def main(width, height, message, rpm=20):
 
     red_paint = VG.ColorPaint((1.0, 0.0, 0.0, 1.0))
     text = font.build_path(message)
-    x1, y1, x2, y2 = text.bounds()
-
-    #translate the text so that it's easier to rotate
-    VG.translate(-x1-(x2-x1)/2.0, -y1-(y2-y1)/2.0)
-    text = text.transform()
-    VG.load_identity()
+    (x, y), (w, h) = text.bounds()
 
     text.style = VG.Style(VG_STROKE_LINE_WIDTH = 1.0,
                           fill_paint = red_paint)
 
     clock = pygame.time.Clock()
     dt = 0
+
+    cx = width/2.0 - w/2.0
+    cy = height/2.0 - h/2.0
     
     running = True
     while running:
@@ -43,15 +46,18 @@ def main(width, height, message, rpm=20):
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_ESCAPE:
                     running = False
+            elif e.type == pygame.MOUSEBUTTONDOWN:
+                pos = e.pos
+                cx = pos[0]  - w/2.0
+                cy = height-pos[1]  - h/2.0
 
         VG.clear((0, 0), (width, height))
         VG.load_identity()
 
-        VG.translate(width/2.0, height/2.0)
-        VG.rotate(dt*360.0*rpm / (60*1000.0))
+        VG.translate(cx, cy)
+        rotate_about((x+w/2.0, y+h/2.0), dt*360.0*rpm / (60*1000.0))
 
         text.draw(VG_STROKE_PATH | VG_FILL_PATH)
-
         
         pygame.display.flip()
         dt += clock.tick(60)
