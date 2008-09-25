@@ -1,9 +1,12 @@
 from math import cos, sin, tan
 import re
 
+import numpy
+
 from OpenVG import VG
 from OpenVG import VGU
-from OpenVG.font import Font
+##from OpenVG.font import Font
+from OpenVG.constants import *
 
 __all__ = ["SVGElement", "SVGContainer", "SVGPrimitive",
            "SVG", "Group",
@@ -12,36 +15,56 @@ __all__ = ["SVGElement", "SVGContainer", "SVGPrimitive",
            ]
 
 class SVGElement(object):
-    pass
+    def __init__(self, style, paint_mode, transform):
+        self.style = style
+        self.paint_mode = paint_mode
+        self.transform = transform
+        
+    def load_style_from_element(self, e):
+        style = DeferredStyle.from_element(e)
+        self.style = style
+        self.paint_mode = style.paint_mode
+
+    def load_transform_from_element(self, e):
+        if "transform" in e.attrib:
+            self.transform = to_matrix(e.attrib["transform"])
+        else:
+            self.transform = None
 
 class SVGContainer(SVGElement):
-    def __init__(self, children, style=None, paint_mode=None, transform=None):
+    def __init__(self, children, style, paint_mode, transform):
+        SVGElement.__init__(self, style, paint_mode, transform)
         self.children = children
-        self.paint_mode = paint_mode
-        self.style = style
-        self.transform = transform
 
     def draw(self):
         if self.transform:
             mat = VG.get_matrix()
             VG.mult_matrix(self.transform)
-            
-        self.style.enable()
+
+        if self.style:
+            self.style.enable()
+
         for child in self.children:
             if isinstance(child, SVGContainer):
                 child.draw()
             elif isinstance(child, SVGPrimitive):
                 child.draw(self.paint_mode)
-        self.style.disable()
+
+        if self.style:
+            self.style.disable()
         
         if self.transform:
             VG.load_matrix(mat)
 
+    def load_children_from_element(self, e):
+        for child in e.getchildren():
+            child_cls = SVG_TAG_MAP.get(child.tag[child.tag.rfind("}") + 1:], None)
+            if child_cls:
+                self.children.append(child_cls.from_element(child))
+
 class SVGPrimitive(SVGElement):
-    def __init__(self, style=None, paint_mode=None, transform=None):
-        self.style = style
-        self.paint_mode = paint_mode
-        self.transform = transform
+    def __init__(self, style, paint_mode, transform):
+        SVGElement.__init__(self, style, paint_mode, transform)
         self._path = None
 
     def draw(self, paint_mode=VG_STROKE_PATH):
@@ -77,25 +100,31 @@ class SVG(SVGContainer):
 
     @classmethod
     def from_element(cls, e):
-        width = to_px(e.attrib["width"])
-        height = to_px(e.attrib["height"])
+        
+        width = 0#to_px(e.attrib["width"])
+        height = 0#to_px(e.attrib["height"])
         if "viewbox" in e.attrib:
             x,y, w,h = e.attrib["viewbox"].split()
             viewbox = ((to_px(x), to_px(y)), (to_px(w), to_px(h)))
         else:
             viewbox = None
+        svg = cls([], width, height, viewbox)
+        svg.load_children_from_element(e)
 
-        children = []
-        for child in e:
-            child_cls = SVG_TAG_MAP.get(e.tag[e.tag.rfind("}"):], None)
-            if child_cls:
-                children.append(child_cls.from_element(e))
-
-        return cls(children, width, height, viewbox)
+        return svg
 
 class Group(SVGContainer):
-    pass
+    @classmethod
+    def from_element(cls, e):
+        g = cls([], None, None, None)
+        g.load_style_from_element(e)
+        g.load_transform_from_element(e)
+        
+        g.load_children_from_element(e)
 
+        return g
+
+path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
 class Path(SVGPrimitive):
     def __init__(self, data, style=None, paint_mode=None, transform=None):
         SVGPrimitive.__init__(self, style, paint_mode, transform)
@@ -104,6 +133,35 @@ class Path(SVGPrimitive):
     def build_path(self):
         path = VG.Path()
         path.extend(self.data)
+        return path
+
+    @classmethod
+    def from_element(cls, e):
+        segments = []
+        for command, args in path_pattern.findall(e.attrib["d"]):
+            command = command.strip()
+            vg_command = SVG_PATH_COMMANDS[command]
+            if vg_command == VG_CLOSE_PATH:
+                segments.append((vg_command, ()))
+                continue
+            coords = map(to_number, re.split(r"(?:,|\s+)", args.strip()))
+
+            count = arg_count(vg_command)
+            if len(coords) % count:
+                raise ValueError("Incorrect number of arguments for command %s" % command)
+            if vg_command - (vg_command % 2) == VG_MOVE_TO and count > 2:
+                segments.append((vg_command, coords[:2]))
+                count -= 2
+                del coords[:2]
+                vg_command = VG_LINE_TO | (vg_command & VG_RELATIVE)
+
+            for i in xrange(len(coords)/count):
+                segments.append((vg_command, coords[i*count:(i+1)*count]))
+
+        path = cls(segments, None, None, None)
+        path.load_style_from_element(e)
+        path.load_transform_from_element(e)
+
         return path
 
 class Rect(SVGPrimitive):
@@ -179,6 +237,91 @@ class Polygon(PolyLine):
     def __init__(self, points, style=None, paint_mode=None, transform=None):
         PolyLine.__init__(self, points, True, style, paint_mode, transform)
 
+style_pattern = re.compile(r"(\w+-?\w+)\s*:\s*([^;]+)(?:;|$)")
+class DeferredStyle(VG.Style):
+    def __init__(self, **kwargs):
+        VG.Style.__init__(self, **kwargs)
+        self.initialized = False
+        self.paint_mode = VG_STROKE_PATH
+        
+    def enable(self):
+        if not self.initialized:
+            if self.fill_paint:
+                const, args = self.fill_paint
+                self.fill_paint = const(*args)
+            if self.stroke_paint:
+                const, args = self.stroke_paint
+                self.stroke_paint = const(*args)
+            self.initialized = True
+        VG.Style.enable(self)
+
+    @classmethod
+    def from_element(cls, e):
+        style = cls()
+        
+        do_fill = False
+        do_stroke = False
+        
+        for name, value in style_pattern.findall(e.get("style","")) + e.attrib.items():
+            name = name.lower().strip()
+            value = value.lower().strip()
+            if name == "fill":
+                if value == "none":
+                    do_fill = False
+                else:
+                    do_fill = True
+                    style.fill_paint = (VG.ColorPaint, (to_rgb(value),))
+            elif name == "stroke":
+                if value == "none":
+                    do_stroke = False
+                else:
+                    do_stroke = True
+                    style.stroke_paint = (VG.ColorPaint, (to_rgb(value),))
+            elif name == "stroke-width":
+                style[VG_STROKE_LINE_WIDTH] = to_px(value)
+            elif name == "stroke-linecap":
+                if value == "round":
+                    style[VG_STROKE_CAP_STYLE] = VG_CAP_ROUND
+                elif value == "butt":
+                    style[VG_STROKE_CAP_STYLE] = VG_CAP_BUTT
+                elif value == "square":
+                    style[VG_STROKE_CAP_STYLE] = VG_CAP_SQUARE
+                else:
+                    raise ValueError("Unknown stroke-linecap style \"%s\"" % value)
+            elif name == "stroke-linejoin":
+                if value == "round":
+                    style[VG_STROKE_JOIN_STYLE] = VG_JOIN_ROUND
+                elif value == "bevel":
+                    style[VG_STROKE_JOIN_STYLE] = VG_JOIN_BEVEL
+                elif value == "miter":
+                    style[VG_STROKE_JOIN_STYLE] = VG_JOIN_MITER
+                else:
+                    raise ValueError("Unknown stroke-linejoin style \"%s\"" % value)
+            elif name == "stroke-miterlimit":
+                style[VG_STROKE_MITER_LIMIT] = to_px(value)
+            elif name == "stroke-dashoffset":
+                style[VG_STROKE_DASH_PHASE] = to_px(value)
+            elif name == "stroke-dasharray":
+                if value == "none":
+                    style[VG_STROKE_DASH_PATTERN] = ()
+                else:
+                    style[VG_STROKE_DASH_PATTERN] = map(to_number, re.split(r"(\s*,\s*)|(?:\s*|,)", value))
+            elif name == "fill-rule":
+                if value == "evenodd":
+                    style[VG_FILL_RULE] = VG_EVEN_ODD
+                elif value == "nonzero":
+                    style[VG_FILL_RULE] = VG_NON_ZERO
+
+        paint_mode = 0
+        if do_stroke:
+            paint_mode |= VG_STROKE_PATH
+        if do_fill:
+            paint_mode |= VG_FILL_PATH
+        style.paint_mode = paint_mode
+
+        return style
+
+
 
 length_pattern = re.compile(r"\s*(.+?)\s*(px|pt|pc|mm|cm|in)?\s*$", re.I)
 def to_px(data):
@@ -188,6 +331,12 @@ def to_px(data):
     else:
         value = int(value)
     return value * SVG_PIXELS_PER_UNIT[unit]
+
+def to_number(data):
+    if "." in data or "e" in data or "E" in data:
+        return float(data)
+    else:
+        return int(data)
 
 hex_pattern = re.compile(r"#\s*([0-9A-F]{3,6})", re.I)
 def to_rgb(data):
@@ -282,6 +431,25 @@ SVG_TAG_MAP = dict(svg=SVG, g=Group,
                    path=Path, rect=Rect, circle=Circle, ellipse=Ellipse,
                    line=Line, polyline=PolyLine, polygon=Polygon,
                    )
+
+def arg_count(command):
+    takes_one = (VG_HLINE_TO, VG_VLINE_TO)
+    takes_two = (VG_MOVE_TO, VG_LINE_TO, VG_SQUAD_TO)
+    takes_four = (VG_QUAD_TO, VG_SCUBIC_TO)
+    takes_six = (VG_CUBIC_TO,)
+    command -= command % 2
+    if command == VG_CLOSE_PATH:
+        return 0
+    elif command in takes_one:
+        return 1
+    elif command in takes_two:
+        return 2
+    elif command in takes_four:
+        return 4
+    elif command in takes_six:
+        return 6
+    else:
+        raise ValueError("Unsupported command type % r" % command)
 
 SVG_PATH_COMMANDS = dict(M=VG_MOVE_TO_ABS,   m=VG_MOVE_TO_REL,
                          Z=VG_CLOSE_PATH,    z=VG_CLOSE_PATH,
