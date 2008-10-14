@@ -20,8 +20,11 @@ class SVGElement(object):
         self.paint_mode = paint_mode
         self.transform = transform
         
-    def load_style_from_element(self, e):
-        style = DeferredStyle.from_element(e)
+    def load_style_from_element(self, e, immediate=True):
+        if immediate:
+            style = DeferredStyle.from_element(e)
+        else:
+            style = DeferredStyle.from_element.im_func(VG.Style, e)
         self.style = style
         self.paint_mode = style.paint_mode
 
@@ -56,11 +59,11 @@ class SVGContainer(SVGElement):
         if self.transform:
             VG.load_matrix(mat)
 
-    def load_children_from_element(self, e):
+    def load_children_from_element(self, e, immediate=True):
         for child in e.getchildren():
             child_cls = SVG_TAG_MAP.get(child.tag[child.tag.rfind("}") + 1:], None)
             if child_cls:
-                self.children.append(child_cls.from_element(child))
+                self.children.append(child_cls.from_element(child, immediate))
 
 class SVGPrimitive(SVGElement):
     def __init__(self, style, paint_mode, transform):
@@ -99,7 +102,7 @@ class SVG(SVGContainer):
                           0,  height, 1]
 
     @classmethod
-    def from_element(cls, e):
+    def from_element(cls, e, immediate=True):
         
         width = 0#to_px(e.attrib["width"])
         height = 0#to_px(e.attrib["height"])
@@ -115,16 +118,15 @@ class SVG(SVGContainer):
 
 class Group(SVGContainer):
     @classmethod
-    def from_element(cls, e):
+    def from_element(cls, e, immediate=True):
         g = cls([], None, None, None)
-        g.load_style_from_element(e)
+        g.load_style_from_element(e, immediate)
         g.load_transform_from_element(e)
         
-        g.load_children_from_element(e)
+        g.load_children_from_element(e, immediate)
 
         return g
 
-path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
 class Path(SVGPrimitive):
     def __init__(self, data, style=None, paint_mode=None, transform=None):
         SVGPrimitive.__init__(self, style, paint_mode, transform)
@@ -136,30 +138,11 @@ class Path(SVGPrimitive):
         return path
 
     @classmethod
-    def from_element(cls, e):
-        segments = []
-        for command, args in path_pattern.findall(e.attrib["d"]):
-            command = command.strip()
-            vg_command = SVG_PATH_COMMANDS[command]
-            if vg_command == VG_CLOSE_PATH:
-                segments.append((vg_command, ()))
-                continue
-            coords = map(to_number, re.split(r"(?:,|\s+)", args.strip()))
-
-            count = arg_count(vg_command)
-            if len(coords) % count:
-                raise ValueError("Incorrect number of arguments for command %s" % command)
-            if vg_command - (vg_command % 2) == VG_MOVE_TO and count > 2:
-                segments.append((vg_command, coords[:2]))
-                count -= 2
-                del coords[:2]
-                vg_command = VG_LINE_TO | (vg_command & VG_RELATIVE)
-
-            for i in xrange(len(coords)/count):
-                segments.append((vg_command, coords[i*count:(i+1)*count]))
+    def from_element(cls, e, immediate=True):
+        segments = list(to_commands(e.attrib["d"]))
 
         path = cls(segments, None, None, None)
-        path.load_style_from_element(e)
+        path.load_style_from_element(e, immediate)
         path.load_transform_from_element(e)
 
         return path
@@ -365,6 +348,38 @@ def to_rgb(data):
         raise ValueError('Invalid color "%s"' % original)
     return (R, G, B)
 
+path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
+def to_commands(data):
+    for command, args in path_pattern.findall(data):
+        command = command.strip()
+        if command == "A" or command == "a":
+            rel = command == "a"
+            coords = map(to_number, re.split(r"(?:,|\s+)", args.strip()))
+            if len(coords) % 7:
+                raise ValueError("Incorrect number of arguments for arc command (expected 7)")
+            for i in xrange(len(coords)//7):
+                large, sweep = coords[i*7+3], coords[i*7+4]
+                vg_command = SVG_ARC_COMMANDS[(large, sweep)] | rel
+                yield (vg_command, coords[i*7:i*7+3]+coords[i*7+5:i*7+7])
+        else:
+            vg_command = SVG_PATH_COMMANDS[command]
+            if vg_command == VG_CLOSE_PATH:
+                yield (vg_command, ())
+                continue
+            coords = map(to_number, re.split(r"(?:,|\s+)", args.strip()))
+
+            count = arg_count(vg_command)
+            if len(coords) % count:
+                raise ValueError("Incorrect number of arguments for command %s" % command)
+            if vg_command - (vg_command % 2) == VG_MOVE_TO and count > 2:
+                yield (vg_command, coords[:2])
+                count -= 2
+                del coords[:2]
+                vg_command = VG_LINE_TO | (vg_command & VG_RELATIVE)
+
+            for i in xrange(len(coords)/count):
+                yield (vg_command, coords[i*count:(i+1)*count])
+
 transform_pattern = re.compile(r"(matrix|translate|scale|rotate|skewX|skewY)\s*\((.+?)\)", re.I)
 def to_matrix(data):
     matrix = numpy.matrix([[1, 0, 0],
@@ -460,6 +475,11 @@ SVG_PATH_COMMANDS = dict(M=VG_MOVE_TO_ABS,   m=VG_MOVE_TO_REL,
                          S=VG_SCUBIC_TO_ABS, s=VG_SCUBIC_TO_REL,
                          Q=VG_QUAD_TO_ABS,   q=VG_QUAD_TO_REL,
                          T=VG_SQUAD_TO_ABS,  t=VG_SQUAD_TO_REL)
+
+SVG_ARC_COMMANDS = {(False, False):VG_SCCWARC_TO,
+                    (False, True):VG_SCWARC_TO,
+                    (True, False):VG_LCCWARC_TO,
+                    (True, True):VG_LCWARC_TO}
 
 SVG_COLORS = dict(aliceblue=(240, 248, 255),
                   antiquewhite=(250, 235, 215),
