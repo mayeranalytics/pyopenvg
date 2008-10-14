@@ -357,6 +357,9 @@ class Style(object):
     def __exit__(self, exc_type, value, traceback):
         self.disable()
 
+    def __contains__(self, key):
+        return key in self.params
+
     def __getitem__(self, name):
         return self.params[name]
 
