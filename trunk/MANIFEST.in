@@ -8,3 +8,5 @@ include examples *.py
 include examples/data *.svg *.jpg
 prune examples/OpenVG
 prune examples/FT
+
+include README
