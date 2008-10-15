@@ -51,6 +51,7 @@ def main(width, height, radius, count, flags=0):
     font = Font("data/Vera.ttf", 30)
     src_path = font.build_path("SRC")
     dst_path = font.build_path("DST")
+    message = font.build_path("Scroll to change the blend mode")
     
     circle = VG.Path()
     VGU.ellipse(circle, (0, 0), (radius*2, radius*2))
@@ -97,6 +98,11 @@ def main(width, height, radius, count, flags=0):
             VG.translate(width//2, height//2)
             VG.translate(radius*math.cos(angle), radius*math.sin(angle))
             circle2.draw(VG_FILL_PATH)
+
+        VG.load_identity()
+        (x,y), (w,h) = message.bounds()
+        VG.translate(-x, height-y-h)
+        message.draw(VG_STROKE_PATH | VG_FILL_PATH)
         
 
         

@@ -7,7 +7,7 @@ from OpenVG import VG
 from OpenVG import VGU
 from OpenVG.constants import *
 
-from svg import path_from_element
+from OpenVG.svg import load_svg_element
 import xml.etree.ElementTree as ET
 
 class MoonWorld(object):
@@ -86,7 +86,9 @@ class MoonBuggy(object):
         self.input_power = 0.0
 
         path_tag = "{http://www.w3.org/2000/svg}path"
-        logo = path_from_element(ET.parse("data/openvg.svg").find(path_tag))
+        svg_logo = load_svg_element(ET.parse("data/openvg.svg").find(path_tag))
+        logo = svg_logo.path
+        logo.style = svg_logo.style
         (x, y), (width, height) = logo.bounds()
         self.chassis_path = VG.Path()
         VGU.rect(self.chassis_path, (x-width/2.0, y-height/2.0), (width, height))
