@@ -1,13 +1,19 @@
+10/14/08:
+If you have any trouble compiling this stuff, feel free to shoot me an email.
+I know that my build system is totally weird.
+
+New features in this first tagged release:
+FreeType font support - PyOpenVG now uses FreeType2 to read outline data so that you can render text via OpenVG.font
+Some image support - Still buggy, not helped by the removal of my test computer's graphics card.
+Limited SVG support - just enough to render groups and paths with colors, not necessarily translated correctly (viewboxes are a pain, seriously)
+
+Sometime in September 2008:
 Though the code generally works, it is still incomplete. In particular, the following functions have not yet been wrapped:
 vgMask
 
 vgSetColor
 vgGetColor
 
-vgImageSubData
-vgGetImageSubData
-vgWritePixels
-vgReadPixels
 vgColorMatrix
 vgConvolve
 vgSeparableConvolve
@@ -21,4 +27,3 @@ vgGetString
 
 Additionally, the code is currently dependent on Ivan Leben's ShivaVG implementation to take care of managing the context as EGL support on Windows is lacking.
 Image support is still lacking, but otherwise the code is mostly functional.
-
