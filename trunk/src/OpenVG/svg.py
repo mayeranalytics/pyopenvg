@@ -21,10 +21,14 @@ class SVGElement(object):
         self.transform = transform
         
     def load_style_from_element(self, e, immediate=True):
-        if immediate:
+        if not immediate:
             style = DeferredStyle.from_element(e)
         else:
             style = DeferredStyle.from_element.im_func(VG.Style, e)
+            if style.fill_paint:
+                style.fill_paint = style.fill_paint[0](*style.fill_paint[1])
+            if style.stroke_paint:
+                style.stroke_paint = style.stroke_paint[0](*style.stroke_paint[1])
         self.style = style
         self.paint_mode = style.paint_mode
 
@@ -104,8 +108,8 @@ class SVG(SVGContainer):
     @classmethod
     def from_element(cls, e, immediate=True):
         
-        width = 0#to_px(e.attrib["width"])
-        height = 0#to_px(e.attrib["height"])
+        width = to_px(e.get("width", "0px"))
+        height = to_px(e.get("height", "0px"))
         if "viewbox" in e.attrib:
             x,y, w,h = e.attrib["viewbox"].split()
             viewbox = ((to_px(x), to_px(y)), (to_px(w), to_px(h)))
@@ -304,7 +308,9 @@ class DeferredStyle(VG.Style):
 
         return style
 
-
+def load_svg_element(e):
+    cls = SVG_TAG_MAP.get(e.tag[e.tag.rfind("}") + 1:])
+    return cls.from_element(e, None)
 
 length_pattern = re.compile(r"\s*(.+?)\s*(px|pt|pc|mm|cm|in)?\s*$", re.I)
 def to_px(data):
@@ -346,7 +352,7 @@ def to_rgb(data):
         R, G, B = SVG_COLORS[data]
     else:
         raise ValueError('Invalid color "%s"' % original)
-    return (R, G, B)
+    return (R/255.0, G/255.0, B/255.0)
 
 path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
 def to_commands(data):
