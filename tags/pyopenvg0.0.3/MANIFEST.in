@@ -1,0 +1,12 @@
+include *.py
+
+recursive-include include *.pxi *.h
+recursive-include src *.c
+include src/OpenVG/VG.pxd
+
+include examples *.py
+include examples/data *.svg *.jpg
+prune examples/OpenVG
+prune examples/FT
+
+include README
