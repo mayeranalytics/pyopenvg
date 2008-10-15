@@ -150,7 +150,10 @@ class Path(SVGPrimitive):
 
     @classmethod
     def from_element(cls, e, immediate=True):
-        segments = list(to_commands(e.attrib["d"]))
+        try:
+            segments = list(to_commands(e.attrib["d"]))
+        except KeyError:
+            segments = []
 
         path = cls(segments, None, None, None)
         path.load_style_from_element(e, immediate)

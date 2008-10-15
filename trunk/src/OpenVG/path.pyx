@@ -68,6 +68,8 @@ cdef class Path:
         
         if not isinstance(segments, Path):
             num_segments = len(segments)
+            if num_segments == 0:
+                return
             
             pathSegments = <VGubyte*>malloc(sizeof(VGubyte) * num_segments)
             if pathSegments == NULL:
