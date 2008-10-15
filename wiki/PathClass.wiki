@@ -140,8 +140,8 @@ The following methods simply append the corresponding segment command to the pat
   * *squad_to(p2, rel=False)* - draws a smooth quadratic Bezier curve to p2 using the reflection of the previous control point across the previous end point as the control point
   * *cubic_to(p1, p2, p3, rel=False)* - draws a cubic Bezier curve to p3 with control points p1 and p2
   * *scubic_to(p2, p3, rel=False)* - draws a smooth cubic Bezier curve to p3 with control point p2 and the reflection of the previous control point across the previous end point.
-  * *arc_from()* - still under development. Do not use
-  * *close()* - closes the current subpath (a line will be draw to the beginning of the subpath if stroked)
+  * *arc_to(p1, rh, rv, rot, major, CW, rel=False)* - draws an elliptical arc passing through p1. major determines if it is a large or small arc. See section _8.4 Elliptical Arcs_ of the OpenVG specification for more details.
+  * *close()* - closes the current subpath (a line will be drawn to the beginning of the subpath if stroked)
 
 
 = Other functions =
