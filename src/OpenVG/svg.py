@@ -75,10 +75,17 @@ class SVGPrimitive(SVGElement):
         self._path = None
 
     def draw(self, paint_mode=VG_STROKE_PATH):
+        if self.transform:
+            mat = VG.get_matrix()
+            VG.mult_matrix(self.transform)
+            
         if self.paint_mode:
             paint_mode = self.paint_mode
         
         self.path.draw(paint_mode, style=self.style)
+
+        if self.transform:
+            VG.load_matrix(mat)
 
     def build_path(self):
         raise NotImplementedError
