@@ -5,6 +5,8 @@ from FT.freetype import *
 from FT.constants import *
 
 library = Library()
+font_finders = []
+
 
 class Font(object):
     def __init__(self, path, size, dpi=72, preload=True):
@@ -81,5 +83,30 @@ class Font(object):
             path = self.path_table[glyph.index] = VG.Path(scale=scale.scale)
             funcs = (path.move_to, path.line_to, path.quad_to, path.cubic_to)
             glyph.outline.decompose(funcs)
-            
-__all__ = ["Font"]
+
+
+def load_font(name, size, dpi=72, preload=True):
+    if not font_finders:
+        raise RuntimeError('No font-locating functions registered; cannot locate font "%s"' % name)
+
+    for find in font_finders:
+        matches = find(name)
+        if matches is None:
+            continue
+        elif isinstance(matches, basestring):
+            path = matches
+            break
+        elif isinstance(matches, (tuple, list)) and len(matches) > 0:
+            path = matches[0]
+        else:
+            continue
+    else:
+        raise IOError('Unable to locate font "%s"' % name)
+
+    return Font(path, size, dpi, preload)
+
+def register_font_finder(func):
+    font_finders.append(func)
+    return func
+
+__all__ = ["Font", "load_font", "register_font_finder"]
