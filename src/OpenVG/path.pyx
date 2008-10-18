@@ -195,13 +195,13 @@ cdef class Path:
         data = (p2[0],p2[1], p3[0],p3[1])
         self.append((VG_SCUBIC_TO | rel, data))
 
-    def arc_to(self, p1, rh, rv, rot, major, CW, rel=False):
+    def arc_to(self, p1, rh, rv, rot, major, CCW, rel=False):
         data = (rh,rv,rot,p1[0],p1[1])
-        if major and CW:
+        if major and not CCW:
             command = VG_LCWARC_TO
-        elif major and not CW:
+        elif major and CCW:
             command = VG_LCCWARC_TO
-        elif not major and CW:
+        elif not major and not CCW:
             command = VG_SCWARC_TO
         else:
             command = VG_SCCWARC_TO

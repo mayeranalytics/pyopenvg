@@ -1,16 +1,17 @@
-from math import cos, sin, tan
+from math import cos, sin, tan, radians
 import re
 
 import numpy
 
 from OpenVG import VG
 from OpenVG import VGU
-##from OpenVG.font import Font
+from OpenVG.font import load_font
 from OpenVG.constants import *
 
 __all__ = ["SVGElement", "SVGContainer", "SVGPrimitive",
            "SVG", "Group",
            "Path", "Rect", "Ellipse", "Circle", "Line", "PolyLine", "Polygon",
+           "Text",
            "SVG_PATH_COMMANDS", "SVG_COLORS", "SVG_TAG_MAP", "SVG_PIXELS_PER_UNIT",
            ]
 
@@ -37,6 +38,24 @@ class SVGElement(object):
             self.transform = to_matrix(e.attrib["transform"])
         else:
             self.transform = None
+
+    def draw(self):
+        raise NotImplementedError
+
+    def corners(self, transform=None):
+        raise NotImplementedError
+
+    def bounds(self, transform=None):
+        (x1,y1), (x2,y2) = self.corners(transform)
+        if x1 is y1 is x2 is y2 is None:
+            return (0,0), (-1,-1)
+        return (x1,y1), (x2-x1,y2-y1)
+
+    @property
+    def numpy_transform(self):
+        T = numpy.matrix(self.transform)
+        T.shape = (3,3)
+        return T.T
 
 class SVGContainer(SVGElement):
     def __init__(self, children, style, paint_mode, transform):
@@ -69,6 +88,27 @@ class SVGContainer(SVGElement):
             if child_cls:
                 self.children.append(child_cls.from_element(child, immediate))
 
+    def corners(self, transform=None):
+        minx,miny, maxx,maxy = None,None, None,None
+        for child in self.children:
+            (x1,y1), (x2,y2) = child.corners(transform)
+            if x1 < minx or minx is None: minx = x1
+            if y1 < miny or miny is None: miny = y1
+
+            if x2 > maxx: maxx = x2
+            if y2 > maxy: maxy = y2
+
+        if self.transform is None or minx is miny is maxx is maxy is None:
+            return (minx, miny), (maxx, maxy)
+        else:
+            pts = numpy.matrix([[minx, minx, maxx, maxx],
+                                [miny, maxy, maxy, miny],
+                                [1,    1,    1,    1]])
+            corners = self.numpy_transform * pts
+
+            X,Y = corners[0], corners[1]
+            return (X.min(), Y.min()), (X.max(), Y.max())
+
 class SVGPrimitive(SVGElement):
     def __init__(self, style, paint_mode, transform):
         SVGElement.__init__(self, style, paint_mode, transform)
@@ -100,30 +140,64 @@ class SVGPrimitive(SVGElement):
     def set_path(self, value):
         self._path = value
 
+    def corners(self, transform=None):
+        (x1,y1), (w,h) = self.path.bounds()
+        x2 = x1 + w
+        y2 = y1 + h
+        
+        if self.transform:
+            if transform is not None:
+                transform = self.numpy_transform * transform
+            else:
+                transform = self.numpy_transform
+
+        if transform is None:
+            return (x1,y1), (x2,y2)
+        else:
+            pts = numpy.matrix([[x1, x1, x2, x2],
+                                [y1, y2, y2, y1],
+                                [1,  1,  1,  1]])
+            corners = transform * pts
+
+            X,Y = corners[0], corners[1]
+            return (X.min(), Y.min()), (X.max(), Y.max())
+
     path = property(get_path, set_path)
 
 class SVG(SVGContainer):
     def __init__(self, children, width, height, viewbox=None):
-        SVGContainer.__init__(self, children, None, None, None)
+        SVGContainer.__init__(self, children, None, VG_STROKE_PATH, None)
         self.width = width
         self.height = height
         self.viewbox = viewbox
-        self.transform = [1,  0,      0,
-                          0, -1,      0,
-                          0,  height, 1]
+        self.transform = None
+        if self.children:
+            self.setup_transform()
+
+    def setup_transform(self):
+        sx = sy = 1
+        dx = dy = 0
+        if self.width or self.height:
+            (dx,dy), (w,h) = self.viewbox if self.viewbox else self.bounds()
+            sx = self.width/float(w) if self.width else self.height/float(h)
+            sy = self.height/float(h) if self.height else self.width/float(w)
+        self.transform = [ sx,   0,           0,
+                           0,   -sy,          0,
+                          -dx,   self.height+dy,  1]
 
     @classmethod
     def from_element(cls, e, immediate=True):
         
         width = to_px(e.get("width", "0px"))
         height = to_px(e.get("height", "0px"))
-        if "viewbox" in e.attrib:
-            x,y, w,h = e.attrib["viewbox"].split()
+        if "viewBox" in e.attrib:
+            x,y, w,h = e.attrib["viewBox"].split()
             viewbox = ((to_px(x), to_px(y)), (to_px(w), to_px(h)))
         else:
             viewbox = None
         svg = cls([], width, height, viewbox)
-        svg.load_children_from_element(e)
+        svg.load_children_from_element(e, immediate)
+        svg.setup_transform()
 
         return svg
 
@@ -184,6 +258,23 @@ class Rect(SVGPrimitive):
             VGU.round_rect(path, self.position, (self.width, self.height), rx, ry)
         return path
 
+    @classmethod
+    def from_element(cls, e, immediate=True):
+        x = to_px(e.get("x", "0"))
+        y = to_px(e.get("y", "0"))
+        width = to_px(e.attrib["width"])
+        height = to_px(e.attrib["height"])
+        rx = to_px(e.get("rx", "0"))
+        ry = to_px(e.get("ry", "0"))
+        if rx or ry:
+            if rx and not ry: ry = rx
+            if ry and not rx: rx = ry
+        rect = cls((x,y), width, height, rx, ry)
+        rect.load_style_from_element(e, immediate)
+        rect.load_transform_from_element(e)
+        return rect
+        
+
 class Ellipse(SVGPrimitive):
     def __init__(self, pos, rx, ry, style=None, paint_mode=None, transform=None):
         SVGPrimitive.__init__(self, style, paint_mode, transform)
@@ -196,6 +287,20 @@ class Ellipse(SVGPrimitive):
         VGU.ellipse(path, self.position, (self.rx*2, self.ry*2))
         return path
 
+    @classmethod
+    def from_element(cls, e, immediate=True):
+        cx = to_px(e.get("cx", "0"))
+        cy = to_px(e.get("cy", "0"))
+        rx = to_px(e.attrib["rx"])
+        ry = to_px(e.attrib["ry"])
+
+        ellipse = cls((cx,cy), rx, ry)
+        ellipse.load_style_from_element(e, immediate)
+        ellipse.load_transform_from_element(e)
+
+        return ellipse
+        
+
 class Circle(Ellipse):
     def __init__(self, pos, radius, style=None, paint_mode=None, transform=None):
         Ellipse.__init__(self, pos, radius, radius, style, paint_mode, transform)
@@ -205,6 +310,18 @@ class Circle(Ellipse):
 
     def set_radius(self, value):
         self.rx = self.ry = value
+
+    @classmethod
+    def from_element(cls, e, immediate=True):
+        cx = to_px(e.get("cx", "0"))
+        cy = to_px(e.get("cy", "0"))
+        r = to_px(e.attrib["r"])
+
+        circle = cls((cx,cy), r)
+        circle.load_style_from_element(e, immediate)
+        circle.load_transform_from_element(e)
+
+        return circle
 
     radius = property(get_radius, set_radius)
 
@@ -219,6 +336,20 @@ class Line(SVGPrimitive):
         VGU.line(path, self.p1, self.p2)
         return path
 
+    @classmethod
+    def from_element(cls, e, immediate=True):
+        x1 = to_px(e.attrib["x1"])
+        y1 = to_px(e.attrib["y1"])
+
+        x2 = to_px(e.attrib["x2"])
+        y2 = to_px(e.attrib["y2"])
+
+        line = cls((x1,y1),(x2,y2))
+        line.load_style_from_element(e, immediate)
+        line.load_transform_from_element(e)
+
+        return line
+
 class PolyLine(SVGPrimitive):
     def __init__(self, points, closed=False, style=None, paint_mode=None, transform=None):
         SVGPrimitive.__init__(self, style, paint_mode, transform)
@@ -230,9 +361,61 @@ class PolyLine(SVGPrimitive):
         VGU.polygon(path, self.points, self.closed)
         return path
 
+    @classmethod
+    def from_element(cls, e, immediate=True):
+        coords = map(to_px, re.split(r"(?:,|\s+)", e.attrib["points"]))
+        points = [(coords[i], coords[i+1]) for i in xrange(0, len(coords), 2)]
+
+        polyline = cls(points)
+        polyline.load_style_from_element(e, immediate)
+        polyline.load_transform_from_element(e)
+
+        return polyline
+
 class Polygon(PolyLine):
     def __init__(self, points, style=None, paint_mode=None, transform=None):
         PolyLine.__init__(self, points, True, style, paint_mode, transform)
+
+class Text(SVGPrimitive):
+    def __init__(self, x, y, dx, dy, text, font_face, style=None, paint_mode=VG_FILL_PATH, transform=None):
+        SVGPrimitive.__init__(self, style, paint_mode, transform)
+        self.text = text
+        self.x = x
+        self.y = y
+        self.font = font_face
+
+    def build_path(self):
+        text = self.font.build_path(self.text)
+
+        (x,y), (w,h) = text.bounds()
+
+        mat = VG.get_matrix()
+        VG.load_matrix([1,0,0,0,-1,0,self.x[0],self.y[0],1])
+
+        path = VG.Path()
+        text.transform(path)
+
+        VG.load_matrix(mat)
+
+        return path
+
+    @classmethod
+    def from_element(cls, e, immediate=True):
+        x = map(to_px, re.split(r"(?:,|\s+)", e.get("x","0")))
+        y = map(to_px, re.split(r"(?:,|\s+)", e.get("y","0")))
+        dx = map(to_px, re.split(r"(?:,|\s+)", e.get("dx","0")))
+        dy = map(to_px, re.split(r"(?:,|\s+)", e.get("dy","0")))
+
+        name = e.get("font-family", "freesansbold")
+
+        font = load_font(name, to_pt(e.get("font-size", "20")))
+        
+        text = cls(x, y, dx, dy, e.text.strip(), font)
+        text.load_style_from_element(e, immediate)
+        text.load_transform_from_element(e)
+
+        return text
+        
 
 style_pattern = re.compile(r"(\w+-?\w+)\s*:\s*([^;]+)(?:;|$)")
 class DeferredStyle(VG.Style):
@@ -331,6 +514,17 @@ def to_px(data):
         value = int(value)
     return value * SVG_PIXELS_PER_UNIT[unit]
 
+def to_pt(data):
+    value, unit = length_pattern.match(data).groups()
+    if "." in value:
+        value = float(value)
+    else:
+        value = int(value)
+    if not unit:
+        return value
+    else:
+        return value * SVG_PIXELS_PER_UNIT[unit] * 0.8
+
 def to_number(data):
     if "." in data or "e" in data or "E" in data:
         return float(data)
@@ -412,7 +606,7 @@ def to_matrix(data):
                               [e, f, 1]])
         elif action == "translate":
             tx = args[0]
-            ty = args[0] if len(args) > 1 else 0.0
+            ty = args[1] if len(args) > 1 else 0.0
             m = numpy.matrix([[1,  0,  0],
                               [0,  1,  0],
                               [tx, ty, 1]])
@@ -423,7 +617,7 @@ def to_matrix(data):
                               [0,  sy, 0],
                               [0,  0,  1]])
         elif action == "rotate":
-            a = args[0]
+            a = radians(args[0])
             rot = numpy.matrix([[ cos(a), sin(a), 0],
                                 [-sin(a), cos(a), 0],
                                 [ 0,      0,      1]])
@@ -436,21 +630,21 @@ def to_matrix(data):
                 t2 = numpy.matrix([[1,  0,  0],
                                    [0,  1,  0],
                                    [cx, cy, 1]])
-                m = t1*rot*t2
+                m = t2*rot*t1
             else:
                 m = rot
         elif action == "skewx":
-            t = tan(args[0])
+            t = tan(radians(args[0]))
             m = numpy.matrix([[1, 0, 0],
                               [t, 1, 0],
                               [0, 0, 0]])
         elif action == "skewy":
-            t = tan(args[0])
+            t = tan(radians(args[0]))
             m = numpy.matrix([[1, t, 0],
                               [0, 1, 0],
                               [0, 0, 1]])
 
-        matrix *= m
+        matrix = m * matrix
 
     return matrix.flatten().tolist()[0]
 
@@ -461,6 +655,7 @@ SVG_PIXELS_PER_UNIT = {None: 1, "px": 1, "pt": 1.25, "pc": 15,
 SVG_TAG_MAP = dict(svg=SVG, g=Group,
                    path=Path, rect=Rect, circle=Circle, ellipse=Ellipse,
                    line=Line, polyline=PolyLine, polygon=Polygon,
+                   text=Text,
                    )
 
 def arg_count(command):
@@ -492,10 +687,10 @@ SVG_PATH_COMMANDS = dict(M=VG_MOVE_TO_ABS,   m=VG_MOVE_TO_REL,
                          Q=VG_QUAD_TO_ABS,   q=VG_QUAD_TO_REL,
                          T=VG_SQUAD_TO_ABS,  t=VG_SQUAD_TO_REL)
 
-SVG_ARC_COMMANDS = {(False, False):VG_SCCWARC_TO,
-                    (False, True):VG_SCWARC_TO,
-                    (True, False):VG_LCCWARC_TO,
-                    (True, True):VG_LCWARC_TO}
+SVG_ARC_COMMANDS = {(False, True):VG_SCCWARC_TO,
+                    (False, False):VG_SCWARC_TO,
+                    (True, True):VG_LCCWARC_TO,
+                    (True, False):VG_LCWARC_TO}
 
 SVG_COLORS = dict(aliceblue=(240, 248, 255),
                   antiquewhite=(250, 235, 215),
