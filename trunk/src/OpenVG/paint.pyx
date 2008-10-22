@@ -29,6 +29,7 @@ cdef class ColorPaint(Paint):
             vgGetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
             check_error()
             return (color[0], color[1], color[2], color[3])
+        
         def __set__(self, value):
             cdef VGfloat color[4]
             color[0] = value[0]
@@ -40,6 +41,23 @@ cdef class ColorPaint(Paint):
                 color[3] = 1.0
             vgSetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
             check_error()
+
+    property opacity:
+        def __get__(self):
+            cdef VGfloat color[4]
+            vgGetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
+            check_error()
+            return color[3]
+        
+        def __set__(self, value):
+            cdef VGfloat color[4]
+            vgGetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
+            check_error()
+
+            color[4] = value
+            vgSetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
+            check_error()
+            
 
 cdef class GradientPaint(Paint):
     def __init__(self, gradient, linear=True):

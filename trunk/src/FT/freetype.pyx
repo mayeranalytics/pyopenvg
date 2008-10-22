@@ -86,14 +86,14 @@ class FreeTypeError(BaseException):
         160:"opcode syntax error",
         161:"argument stack underflow",
         162:"ignore",
-        176:"`STARTFONT' field missing",
-        177:"`FONT' field missing",
-        178:"`SIZE' field missing",
-        179:"`CHARS' field missing",
-        180:"`STARTCHAR' field missing",
-        181:"`ENCODING' field missing",
-        182:"`BBX' field missing",
-        183:"`BBX' too big",
+        176:"'STARTFONT' field missing",
+        177:"'FONT' field missing",
+        178:"'SIZE' field missing",
+        179:"'CHARS' field missing",
+        180:"'STARTCHAR' field missing",
+        181:"'ENCODING' field missing",
+        182:"'BBX' field missing",
+        183:"'BBX' too big",
         184:"Font header corrupted or missing fields",
         185:"Font glyphs corrupted or missing fields"}
 
@@ -428,3 +428,66 @@ cdef class Outline:
         error = FT_Outline_Decompose(&self.data, &F, <void*>funcs)
         if error:
             raise FreeTypeError(error)
+
+cdef class Bitmap:
+    cdef object __weakref__
+    cdef Library library
+    cdef FT_Bitmap data
+
+    def __cinit__(self, Library library not None):
+        FT_Bitmap_New(&self.data)
+        self.library = library
+
+    def __dealloc__(self):
+        FT_Bitmap_Done(self.library.handle, &self.data)
+
+    def convert(self, alignment):
+        cdef Bitmap target
+        target = Bitmap(self.library)
+        
+        error = FT_Bitmap_Convert(self.library.handle,
+                                  &self.data, &target.data,
+                                  alignment)
+        if error:
+            raise FreeTypeError(error)
+
+        return target
+
+    def copy(self):
+        cdef Bitmap target
+        target = Bitmap(self.library)
+        
+        error = FT_Bitmap_Copy(self.library.handle,
+                               &self.data, &target.data)
+        if error:
+            raise FreeTypeError(error)
+
+        return target
+
+    def embolden(self, x_strength, y_strength):
+        error = FT_Bitmap_Embolden(self.library.handle, &self.data,
+                                   x_strength << 6, y_strength << 6)
+        if error:
+            raise FreeTypeError(error)
+
+    property rows:
+        def __get__(self):
+            return self.data.rows
+
+    property width:
+        def __get__(self):
+            return self.data.width
+
+    property pitch:
+        def __get__(self):
+            return self.data.pitch
+
+    property num_grays:
+        def __get__(self):
+            return self.data.num_grays
+
+    property pixel_mode:
+        def __get__(self):
+            return self.data.pixel_mode
+        def __set__(self, value):
+            self.data.pixel_mode = value
