@@ -495,4 +495,11 @@ cdef extern from "pyfreetype.h":
         FT_ORIENTATION_NONE
 
     FT_Orientation FT_Outline_Get_Orientation(FT_Outline *outline)
+
+    #ftbitmap.h
+    void FT_Bitmap_New(FT_Bitmap *bitmap)
+    FT_Error FT_Bitmap_Done(FT_Library lib, FT_Bitmap *bitmap)
+    FT_Error FT_Bitmap_Copy(FT_Library lib, FT_Bitmap *source, FT_Bitmap *target)
+    FT_Error FT_Bitmap_Embolden(FT_Library lib, FT_Bitmap *bitmap, FT_Pos xStrength, FT_Pos yStrength)
+    FT_Error FT_Bitmap_Convert(FT_Library lib, FT_Bitmap *source, FT_Bitmap *target, FT_Int alignment)
     

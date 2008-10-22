@@ -358,7 +358,20 @@ class PolyLine(SVGPrimitive):
 
     def build_path(self):
         path = VG.Path()
-        VGU.polygon(path, self.points, self.closed)
+        #VGU.polygon(path, self.points, self.closed)
+        #ShivaVG's implementation of vguPolygon reuses a function that
+        #assumes that there are at most 26 data points (26 being the
+        #most number needed by other vgu functions) to append polygon
+        #data, which then fails the assert if there are more than 13 points
+        #The workaround is to just not use the VGU function
+
+        path.move_to(self.points[0])
+        for point in self.points[1:]:
+            path.line_to(point)
+
+        if self.closed:
+            path.close()
+
         return path
 
     @classmethod
@@ -441,6 +454,9 @@ class DeferredStyle(VG.Style):
         
         do_fill = False
         do_stroke = False
+
+        fill_opacity = 1.0
+        stroke_opacity = 1.0
         
         for name, value in style_pattern.findall(e.get("style","")) + e.attrib.items():
             name = name.lower().strip()
@@ -450,13 +466,25 @@ class DeferredStyle(VG.Style):
                     do_fill = False
                 else:
                     do_fill = True
-                    style.fill_paint = (VG.ColorPaint, (to_rgb(value),))
+                    r,g,b = to_rgb(value)
+                    style.fill_paint = [VG.ColorPaint, [(r,g,b,fill_opacity)]]
+            elif name == "fill-opacity":
+                fill_opacity = to_number(value)
+                if do_fill:
+                    r,g,b,a = style.fill_paint[1][0]
+                    style.fill_paint[1][0] = (r,g,b,fill_opacity)
             elif name == "stroke":
                 if value == "none":
                     do_stroke = False
                 else:
                     do_stroke = True
-                    style.stroke_paint = (VG.ColorPaint, (to_rgb(value),))
+                    r,g,b = to_rgb(value)
+                    style.stroke_paint = [VG.ColorPaint, [(r,g,b,stroke_opacity)]]
+            elif name == "stroke-opacity":
+                stroke_opacity = to_number(value)
+                if do_stroke:
+                    r,g,b,a = style.stroke_paint[1][0]
+                    style.stroke_paint[1][0] = (r,g,b,stroke_opacity)
             elif name == "stroke-width":
                 style[VG_STROKE_LINE_WIDTH] = to_px(value)
             elif name == "stroke-linecap":
@@ -485,7 +513,7 @@ class DeferredStyle(VG.Style):
                 if value == "none":
                     style[VG_STROKE_DASH_PATTERN] = ()
                 else:
-                    style[VG_STROKE_DASH_PATTERN] = map(to_number, re.split(r"(\s*,\s*)|(?:\s*|,)", value))
+                    style[VG_STROKE_DASH_PATTERN] = map(to_number, re.split(r"(?:\s*,\s*)|(?:\s*|,)", value))
             elif name == "fill-rule":
                 if value == "evenodd":
                     style[VG_FILL_RULE] = VG_EVEN_ODD
@@ -526,6 +554,7 @@ def to_pt(data):
         return value * SVG_PIXELS_PER_UNIT[unit] * 0.8
 
 def to_number(data):
+    data = data.strip()
     if "." in data or "e" in data or "E" in data:
         return float(data)
     else:

@@ -5,3 +5,4 @@
 #include FT_IMAGE_H
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
+#include FT_BITMAP_H

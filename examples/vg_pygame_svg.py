@@ -39,9 +39,13 @@ def main(width, height, directory):
         tree = ET.parse(path)
         element = tree.getroot()
         if element:
-            drawing = load_svg_element(element)
-            drawing.name = vera.build_path(os.path.basename(path), 16)
-            drawings.append(drawing)
+            try:
+                drawing = load_svg_element(element)
+                drawing.name = vera.build_path(os.path.basename(path), 16)
+                drawings.append(drawing)
+            except:
+                print "Error in loading %s" % path
+                raise
     
     dragging = False
     dx = dy = 0
@@ -114,4 +118,4 @@ def main(width, height, directory):
         pygame.display.flip()
 
 if __name__ == '__main__':
-    main(640, 480, r"data/")
+    main(640, 480, r"data")
