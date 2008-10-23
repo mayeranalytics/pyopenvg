@@ -290,8 +290,10 @@ Context.get_string = staticmethod(get_string)
 Context.get_paint = staticmethod(get_paint)
 Context.set_paint = staticmethod(set_paint)
 Context.clear = staticmethod(clear)
-Context.blit = staticmethod(blit)
-Context.blit_to_image = staticmethod(blit_to_image)
+Context.write_image = staticmethod(write_image)
+Context.write_to_image = staticmethod(write_to_image)
+Context.write_buffer = staticmethod(write_buffer)
+Context.write_to_buffer = staticmethod(write_to_buffer)
 Context.copy_pixels = staticmethod(copy_pixels)
 Context.flush = staticmethod(flush)
 Context.finish = staticmethod(finish)
@@ -400,5 +402,5 @@ class Style(object):
 
 __all__ = ["Path", "Paint", "ColorPaint", "GradientPaint", "PatternPaint",
            "Image", "Context", "Style" "VGError", "check_error", "interpolate",
-           "blit", "blit_buffer", "blit_to_buffer", "blit_to_image",
+           "write_image", "write_buffer", "write_to_buffer", "write_to_image",
            "copy_pixels"]

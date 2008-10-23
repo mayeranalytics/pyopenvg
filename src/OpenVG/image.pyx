@@ -91,7 +91,6 @@ cdef class Image:
                           area[0][0], area[0][1],
                           area[1][0], area[1][1])
         check_error()
-        return data
         
 
 ##    def load_array(self, array, format, pos, dimensions, padded=False):
@@ -132,7 +131,7 @@ cdef class Image:
         data = <VGubyte*>malloc(sizeof(VGubyte) * 4 * width * height)
         try:
             if alpha:
-                format = VG_lRGBA_8888
+                format = VG_sRGBA_8888
                 for i from 0 <= i < width*height:
                     obj = it.next()
                     data[i*4] = obj[0]
@@ -141,7 +140,7 @@ cdef class Image:
                     data[i*4+3] = obj[3]
                     
             else:
-                format = VG_lRGBX_8888
+                format = VG_sRGBX_8888
                 for i from 0 <= i < width*height:
                     obj = it.next()
                     data[i*4] = obj[0]
@@ -177,7 +176,7 @@ cdef class Image:
         _image_table[<long>handle] = image
         return image
 
-    def blit(self, Image src not None, dest_pos, area=None, dither=VG_FALSE):
+    def write(self, Image src not None, dest_pos, area=None, dither=VG_FALSE):
         if area is None:
             area = ((0, 0), (src.width, src.height))
         vgCopyImage(self.handle, dest_pos[0], dest_pos[1],
@@ -235,7 +234,7 @@ cdef object lookup_image(VGImage handle):
         im.handle = handle
         return im
 
-def blit(Image src not None, dest_pos, area=None):
+def write_image(Image src not None, dest_pos, area=None):
     cdef VGint dest_x, dest_y
     cdef VGint src_x, src_y, width, height
 
@@ -248,7 +247,7 @@ def blit(Image src not None, dest_pos, area=None):
     else:
         (src_x, src_y), (width, height) = area
 
-    if dest_x + width < 0 or dest_y + height < 0:
+    if dest_x + width <= 0 or dest_y + height <= 0:
         return None
 
     if dest_x < 0:
@@ -260,22 +259,45 @@ def blit(Image src not None, dest_pos, area=None):
         src_y -= dest_y
         height += dest_y
         dest_y = 0
-        
+
     vgSetPixels(dest_x, dest_y,
                 src.handle, src_x, src_y,
                 width, height)
     check_error()
 
-def blit_buffer(object buffer, dest_pos, dimensions, format, stride):
+def write_buffer(object buffer, dest_pos, dimensions, format, stride, flip=True):
     cdef void *data
+    cdef char *p
     
     data = get_read_buffer(buffer)
-    vgWritePixels(data, stride, format,
-                  dest_pos[0], dest_pos[1],
-                  dimensions[0], dimensions[1])
+    p = <char*>data
+    
+    dest_x, dest_y = dest_pos
+    width, height = dimensions
+    
+    if dest_x + width <= 0 or dest_y + height <= 0:
+        return None
+
+    if flip:
+        p += stride * (height-1)
+        stride = -stride
+
+    if dest_x < 0:
+        p += format_size(format)/8 * -dest_x
+        width += dest_x
+        dest_x = 0
+
+    if dest_y < 0:
+        p += stride * -dest_y
+        height += dest_y
+        dest_y = 0
+    
+    vgWritePixels(<void*>p, stride, format,
+                  dest_x, dest_y,
+                  width, height)
     check_error()
 
-def blit_to_buffer(object buffer, object area, format, stride):
+def write_to_buffer(object buffer, object area, format, stride):
     cdef void *data
     cdef Py_ssize_t size
 
@@ -287,7 +309,7 @@ def blit_to_buffer(object buffer, object area, format, stride):
                  area[1][0], area[1][1])
     check_error()
 
-def blit_to_image(Image dest not None, dest_pos, area):
+def write_to_image(Image dest not None, dest_pos, area):
     vgGetPixels(dest.handle, dest_pos[0], dest_pos[1],
                 area[0][0], area[0][1],
                 area[1][0], area[1][1])
@@ -306,7 +328,7 @@ def copy_pixels(dest_pos, area):
     else:
         (src_x, src_y), (width, height) = area
 
-    if dest_x + width < 0 or dest_y + height < 0:
+    if dest_x + width <= 0 or dest_y + height <= 0:
         return None
 
     if dest_x < 0:

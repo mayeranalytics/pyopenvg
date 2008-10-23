@@ -37,7 +37,7 @@ def main(width, height, path, flags=0):
     flags |= pygame.OPENGL | pygame.DOUBLEBUF
     
     screen = pygame.display.set_mode((width, height), flags)
-    pygame.display.set_caption("Pygame Image Blit Test")
+    pygame.display.set_caption("Pygame Image Direct Write Test")
     
     VG.create_context((width, height))
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
@@ -70,7 +70,7 @@ def main(width, height, path, flags=0):
 
         VG.clear((0, 0), (width, height))
 
-        VG.blit(im, (dest_x, dest_y))
+        VG.write_image(im, (dest_x, dest_y))
 
         pygame.display.flip()
 
