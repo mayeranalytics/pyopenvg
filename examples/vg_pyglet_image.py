@@ -1,36 +1,29 @@
 from pyglet.gl import Config
 from pyglet import window
+from pyglet import image
 
 import Image
 
 from OpenVG import VG
 from OpenVG.constants import *
 
-
 def load_image(path):
-    im = Image.open(path)
-##    pixels = reversed([(p[2], p[1], p[0]) for p in im.getdata()])
-##    pixels = reversed(list(im.getdata()))
+    pic = image.load(path)
 
-    data = list(im.getdata())
-##    pixels = data
-    pixels = []
-    width,height = im.size
-    for j in xrange(height, -1, -1):
-        pixels.extend(data[j*width:(j+1)*width])
+    width, height = pic.width, pic.height
 
-    image = VG.Image(VG_lRGBX_8888, im.size)
-    image.fromiter(iter(pixels), (0,0), im.size)
-    
-    return image
+    pixels = pic.get_data('RGBA', -4 * pic.width)
+
+    im = VG.Image(VG_sRGBA_8888, (width, height))
+    im.sub_data(pixels, VG_sRGBA_8888, pic.width * 4, (0,0), (width, height), flip=True)
 
 #Setup pyglet window -- it is crucial that you have a stencil buffer.
 screen = window.get_platform().get_default_display().get_default_screen()
 
 template = Config()
-template.depth_size = 24
+template.depth_size = 8
 template.double_buffer = True
-template.stencil_size = 16
+template.stencil_size = 2
 
 config = screen.get_best_config(template)
 
@@ -39,13 +32,11 @@ config = screen.get_best_config(template)
 # to OpenGL before a window is created will fail.
 win = window.Window(visible=False, config=config)
 
-
 # ... perform any OpenGL state initialisation here.
 context = VG.create_context((640, 480))
 VG.set(VG_CLEAR_COLOR, (0.0, 0.0, 0.0, 1.0))
 
 im = load_image("data/donkoose.jpg")
-
 
 win.set_visible()
 while not win.has_exit:
@@ -55,7 +46,7 @@ while not win.has_exit:
     VG.set(VG_MATRIX_MODE, VG_MATRIX_IMAGE_USER_TO_SURFACE)
     VG.load_identity()
     VG.translate(160, 120)
+
     im.draw()
-    
 
     win.flip()

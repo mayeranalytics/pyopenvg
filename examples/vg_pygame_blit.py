@@ -21,11 +21,9 @@ RGBA_masks = (R, G, B, A)
 def load_image(path):
     surf = pygame.image.load(path).convert(RGBA_masks)
 
-    data = surf.get_buffer().raw
-
-    im = VG.Image(VG_lRGBA_8888, surf.get_size())
-    im.sub_data(data,
-                surf.get_pitch(), VG_sRGBA_8888,
+    im = VG.Image(VG_sRGBA_8888, surf.get_size())
+    im.sub_data(surf.get_buffer(),
+                VG_sRGBA_8888, surf.get_pitch(),
                 (0,0), surf.get_size(),
                 flip=True)
 
