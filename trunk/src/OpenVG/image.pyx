@@ -62,7 +62,7 @@ cdef class Image:
     def __dealloc__(self):
         vgDestroyImage(self.handle)
 
-    def sub_data(self, object data, stride, format, corner, dimensions, flip=False):
+    def sub_data(self, object data, format, stride, corner, dimensions, flip=False):
         cdef void *p
         p = get_read_buffer(data)
         
@@ -80,7 +80,7 @@ cdef class Image:
                     VG_UNSUPPORTED_IMAGE_FORMAT_ERROR="invalid format",
                     VG_ILLEGAL_ARGUMENT_ERROR="invalid width/height or data is NULL or data is misaligned")
 
-    def get_sub_data(self, object buffer, area, format, stride=0):
+    def get_sub_data(self, object buffer, area, format, stride):
         cdef void *data
         cdef Py_ssize_t size
 
@@ -91,6 +91,7 @@ cdef class Image:
                           area[0][0], area[0][1],
                           area[1][0], area[1][1])
         check_error()
+        return data
         
 
 ##    def load_array(self, array, format, pos, dimensions, padded=False):
@@ -247,6 +248,9 @@ def blit(Image src not None, dest_pos, area=None):
     else:
         (src_x, src_y), (width, height) = area
 
+    if dest_x + width < 0 or dest_y + height < 0:
+        return None
+
     if dest_x < 0:
         src_x -= dest_x
         width += dest_x
@@ -262,7 +266,7 @@ def blit(Image src not None, dest_pos, area=None):
                 width, height)
     check_error()
 
-def blit_buffer(object buffer, dest_pos, dimensions, format, stride=0):
+def blit_buffer(object buffer, dest_pos, dimensions, format, stride):
     cdef void *data
     
     data = get_read_buffer(buffer)
@@ -271,7 +275,7 @@ def blit_buffer(object buffer, dest_pos, dimensions, format, stride=0):
                   dimensions[0], dimensions[1])
     check_error()
 
-def blit_to_buffer(object buffer, object area, format, stride=0):
+def blit_to_buffer(object buffer, object area, format, stride):
     cdef void *data
     cdef Py_ssize_t size
 
@@ -301,6 +305,9 @@ def copy_pixels(dest_pos, area):
         height = src.height
     else:
         (src_x, src_y), (width, height) = area
+
+    if dest_x + width < 0 or dest_y + height < 0:
+        return None
 
     if dest_x < 0:
         src_x -= dest_x
