@@ -14,8 +14,7 @@ from OpenVG.constants import *
 def main(width, height):
     pygame.init()
 
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
-    pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
     screen = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Flower test")
     
@@ -51,7 +50,7 @@ def main(width, height):
             m = random.randint(-60, 60)
             angle = random.randint(0,359)
 
-            pos = (x, height-y)
+            pos = (x-cx, height-y-cy)
             vel = (m*math.cos(math.radians(angle)),
                    m*math.sin(math.radians(angle)))
             rot = random.randint(-30, 30)

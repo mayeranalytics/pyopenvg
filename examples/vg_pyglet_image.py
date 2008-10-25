@@ -17,11 +17,12 @@ def load_image(path):
     im = VG.Image(VG_sRGBA_8888, (width, height))
     im.sub_data(pixels, VG_sRGBA_8888, pic.width * 4, (0,0), (width, height), flip=True)
 
+    return im
+
 #Setup pyglet window -- it is crucial that you have a stencil buffer.
 screen = window.get_platform().get_default_display().get_default_screen()
 
 template = Config()
-template.depth_size = 8
 template.double_buffer = True
 template.stencil_size = 2
 

@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import pygame
 
 from OpenVG import VG
@@ -32,7 +30,7 @@ def load_image(path):
 def main(width, height, path, flags=0):
     pygame.init()
     
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
 
     flags |= pygame.OPENGL | pygame.DOUBLEBUF
     

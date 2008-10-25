@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import pygame
 
 from OpenVG import VG
@@ -15,7 +13,7 @@ def rotate_about(p, angle):
 def main(width, height, message, rpm=20):
     pygame.init()
     
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
     srf = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Freetype Font test")
     
