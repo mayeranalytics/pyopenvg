@@ -192,18 +192,13 @@ if __name__ == "__main__":
     pygame.init()
     pymunk.init_pymunk()
 
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
-    pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
 
     screen = pygame.display.set_mode((640, 480), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("VG Moon Buggy Demo")
 
     VG.create_context((640, 480))
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
-
-##    VG.load_matrix([ 1,    0,   0,
-##                     0,   -1,   0,
-##                     0,  480,   1])
 
     world = MoonWorld()
     low_point = min(world.terrain_data)

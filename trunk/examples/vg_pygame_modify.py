@@ -12,16 +12,15 @@ CYCLE_TIME = 4 * 1000
 def circle(path, center, radius=16):
     VGU.ellipse(path, center, (radius*2, radius*2))
 
-def main():
+def main(width, height):
     pygame.init()
     
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
-    pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
-    srf = pygame.display.set_mode((640,480), pygame.OPENGL | pygame.DOUBLEBUF)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
+    srf = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Modification test")
     
     
-    VG.create_context((640, 480))
+    VG.create_context((width, height))
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
 
     bezier = VG.Path()
@@ -66,7 +65,7 @@ def main():
                 if e.key == pygame.K_ESCAPE:
                     running = False
 
-        VG.clear((0, 0), (640, 480))
+        VG.clear((0, 0), (width, height))
         
         m = t/float(CYCLE_TIME)
         if forwards:
@@ -99,5 +98,4 @@ def main():
             forwards = not forwards
 
 if __name__ == '__main__':
-    main()
-    VG.destroy_context()
+    main(640, 480)

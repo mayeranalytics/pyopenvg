@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 import math
 import pygame
 
@@ -23,8 +21,7 @@ def center_and_concat(p1, p2):
 def main(width, height, radius, count, flags=0):
     pygame.init()
     
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
-    pygame.display.gl_set_attribute(pygame.GL_DEPTH_SIZE, 24)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
 
     flags |= pygame.OPENGL | pygame.DOUBLEBUF
     

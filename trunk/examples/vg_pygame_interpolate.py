@@ -11,7 +11,7 @@ MORPH_TIME = 1 * 1000
 def main(width, height):
     pygame.init()
     
-    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 8)
+    pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
     srf = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Interpolation test")
     
