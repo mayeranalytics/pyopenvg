@@ -86,7 +86,10 @@ class SVGContainer(SVGElement):
         for child in e.getchildren():
             child_cls = SVG_TAG_MAP.get(child.tag[child.tag.rfind("}") + 1:], None)
             if child_cls:
-                self.children.append(child_cls.from_element(child, immediate))
+                if issubclass(child_cls, SVG):
+                    self.children.append(child_cls.from_element(child, immediate, flip=False))
+                else:
+                    self.children.append(child_cls.from_element(child, immediate))
 
     def corners(self, transform=None):
         minx,miny, maxx,maxy = None,None, None,None
@@ -165,28 +168,38 @@ class SVGPrimitive(SVGElement):
     path = property(get_path, set_path)
 
 class SVG(SVGContainer):
-    def __init__(self, children, width, height, viewbox=None):
+    def __init__(self, children, width, height, viewbox=None, flip=True):
         SVGContainer.__init__(self, children, None, VG_STROKE_PATH, None)
         self.width = width
         self.height = height
         self.viewbox = viewbox
         self.transform = None
         if self.children:
-            self.setup_transform()
+            self.setup_transform(flip)
 
-    def setup_transform(self):
+    def setup_transform(self, flip):
         sx = sy = 1
-        dx = dy = 0
-        if self.width or self.height:
-            (dx,dy), (w,h) = self.viewbox if self.viewbox else self.bounds()
-            sx = self.width/float(w) if self.width else self.height/float(h)
-            sy = self.height/float(h) if self.height else self.width/float(w)
-        self.transform = [ sx,   0,           0,
-                           0,   -sy,          0,
-                          -dx,   self.height+dy,  1]
+        vx = vy = 0
+        if self.viewbox:
+            (vx,vy), (vw,vh) = self.viewbox
+            if self.width or self.height:
+                sx = self.width/float(vw) if self.width else self.height/float(vh)
+                sy = self.height/float(vh) if self.height else self.width/float(vw)
+            else:
+                (bx, by), (bw, bh) = self.bounds()
+                sx = bw/float(vw)
+                sy = bh/float(vh)
+                
+
+        if flip:
+            sy = -sy
+            vy += self.height
+        self.transform = [ sx, 0,   0,
+                           0,  sy,  0,
+                          -vx, vy,  1]
 
     @classmethod
-    def from_element(cls, e, immediate=True):
+    def from_element(cls, e, immediate=True, flip=True):
         
         width = to_px(e.get("width", "0px"))
         height = to_px(e.get("height", "0px"))
@@ -197,7 +210,7 @@ class SVG(SVGContainer):
             viewbox = None
         svg = cls([], width, height, viewbox)
         svg.load_children_from_element(e, immediate)
-        svg.setup_transform()
+        svg.setup_transform(flip)
 
         return svg
 
@@ -439,6 +452,11 @@ class DeferredStyle(VG.Style):
         
     def enable(self):
         if not self.initialized:
+            self.initialize()
+        VG.Style.enable(self)
+
+    def initialize(self):
+        if not self.initialized:
             if self.fill_paint:
                 const, args = self.fill_paint
                 self.fill_paint = const(*args)
@@ -446,7 +464,6 @@ class DeferredStyle(VG.Style):
                 const, args = self.stroke_paint
                 self.stroke_paint = const(*args)
             self.initialized = True
-        VG.Style.enable(self)
 
     @classmethod
     def from_element(cls, e):
@@ -529,9 +546,12 @@ class DeferredStyle(VG.Style):
 
         return style
 
-def load_svg_element(e):
-    cls = SVG_TAG_MAP.get(e.tag[e.tag.rfind("}") + 1:])
-    return cls.from_element(e, None)
+def load_svg_element(e, immediate=True):
+    try:
+        cls = SVG_TAG_MAP[e.tag[e.tag.rfind("}") + 1:]]
+    except:
+        raise ValueError('Unable to load tag %r' % e.tag[e.tag.rfind("}") + 1:]) 
+    return cls.from_element(e, immediate)
 
 length_pattern = re.compile(r"\s*(.+?)\s*(px|pt|pc|mm|cm|in)?\s*$", re.I)
 def to_px(data):

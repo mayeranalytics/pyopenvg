@@ -160,9 +160,11 @@ cdef class GradientPaint(Paint):
             check_error()
 
 cdef class PatternPaint(Paint):
-    def __init__(self, pattern):
+    def __init__(self, pattern, tiling_mode=None):
         Paint.__init__(self, VG_PAINT_TYPE_PATTERN)
         self.pattern = pattern
+        if tiling_mode is not None:
+            self.tiling_mode = tiling_mode
 
     property pattern:
         def __get__(self):
