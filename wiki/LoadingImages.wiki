@@ -33,7 +33,7 @@ def load_image(path):
     image = VG.Image(VG_sRGBA_8888, im.size)
     stride = im.size[0] * 4
     data = im.__array_interface__["data"]
-    image.sub_data(data, VG_sRGBA_8888, stride, (0,0), im.size, flip=True)
+    image.sub_data(data, VG_sABGR_8888, stride, (0,0), im.size, flip=True)
     
     return image
 }}}
