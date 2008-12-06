@@ -10,18 +10,7 @@ The basic idea is to load the image, convert it to RGBA (because it's straightfo
 == Pygame ==
 
 {{{
-def make_mask(start, stop):
-    x = 0
-    for i in xrange(start, stop):
-        x |= 1 << i
-    return x
-
-R = make_mask(0, 8)
-G = make_mask(8, 16)
-B = make_mask(16, 24)
-A = ~(R | G | B)
-
-RGBA_masks = (R, G, B, A)
+RGBA_masks = (-16777216, 16711680, 65280, 255)
 
 def load_image(path):
     surf = pygame.image.load(path).convert(RGBA_masks)
