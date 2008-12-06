@@ -182,7 +182,7 @@ cdef class PatternPaint(Paint):
 
     property tiling_mode:
         def __get__(self):
-            return vgGetParameteri(self.handle, VG_TILING_MODE)
+            return vgGetParameteri(self.handle, VG_PAINT_PATTERN_TILING_MODE)
         def __set__(self, value):
-            vgSetParameteri(self.handle, VG_TILING_MODE, value)
+            vgSetParameteri(self.handle, VG_PAINT_PATTERN_TILING_MODE, value)
             check_error()
