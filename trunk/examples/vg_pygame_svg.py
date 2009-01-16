@@ -16,6 +16,8 @@ def main(width, height, directory):
     pygame.init()
     
     pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
+    pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
+    pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
     screen = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("SVG test")
     
