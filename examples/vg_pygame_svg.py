@@ -10,7 +10,7 @@ from OpenVG import VGU
 from OpenVG.constants import *
 
 from OpenVG.font import Font, register_font_finder
-from OpenVG.svg import load_svg_element
+from OpenVG.svg import parse_svg
 
 def main(width, height, directory):
     pygame.init()
@@ -34,25 +34,22 @@ def main(width, height, directory):
     vera = Font("data/Vera.ttf", 16)
     text = vera.build_path("Scroll to change svg files. Drag to see more.")
 
-    svg_tag = "{http://www.w3.org/2000/svg}svg"
     drawings = []
     for path in glob.glob(os.path.join(directory, "*.svg")):
-        tree = ET.parse(path)
-        element = tree.getroot()
-        if element:
-            try:
-                drawing = load_svg_element(element)
-                drawing.name = vera.build_path(os.path.basename(path), 16)
-                drawings.append(drawing)
-            except:
-                print "Error in loading %s" % path
-                raise
+        try:
+            tree = parse_svg(path)
+            name = vera.build_path(os.path.basename(path), 16)
+            tree.getroot().setup_transform(True)
+            drawings.append((tree.getroot(), name))
+        except:
+            print "Error in loading %s" % path
+            raise
     
     dragging = False
     dx = dy = 0
     i = 0
     scale = 1
-    drawing = drawings[0]
+    drawing, name = drawings[0]
 
     running = True
     while running:
@@ -90,7 +87,7 @@ def main(width, height, directory):
                         i += 1
                     else:
                         i -= 1
-                    drawing = drawings[i % len(drawings)]
+                    drawing, name = drawings[i % len(drawings)]
                     
             elif e.type == pygame.MOUSEBUTTONUP:
                 if e.button == 1 or e.button == 2 or e.button == 3:
@@ -114,7 +111,7 @@ def main(width, height, directory):
         VG.translate(10, 10)
         text.draw(VG_FILL_PATH)
         VG.translate(text.bounds()[1][0]+10, 0)
-        drawing.name.draw(VG_FILL_PATH)
+        name.draw(VG_FILL_PATH)
 
         pygame.display.flip()
 
