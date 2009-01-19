@@ -15,58 +15,77 @@ __all__ = ["SVGElement", "SVGDrawableElement", "SVGContainer", "SVGPrimitive",
            "SVG", "Group",
            "Path", "Rect", "Ellipse", "Circle", "Line", "PolyLine", "Polygon",
            "Text",
-           "SVG_PATH_COMMANDS", "SVG_COLORS", "SVG_PIXELS_PER_UNIT",
-           "svg_parser"]
+           "SVGElementFactory", "SVGElementTree", "parse_svg"]
 
-class SVGElement(object, ElementTree._ElementInterface):
-    def __init__(self, tag, attribs):
-        ElementTree._ElementInterface.__init__(self, tag, attribs)
-        
-    def __repr__(self):
-        return "<SVGElement %s at %x>" % (self.tag, id(self))
-    
-    def makeelement(self, tag, attrib):
-        return SVGElement(tag, attrib)
+#ElementTree kludge for outputting svg instead of ns0
+ElementTree._namespace_map["http://www.w3.org/2000/svg"] = "svg"
 
 def SVGElementFactory(tag, attrib):
     factory = SVG_TAG_MAP.get(tag[tag.rfind("}")+1:], ElementTree.Element)
     return factory(tag, attrib)
 
 class SVGElementTree(object, ElementTree.ElementTree):
-    def _write(self, *args, **kwargs):
-        ElementTree.ElementTree._write(*args, **kwargs)
-        
+    def write(self, *args, **kwargs):
+        for e in self.getiterator():
+            if isinstance(e, SVGElement):
+                e.dump()
+        ElementTree.ElementTree.write(self, *args, **kwargs)
 
+    def init(self):
+        if isinstance(self.getroot(), SVGElement):
+            self.getroot().init()
+
+        for e in self.getroot():
+            if isinstance(e, SVGElement):
+                e.init()
+
+class SVGElement(ElementTree._ElementInterface):
+    def init(self):
+        for key, desc in self._attributes.iteritems():
+            setattr(self, key, desc.load(self))
+
+    def dump(self):
+        for key, desc in self._attributes.iteritems():
+            desc.dump(self, getattr(self, key))
+        
+    def __repr__(self):
+        return "<%s %s at %x>" % (self.__class__.__name__, self.tag, id(self))
+    
+    def makeelement(self, tag, attrib):
+        return SVGElement(tag, attrib)
 
 class SVGDrawableElement(SVGElement):
-    def __init__(self, tag, attrib):
-        SVGElement.__init__(self, tag, attrib)
-        self._style = None
-    
-    transform = desc.TransformList("transform")
+    _attributes = dict(
+        transform=desc.TransformList("transform"))
 
-    @property
-    def numpy_transform(self):
-        T = numpy.matrix(self.transform)
-        T.shape = (3,3)
-        return T.T
-
-    @property
-    def style(self):
-        if self._style is not None:
-            return self._style
-        elif "style" in self.keys():
-            self._style = to_style(self.get("style"))
-            return self._style
+    def init(self, do_stroke=False, do_fill=False):
+        SVGElement.init(self)
+        if has_style(self.keys()):
+            if "style" in self.keys():
+                attrs = style_pattern.findall(self.get("style"))
+            else:
+                attrs = []
+            attrs.extend(self.items())
+            self.style = to_style(attrs, do_stroke, do_fill)
+            self.paint_mode = self.style.paint_mode
         else:
-            return None
+            self.style = None
+            self.paint_mode = 0
+            if do_stroke:
+                self.paint_mode |= VG_STROKE_PATH
+            if do_fill:
+                self.paint_mode |= VG_FILL_PATH
 
-    @property
-    def paint_mode(self):
-        if self.style is not None:
-            return self.style.paint_mode
+        if self.transform is not None:
+            T = numpy.matrix(self.transform)
+            T.shape = (3,3)
+            self.numpy_transform = T.T
         else:
-            return VG_STROKE_PATH
+            self.numpy_transform = None
+
+    def dump(self):
+        SVGElement.dump(self)
+        #TODO: add style writing code
 
     def draw(self):
         raise NotImplementedError
@@ -83,11 +102,16 @@ class SVGDrawableElement(SVGElement):
     
 
 class SVGContainer(SVGDrawableElement):
-    @property
-    def drawables(self):
-        return (child for child in self if isinstance(child, SVGDrawableElement))
+    def init(self, do_stroke=False, do_fill=False):
+        SVGDrawableElement.init(self, do_stroke, do_fill)
+        do_stroke = self.paint_mode & VG_STROKE_PATH
+        do_fill = self.paint_mode & VG_FILL_PATH
+        
+        self.drawables = [child for child in self if isinstance(child, SVGDrawableElement)]
+        for child in self.drawables:
+            child.init(do_stroke, do_fill)
 
-    def draw(self, paint_mode=None):
+    def draw(self):
         if self.transform:
             mat = VG.get_matrix()
             VG.mult_matrix(self.transform)
@@ -96,7 +120,7 @@ class SVGContainer(SVGDrawableElement):
             self.style.enable()
 
         for child in self.drawables:
-            child.draw(self.paint_mode)
+            child.draw()
 
         if self.style:
             self.style.disable()
@@ -126,18 +150,16 @@ class SVGContainer(SVGDrawableElement):
             return (X.min(), Y.min()), (X.max(), Y.max())
 
 class SVGPrimitive(SVGDrawableElement):
-    def __init__(self, tag, attrib):
-        SVGDrawableElement.__init__(self, tag, attrib)
-        self._path = None
-    def draw(self, paint_mode=VG_STROKE_PATH):
+    def init(self, do_stroke=False, do_fill=False):
+        SVGDrawableElement.init(self, do_stroke, do_fill)
+        self.path = self.build_path()
+
+    def draw(self):
         if self.transform:
             mat = VG.get_matrix()
             VG.mult_matrix(self.transform)
-            
-        if self.paint_mode:
-            paint_mode = self.paint_mode
-        
-        self.path.draw(paint_mode, style=self.style)
+
+        self.path.draw(self.paint_mode, style=self.style)
 
         if self.transform:
             VG.load_matrix(mat)
@@ -145,20 +167,12 @@ class SVGPrimitive(SVGDrawableElement):
     def build_path(self):
         raise NotImplementedError
 
-    @property
-    def path(self):
-        if self._path is None:
-            self._path = self.build_path() 
-            return self._path
-        else:
-            return self._path
-
     def corners(self, transform=None):
         (x1,y1), (w,h) = self.path.bounds()
         x2 = x1 + w
         y2 = y1 + h
         
-        if self.transform:
+        if self.transform is not None:
             if transform is not None:
                 transform = self.numpy_transform * transform
             else:
@@ -176,10 +190,11 @@ class SVGPrimitive(SVGDrawableElement):
             return (X.min(), Y.min()), (X.max(), Y.max())
 
 class SVG(SVGContainer):
-    width = desc.Length("width", default="0px")
-    height = desc.Length("height", default="0px")
-
-    viewbox = desc.ListOf(desc.Length(None, default="0px"), "viewBox")
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        width = desc.Length("width", default="0px"),
+        height = desc.Length("height", default="0px"),
+        viewbox = desc.ListOf(desc.Length(None, default="0px"), "viewBox"))
 
     def setup_transform(self, flip):
         sx = sy = 1
@@ -201,6 +216,10 @@ class SVG(SVGContainer):
         self.transform = [ sx, 0,   0,
                            0,  sy,  0,
                           -vx, vy,  1]
+
+        self.numpy_transform = numpy.matrix(self.transform)
+        self.numpy_transform.shape = (3,3)
+        self.numpy_transform = self.numpy_transform.T
 
 class Group(SVGContainer):
     pass
@@ -233,43 +252,41 @@ class Rect(SVGPrimitive):
                 ry = self.height/2.0
             VGU.round_rect(path, self.position, (self.width, self.height), rx, ry)
         return path
-    
-    position = desc.Tuple(desc.Coordinate("x", default="0"),
-                          desc.Coordinate("y", default="0"))
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        position = desc.Tuple(desc.Coordinate("x", default="0"),
+                              desc.Coordinate("y", default="0")),
 
-    width = desc.Length("width", default="0")
-    height = desc.Length("height", default="0")
-    
-    @property
-    def rx(self):
-        return self.get("rx", self.get("ry"))
-
-    @property
-    def ry(self):
-        return self.get("ry", self.get("rx"))
+        width = desc.Length("width", default="0"),
+        height = desc.Length("height", default="0"),
+        
+        rx = desc.Length("rx"),
+        ry = desc.Length("ry"))
 
 class Ellipse(SVGPrimitive):
     def build_path(self):
         path = VG.Path()
         VGU.ellipse(path, (self.cx, self.cy), (self.rx*2, self.ry*2))
         return path
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        cx = desc.Coordinate("cx", default="0"),
+        cy = desc.Coordinate("cy", default="0"),
 
-    cx = desc.Coordinate("cx", default="0")
-    cy = desc.Coordinate("cy", default="0")
-
-    rx = desc.Length("rx")
-    ry = desc.Length("ry")
+        rx = desc.Length("rx"),
+        ry = desc.Length("ry"))
 
 class Circle(SVGPrimitive):
     def build_path(self):
         path = VG.Path()
         VGU.ellipse(path, (self.cx, self.cy), (self.r*2, self.r*2))
         return path
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        cx = desc.Coordinate("cx", default="0"),
+        cy = desc.Coordinate("cy", default="0"),
 
-    cx = desc.Coordinate("cx", default="0")
-    cy = desc.Coordinate("cy", default="0")
-
-    r = desc.Length("r")
+        r = desc.Length("r"))
 
 class Line(SVGPrimitive):
     def build_path(self):
@@ -277,10 +294,12 @@ class Line(SVGPrimitive):
         VGU.line(path, (self.x1, self.y1), (self.x2, self.y2))
         return path
 
-    x1 = desc.Coordinate("x1", default="0")
-    y1 = desc.Coordinate("y1", default="0")
-    x2 = desc.Coordinate("x2", default="0")
-    y2 = desc.Coordinate("y2", default="0")
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        x1 = desc.Coordinate("x1", default="0"),
+        y1 = desc.Coordinate("y1", default="0"),
+        x2 = desc.Coordinate("x2", default="0"),
+        y2 = desc.Coordinate("y2", default="0"))
     
 
 class PolyLine(SVGPrimitive):
@@ -306,7 +325,9 @@ class PolyLine(SVGPrimitive):
 
         return path
 
-    points = desc.ListOf(desc.Coordinate(None), "points") 
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        points = desc.ListOf(desc.Coordinate(None), "points"))
 
 class Polygon(PolyLine):
     closed = True
@@ -327,12 +348,14 @@ class Text(SVGPrimitive):
 
         return path
 
-    x = desc.ListOf(desc.Coordinate(None), "x", default="0")
-    y = desc.ListOf(desc.Coordinate(None), "y", default="0")
-    dx = desc.ListOf(desc.Coordinate(None), "dx", default="0")
-    dy = desc.ListOf(desc.Coordinate(None), "dy", default="0")
+    _attributes = dict(
+        transform = desc.TransformList("transform"),
+        x = desc.ListOf(desc.Coordinate(None), "x", default="0"),
+        y = desc.ListOf(desc.Coordinate(None), "y", default="0"),
+        dx = desc.ListOf(desc.Coordinate(None), "dx", default="0"),
+        dy = desc.ListOf(desc.Coordinate(None), "dy", default="0"),
 
-    font_size = desc.Length("font-size", default="16pt", units="pt")
+        font_size = desc.Length("font-size", default="16pt", units="pt"))
 
     @property
     def font(self):
@@ -340,13 +363,39 @@ class Text(SVGPrimitive):
 
         return load_font(name, self.font_size)
 
+
+def parse_svg(source, init=True):
+    svg_tree_builder = ElementTree.TreeBuilder(SVGElementFactory)
+    parser = ElementTree.XMLTreeBuilder(target=svg_tree_builder)
+    
+    tree = SVGElementTree()
+    tree.parse(source, parser)
+
+    if init:
+        tree.init()
+        if isinstance(tree.getroot(), SVG):
+            tree.getroot().setup_transform(True)
+    
+    return tree
+
+
+style_properties = ["fill", "fill-opacity", "fill-rule",
+                    "stroke", "stroke-opacity", "stroke-width",
+                    "stroke-dasharray", "stroke-dashoffset",
+                    "stroke-linecap", "stroke-linejoin", "stroke-miterlimit"]
+
+def has_style(keys):
+    if "style" in keys:
+        return True
+    return any(key in style_properties for key in keys)
+
 style_pattern = re.compile(r"(\w+-?\w+)\s*:\s*([^;]+)(?:;|$)")
-def to_style(data, do_stroke=False, do_fill=False):
+def to_style(attrs, do_stroke=False, do_fill=False):
     style = VG.Style()
 
     fill_opacity = stroke_opacity = 1.0
     
-    for name, value in style_pattern.findall(data):
+    for name, value in attrs:
         name = name.lower().strip()
         value = value.lower().strip()
         if name == "fill":
@@ -422,14 +471,6 @@ def to_style(data, do_stroke=False, do_fill=False):
         style.stroke_paint = style.stroke_paint[0](*style.stroke_paint[1])
 
     return style
-
-def parse_svg(source):
-    svg_tree_builder = ElementTree.TreeBuilder(SVGElementFactory)
-    parser = ElementTree.XMLTreeBuilder(target=svg_tree_builder)
-    
-    tree = SVGElementTree()
-    tree.parse(source, parser)
-    return tree
 
 path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
 def to_commands(data):

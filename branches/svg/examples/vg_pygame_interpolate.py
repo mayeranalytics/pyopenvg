@@ -1,10 +1,9 @@
 import pygame
-import xml.etree.ElementTree as ET
 
 from OpenVG import VG
 from OpenVG.constants import *
 
-from OpenVG.svg import load_svg_element
+from OpenVG.svg import parse_svg
 
 MORPH_TIME = 1 * 1000
 
@@ -20,19 +19,21 @@ def main(width, height):
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
 
     paths = []
-    path_tag = "{http://www.w3.org/2000/svg}path"
+    path_tag = ".//{http://www.w3.org/2000/svg}path"
 
     VG.set(VG_MATRIX_MODE, VG_MATRIX_PATH_USER_TO_SURFACE)
     VG.scale(5.0, 5.0)
-    for element in ET.parse("data/shapes.svg").findall(path_tag):
-        svg_path = load_svg_element(element)
-        p = svg_path.path.transform()
-        p.style = svg_path.style
-        if not p.style:
-            p.style = VG.Style(VG_STROKE_LINE_WIDTH=5.0)
+
+    doc = parse_svg("data/shapes.svg")
+    
+    for element in doc.findall(path_tag):
+        path = element.path.transform()
+        path.style = element.style
+        if not path.style:
+            path.style = VG.Style(VG_STROKE_LINE_WIDTH=5.0)
         else:
-            p.style[VG_STROKE_LINE_WIDTH] *= 2
-        paths.append(p)
+            path.style[VG_STROKE_LINE_WIDTH] *= 2
+        paths.append(path)
 
     VG.load_identity()
 

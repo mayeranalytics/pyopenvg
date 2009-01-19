@@ -39,7 +39,6 @@ def main(width, height, directory):
         try:
             tree = parse_svg(path)
             name = vera.build_path(os.path.basename(path), 16)
-            tree.getroot().setup_transform(True)
             drawings.append((tree.getroot(), name))
         except:
             print "Error in loading %s" % path
@@ -49,7 +48,9 @@ def main(width, height, directory):
     dx = dy = 0
     i = 0
     scale = 1
+    
     drawing, name = drawings[0]
+    (x,y), (w,h) = drawing.bounds()
 
     running = True
     while running:
@@ -88,6 +89,7 @@ def main(width, height, directory):
                     else:
                         i -= 1
                     drawing, name = drawings[i % len(drawings)]
+                    (x,y), (w,h) = drawing.bounds()
                     
             elif e.type == pygame.MOUSEBUTTONUP:
                 if e.button == 1 or e.button == 2 or e.button == 3:
@@ -99,7 +101,7 @@ def main(width, height, directory):
 
         VG.clear((0, 0), (width, height))
 
-        (x,y), (w,h) = drawing.bounds()
+        
         VG.load_identity()
 
         VG.scale(2**(scale-1),2**(scale-1))

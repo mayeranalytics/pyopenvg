@@ -1,8 +1,7 @@
 import pygame
-import xml.etree.ElementTree as ET
 
 from OpenVG import VG
-from OpenVG.svg import load_svg_element
+from OpenVG.svg import parse_svg
 from OpenVG.constants import *
 
 RGBA_masks = (-16777216, 16711680, 65280, 255)
@@ -35,10 +34,13 @@ def main(width, height, path, flags=0):
     pattern_paint = VG.PatternPaint(im)
     pattern_paint.tiling_mode = VG_TILE_REPEAT
 
-    tree = ET.parse("data/donkoose.svg")
-    shape = load_svg_element(tree.getroot())
+    tree = parse_svg("data/donkoose.svg")
+    tree.init()
 
-    p = shape.children[0].children[0]
+    shape = tree.getroot()
+    shape.setup_transform(True)
+
+    p = shape.find(".//{http://www.w3.org/2000/svg}path")
     p.paint_mode = VG_STROKE_PATH | VG_FILL_PATH
     p.style.fill_paint = pattern_paint
 

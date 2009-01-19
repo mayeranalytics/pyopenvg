@@ -1,41 +1,24 @@
+from math import tan, sin, cos, radians
 import numpy
 import re
 
-#Attribute descriptors so that we don't have to write getter functions
+#Attribute descriptors so that we don't have to dump getter functions
 #for every single conversion.
 
 class SVGDataType(object):
-    update_on_change = False
     def __init__(self, key, default=None):
         self.key = key
         self.default = default
-        
-        self.value = None
-        self.set = False
 
-    def __get__(self, obj, type):
-        if self.set:
-            return self.value
-        else:
-            data = obj.get(self.key, self.default)
-            self.value = self.fromstring(data)
-            self.set = True
+    def load(self, obj):
+        data = obj.get(self.key, self.default)
+        if data is None:
+            return None
+        return self.fromstring(data)
 
-            return self.value
-
-    def __set__(self, obj, value):
-        self.value = value
-        if self.update_on_change:
+    def dump(self, obj, value):
+        if self.key in obj.keys() and value is not None:
             obj.set(self.key, self.tostring(value))
-        self.set = True
-
-    def __delete__(self, obj):
-        del obj.attrib[self.key]
-        self.value = None
-        self.set = False
-
-    def write(self, obj):
-        obj.set(self.key, self.tostring(self.value))
 
     def fromstring(self, data):
         raise NotImplementedError
@@ -49,8 +32,6 @@ class ListOf(SVGDataType):
         self.datatype = datatype
 
     def fromstring(self, data):
-        if data is None:
-            return None
         items = re.split(r"(?:,|\s+)", data.strip())
         return [self.datatype.fromstring(item) for item in items]
 
@@ -62,16 +43,12 @@ class Tuple(SVGDataType):
         SVGDataType.__init__(self, None, None)
         self.descriptors = descriptors
 
-    def __get__(self, obj, type):
-        return tuple(desc.__get__(obj, type) for desc in self.descriptors)
+    def load(self, obj):
+        return tuple(desc.load(obj) for desc in self.descriptors)
 
-    def __set__(self, obj, values):
-        for desc,value in zip(self.descriptors, values):
-            desc.__set__(obj, value)
-
-    def write(self, obj):
+    def dump(self, obj):
         for desc in self.descriptors:
-            desc.write(obj)
+            desc.dump(obj)
 
 class Integer(SVGDataType):
     fromstring = staticmethod(int)
@@ -192,8 +169,6 @@ transform_pattern = re.compile(r"(matrix|translate|scale|rotate|skewX|skewY)\s*\
 class TransformList(SVGDataType):
     @staticmethod
     def fromstring(data):
-        if data is None:
-            return None
         matrix = numpy.matrix([[1, 0, 0],
                                [0, 1, 0],
                                [0, 0, 1]])

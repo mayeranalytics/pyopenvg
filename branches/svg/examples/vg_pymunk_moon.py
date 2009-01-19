@@ -7,8 +7,7 @@ from OpenVG import VG
 from OpenVG import VGU
 from OpenVG.constants import *
 
-from OpenVG.svg import load_svg_element
-import xml.etree.ElementTree as ET
+from OpenVG.svg import parse_svg
 
 class MoonWorld(object):
     terrain_data = [
@@ -85,8 +84,10 @@ class MoonBuggy(object):
     def __init__(self, space, pos):
         self.input_power = 0.0
 
-        path_tag = "{http://www.w3.org/2000/svg}path"
-        svg_logo = load_svg_element(ET.parse("data/openvg.svg").find(path_tag))
+        doc = parse_svg("data/openvg.svg")
+
+        svg_logo = doc.find(".//{http://www.w3.org/2000/svg}path")
+        
         logo = svg_logo.path
         logo.style = svg_logo.style
         (x, y), (width, height) = logo.bounds()
@@ -96,13 +97,20 @@ class MoonBuggy(object):
                         0, -1,      0,
                         -width/2.0+x, height/2.0+y, 1])
         logo.transform(self.chassis_path)
+        
         del logo
+        del svg_logo
+        del doc
+        
         VG.load_identity()
         
         chassis_mass = 5.0
-        vertices = [(x + width, y), (x + width, y + height),
-                    (x, y + height), (x, y)]
-        chassis_moment = pymunk.moment_for_poly(chassis_mass, vertices, (0,0))
+        vertices = [(width, 0), (width, height),
+                    (0,  height), (0, 0)]
+##        vertices = [(x, y), (x, y + height), (x + width, y + height), (x + width, y)]
+        print vertices
+
+        chassis_moment = pymunk.moment_for_poly(chassis_mass, vertices, (-x-width/2.0,-y-height/2.0))
 
         chassis_body = pymunk.Body(chassis_mass, chassis_moment)
         chassis_body.position = pos
@@ -125,8 +133,9 @@ class MoonBuggy(object):
         space.add(pymunk.PinJoint(chassis_body, wheel1_body, (0,0), (0,0)))
         space.add(pymunk.PinJoint(chassis_body, wheel2_body, (0,0), (0,0)))
 
-        self.chassis = pymunk.Poly(chassis_body, vertices, (0,0))
+        self.chassis = pymunk.Poly(chassis_body, vertices, (-x-width/2.0,-y-height/2.0))
         self.chassis.friction = 0.5
+        self.chassis.offset = (-x-width/2.0,-y-height/2.0)
         space.add(self.chassis)
 
         self.wheel1 = pymunk.Circle(wheel1_body, wheel_radius, (0,0))
@@ -173,7 +182,18 @@ class MoonBuggy(object):
         VG.translate(*self.chassis.body.position)
         VG.rotate(math.degrees(self.chassis.body.angle))
 
-        self.chassis_path.draw(VG_STROKE_PATH | VG_FILL_PATH)
+##        self.chassis_path.draw(VG_STROKE_PATH | VG_FILL_PATH)
+
+        VG.load_matrix(mat)
+        p = VG.Path()
+        points = self.chassis.get_points()
+        p.move_to(points[0]+self.chassis.offset)
+        for point in points[1:]:
+            p.move_to(point+self.chassis.offset)
+        p.close()
+
+        p.style = VG.Style(fill_paint=VG.ColorPaint((1.0, 0.0,0.0)))
+        p.draw(VG_FILL_PATH)
 
         VG.load_matrix(mat)
         VG.translate(*self.wheel1.body.position)
