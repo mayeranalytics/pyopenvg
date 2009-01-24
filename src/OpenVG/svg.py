@@ -1,4 +1,4 @@
-from math import cos, sin, tan, radians
+from math import cos, sin, tan, radians, atan2
 import re
 
 from xml.etree import ElementTree
@@ -21,10 +21,14 @@ __all__ = ["SVGElement", "SVGDrawableElement", "SVGContainer", "SVGPrimitive",
 ElementTree._namespace_map["http://www.w3.org/2000/svg"] = "svg"
 
 def SVGElementFactory(tag, attrib):
-    factory = SVG_TAG_MAP.get(tag[tag.rfind("}")+1:], ElementTree.Element)
+    factory = SVG_TAG_MAP.get(tag[tag.rfind("}")+1:], SVGElement)
     return factory(tag, attrib)
 
 class SVGElementTree(object, ElementTree.ElementTree):
+    def __init__(self, *args, **kwargs):
+        ElementTree.ElementTree.__init__(self, *args, **kwargs)
+        self.id_table = {}
+        
     def write(self, *args, **kwargs):
         for e in self.getiterator():
             if isinstance(e, SVGElement):
@@ -32,17 +36,27 @@ class SVGElementTree(object, ElementTree.ElementTree):
         ElementTree.ElementTree.write(self, *args, **kwargs)
 
     def init(self):
-        if isinstance(self.getroot(), SVGElement):
-            self.getroot().init()
+        for e in self.getiterator():
+            if e.get("id"):
+                self.id_table[e.get("id")] = e
 
-        for e in self.getroot():
-            if isinstance(e, SVGElement):
-                e.init()
+        self.getroot().init(id_table=self.id_table)
 
 class SVGElement(ElementTree._ElementInterface):
-    def init(self):
+    _attributes = {}
+    def __init__(self, *args, **kwargs):
+        ElementTree._ElementInterface.__init__(self, *args, **kwargs)
+        self.initialized = False
+    
+    def init(self, id_table=None):
         for key, desc in self._attributes.iteritems():
             setattr(self, key, desc.load(self))
+        self.initialized = True
+        self.id_table = id_table
+
+        for child in self:
+            if not child.initialized:
+                child.init(id_table=id_table)
 
     def dump(self):
         for key, desc in self._attributes.iteritems():
@@ -52,36 +66,42 @@ class SVGElement(ElementTree._ElementInterface):
         return "<%s %s at %x>" % (self.__class__.__name__, self.tag, id(self))
     
     def makeelement(self, tag, attrib):
-        return SVGElement(tag, attrib)
+        return SVGElementFactory(tag, attrib)
 
 class SVGDrawableElement(SVGElement):
     _attributes = dict(
         transform=desc.TransformList("transform"))
 
-    def init(self, do_stroke=False, do_fill=False):
-        SVGElement.init(self)
-        if has_style(self.keys()):
-            if "style" in self.keys():
-                attrs = style_pattern.findall(self.get("style"))
-            else:
-                attrs = []
-            attrs.extend(self.items())
-            self.style = to_style(attrs, do_stroke, do_fill)
-            self.paint_mode = self.style.paint_mode
-        else:
-            self.style = None
-            self.paint_mode = 0
-            if do_stroke:
-                self.paint_mode |= VG_STROKE_PATH
-            if do_fill:
-                self.paint_mode |= VG_FILL_PATH
-
+    def init(self, do_stroke=False, do_fill=False, id_table=None):
+        for key, desc in self._attributes.iteritems():
+            setattr(self, key, desc.load(self))
+        self.initialized = True
+        self.id_table = id_table
+        
         if self.transform is not None:
             T = numpy.matrix(self.transform)
             T.shape = (3,3)
             self.numpy_transform = T.T
         else:
             self.numpy_transform = None
+
+    def get_style(self, do_stroke=False, do_fill=False):
+        if has_style(self.keys()):
+            if "style" in self.keys():
+                attrs = style_pattern.findall(self.get("style"))
+            else:
+                attrs = []
+            attrs.extend(self.items())
+            style = to_style(self, attrs, do_stroke, do_fill)
+            paint_mode = style.paint_mode
+        else:
+            style = None
+            paint_mode = 0
+            if do_stroke:
+                paint_mode |= VG_STROKE_PATH
+            if do_fill:
+                paint_mode |= VG_FILL_PATH
+        return style, paint_mode
 
     def dump(self):
         SVGElement.dump(self)
@@ -102,14 +122,22 @@ class SVGDrawableElement(SVGElement):
     
 
 class SVGContainer(SVGDrawableElement):
-    def init(self, do_stroke=False, do_fill=False):
-        SVGDrawableElement.init(self, do_stroke, do_fill)
+    def init(self, do_stroke=False, do_fill=False, id_table=None):
+        SVGDrawableElement.init(self, do_stroke, do_fill, id_table)
+
+        self.style, self.paint_mode = self.get_style(do_stroke, do_fill)
+        
         do_stroke = self.paint_mode & VG_STROKE_PATH
         do_fill = self.paint_mode & VG_FILL_PATH
         
-        self.drawables = [child for child in self if isinstance(child, SVGDrawableElement)]
-        for child in self.drawables:
-            child.init(do_stroke, do_fill)
+        self.drawables = []
+        for child in self:
+            if not child.initialized:
+                if isinstance(child, SVGDrawableElement):
+                    child.init(do_stroke, do_fill, id_table)
+                    self.drawables.append(child)
+                else:
+                    child.init(id_table)
 
     def draw(self):
         if self.transform:
@@ -130,14 +158,19 @@ class SVGContainer(SVGDrawableElement):
 
     def corners(self, transform=None):
         minx,miny, maxx,maxy = None,None, None,None
+        if not self.drawables:
+            return (None,None), (None,None)
+        
         for child in self.drawables:
             (x1,y1), (x2,y2) = child.corners(transform)
+            if x1 is y1 is x2 is y2 is None:
+                continue
             if x1 < minx or minx is None: minx = x1
             if y1 < miny or miny is None: miny = y1
 
             if x2 > maxx: maxx = x2
             if y2 > maxy: maxy = y2
-
+        
         if self.transform is None or minx is miny is maxx is maxy is None:
             return (minx, miny), (maxx, maxy)
         else:
@@ -150,9 +183,10 @@ class SVGContainer(SVGDrawableElement):
             return (X.min(), Y.min()), (X.max(), Y.max())
 
 class SVGPrimitive(SVGDrawableElement):
-    def init(self, do_stroke=False, do_fill=False):
-        SVGDrawableElement.init(self, do_stroke, do_fill)
-        self.path = self.build_path()
+    def init(self, do_stroke=False, do_fill=False, id_table=None):
+        SVGDrawableElement.init(self, do_stroke, do_fill, id_table)
+        self.path = self.build_path() 
+        self.style, self.paint_mode = self.get_style(do_stroke, do_fill)
 
     def draw(self):
         if self.transform:
@@ -220,6 +254,19 @@ class SVG(SVGContainer):
         self.numpy_transform = numpy.matrix(self.transform)
         self.numpy_transform.shape = (3,3)
         self.numpy_transform = self.numpy_transform.T
+
+    def fit(self, width, height):
+        w,h = self.bounds()[1]
+        s = 1.0
+        if w > width:
+            s = width/w
+        if h*s > height:
+            s = height/h
+        T2 = numpy.matrix([[s, 0, 0],
+                           [0, s, 0],
+                           [0, 0, 1]])
+        self.numpy_transform = self.numpy_transform * T2
+        self.transform = self.numpy_transform.T.flatten().tolist()[0]
 
 class Group(SVGContainer):
     pass
@@ -364,6 +411,176 @@ class Text(SVGPrimitive):
         return load_font(name, self.font_size)
 
 
+class Gradient(SVGElement):
+    linear = True
+    def init(self, id_table=None):
+        SVGElement.init(self, id_table) 
+        self.stops = self.get_stops()
+        if self.href:
+            href = self.id_table[self.href[1:]]
+            if not href.initialized:
+                href.init(self.id_table)
+            if not self.stops:
+                self.stops = href.stops
+            if not self.get("spreadMode"):
+                self.spread = href.spread
+
+    def get_stops(self):
+        stops = []
+        last_offset = None
+        for child in self:
+            if child.tag.endswith("stop"):
+                if child.get("offset").endswith("%"):
+                    offset = float(child.get("offset")[:-1])/100.0
+                else:
+                    offset = desc.Number.fromstring(child.get("offset"))
+
+                if last_offset is not None and last_offset > offset:
+                    offset = last_offset
+                last_offset = offset
+
+                opacity = desc.Number.fromstring(child.get("stop-opacity", "1"))
+                if child.get("style"):
+                    for name, value in style_pattern.findall(child.get("style")):
+                        if name == "stop-color":
+                            R,G,B = desc.Color.fromstring(value)
+                        elif name == "stop-opacity":
+                            opacity = desc.Number.fromstring(value)
+                if child.get("stop-color"):
+                    R,G,B = desc.Color.fromstring(child.get("stop-color"))
+                
+                stops.append((offset, (R/255.0, G/255.0, B/255.0, opacity)))
+        return stops
+
+    def build_paint(self, element):
+        if self.spread == "pad":
+            spread = VG_COLOR_RAMP_SPREAD_PAD
+        elif self.spread == "repeat":
+            spread = VG_COLOR_RAMP_SPREAD_REPEAT
+        elif self.spread == "reflect":
+            spread = VG_COLOR_RAMP_SPREAD_REFLECT
+        else:
+            raise ValueError("invalid spreadMethod '%s' specified" % self.spread)
+
+        vector = self.get_vector(element)
+
+        paint = VG.GradientPaint(vector, self.linear)
+        paint.stops = self.stops
+        paint.spread_mode = spread
+        paint.transform = self.transform
+
+        return paint
+
+    def get_vector(self, element):
+        raise NotImplementedError
+        
+class LinearGradient(Gradient):
+    linear = True
+    _attributes = dict(
+        transform = desc.TransformList("gradientTransform"),
+        units = desc.String("gradientUnits", default="objectBoundingBox"),
+
+        x1 = desc.String("x1", default="0%"),
+        y1 = desc.String("y1", default="0%"),
+        x2 = desc.String("x2", default="100%"),
+        y2 = desc.String("y2", default="0%"),
+
+        spread = desc.String("spreadMethod", default="pad"),
+        href = desc.String("{http://www.w3.org/1999/xlink}href"))
+
+    def get_vector(self, element):
+        to_px = desc.Coordinate(None, units="px").fromstring
+        if self.units == "objectBoundingBox":
+            (x0,y0), (w,h) = element.bounds()
+            if "%" in self.x1:
+                x1 = x0 + desc.Percentage.fromstring(self.x1)*w
+            else:
+                x1 = x0 + to_px(self.x1)
+            if "%" in self.x2:
+                x2 = x0 + desc.Percentage.fromstring(self.x2)*w
+            else:
+                x2 = x0 + to_px(self.x2)
+            if "%" in self.y1:
+                y1 = y0 + desc.Percentage.fromstring(self.y1)*h
+            else:
+                y1 = y0 + to_px(self.y1)
+            if "%" in self.y2:
+                y2 = y0 + desc.Percentage.fromstring(self.y2)*h
+            else:
+                y2 = y0 + to_px(self.y2)
+
+            return ((x1,y1), (x2,y2))
+        elif self.units == "userSpaceOnUse":
+            return ((to_px(self.x1), to_px(self.y1)), (to_px(self.x2), to_px(self.y2)))
+        else:
+            raise ValueError("Invalid gradientUnits '%s' specified" % self.units)
+        
+class RadialGradient(Gradient):
+    linear = False
+    _attributes = dict(
+        transform = desc.TransformList("gradientTransform"),
+        units = desc.String("gradientUnits", default="objectBoundingBox"),
+
+        cx = desc.String("cx", default="50%"),
+        cy = desc.String("cy", default="50%"),
+        
+        fx = desc.String("fx"),
+        fy = desc.String("fy"),
+
+        radius = desc.String("r", default="50%"),
+
+        spread = desc.String("spreadMethod", default="pad"),
+        href = desc.String("{http://www.w3.org/1999/xlink}href"))
+
+    def init(self, id_table=None):
+        Gradient.init(self, id_table)
+        if self.fx is None:
+            self.fx = self.cx
+        if self.fy is None:
+            self.fy = self.cy
+
+    def get_vector(self, element):
+        to_px = desc.Coordinate(None, units="px").fromstring
+        if self.units == "objectBoundingBox":
+            (x0,y0), (w,h) = element.bounds()
+            if "%" in self.fx:
+                fx = x0 + desc.Percentage.fromstring(self.fx)*w
+            else:
+                fx = x0 + to_px(self.fx)
+            if "%" in self.fy:
+                fy = y0 + desc.Percentage.fromstring(self.fy)*h
+            else:
+                fy = y0 + to_px(self.fy)
+            
+            if "%" in self.cx:
+                cx = x0 + desc.Percentage.fromstring(self.cx)*w
+            else:
+                cx = x0 + to_px(self.cx)
+            if "%" in self.cy:
+                cy = y0 + desc.Percentage.fromstring(self.cy)*h
+            else:
+                cy = y0 + to_px(self.cy)
+
+            if "%" in self.radius:
+                r = desc.Percentage.fromstring(self.radius)*w
+            else:
+                r = to_px(self.radius)
+
+            if (fx-cx)**2 + (fy-cy)**2 > r**2:
+                angle = atan2(fy-cy, fx-cx)
+                fx = cx + r*cos(angle)
+                fy = cy + r*sin(angle)
+
+            return ((cx,cy), (fx,fy), r)
+        elif self.units == "userSpaceOnUse":
+            return ((to_px(self.cx), to_px(self.cy)),
+                    (to_px(self.cx), to_px(self.cy)),
+                    to_px(self.radius))
+        else:
+            raise ValueError("Invalid gradientUnits '%s' specified" % self.units)
+
+    
+
 def parse_svg(source, init=True):
     svg_tree_builder = ElementTree.TreeBuilder(SVGElementFactory)
     parser = ElementTree.XMLTreeBuilder(target=svg_tree_builder)
@@ -390,40 +607,33 @@ def has_style(keys):
     return any(key in style_properties for key in keys)
 
 style_pattern = re.compile(r"(\w+-?\w+)\s*:\s*([^;]+)(?:;|$)")
-def to_style(attrs, do_stroke=False, do_fill=False):
+to_px = desc.Length(None, units="px").fromstring
+def to_style(element, attrs, do_stroke=False, do_fill=False):
     style = VG.Style()
 
-    fill_opacity = stroke_opacity = 1.0
+    fill_opacity = stroke_opacity = opacity = 1.0
     
     for name, value in attrs:
         name = name.lower().strip()
-        value = value.lower().strip()
+        value = value.strip()
         if name == "fill":
             if value == "none":
                 do_fill = False
             else:
                 do_fill = True
-                r,g,b = [x/255.0 for x in desc.Color.fromstring(value)]
-                style.fill_paint = [VG.ColorPaint, [(r,g,b,fill_opacity)]]
+                style.fill_paint = desc.Paint.fromstring(value, element)
         elif name == "fill-opacity":
-            fill_opacity = desc.Number.fromstring(value)
-            if do_fill:
-                r,g,b,a = style.fill_paint[1][0]
-                style.fill_paint[1][0] = (r,g,b,fill_opacity)
+            fill_opacity = desc.Number.fromstring(value) * opacity
         elif name == "stroke":
             if value == "none":
                 do_stroke = False
             else:
                 do_stroke = True
-                r,g,b = [x/255.0 for x in desc.Color.fromstring(value)]
-                style.stroke_paint = [VG.ColorPaint, [(r,g,b,stroke_opacity)]]
+                style.stroke_paint = desc.Paint.fromstring(value, element)
         elif name == "stroke-opacity":
-            stroke_opacity = desc.Number.fromstring(value)
-            if do_stroke:
-                r,g,b,a = style.stroke_paint[1][0]
-                style.stroke_paint[1][0] = (r,g,b,stroke_opacity)
+            stroke_opacity = desc.Number.fromstring(value) * opacity
         elif name == "stroke-width":
-            style[VG_STROKE_LINE_WIDTH] = desc.Number.fromstring(value)
+            style[VG_STROKE_LINE_WIDTH] = to_px(value)
         elif name == "stroke-linecap":
             if value == "round":
                 style[VG_STROKE_CAP_STYLE] = VG_CAP_ROUND
@@ -443,19 +653,30 @@ def to_style(attrs, do_stroke=False, do_fill=False):
             else:
                 raise ValueError("Unknown stroke-linejoin style \"%s\"" % value)
         elif name == "stroke-miterlimit":
-            style[VG_STROKE_MITER_LIMIT] = desc.Number.fromstring(value)
+            style[VG_STROKE_MITER_LIMIT] = to_px(value)
         elif name == "stroke-dashoffset":
-            style[VG_STROKE_DASH_PHASE] = desc.Number.fromstring(value)
+            style[VG_STROKE_DASH_PHASE] = to_px(value)
         elif name == "stroke-dasharray":
             if value == "none":
                 style[VG_STROKE_DASH_PATTERN] = ()
             else:
-                style[VG_STROKE_DASH_PATTERN] = map(desc.Number.fromstring, re.split(r"(?:\s*,\s*)|(?:\s*|,)", value))
+                style[VG_STROKE_DASH_PATTERN] = map(to_px, re.split(r"(?:\s*,\s*)|(?:\s*|,)", value))
         elif name == "fill-rule":
             if value == "evenodd":
                 style[VG_FILL_RULE] = VG_EVEN_ODD
             elif value == "nonzero":
                 style[VG_FILL_RULE] = VG_NON_ZERO
+        elif name == "opacity":
+            opacity = desc.Number.fromstring(value)
+            fill_opacity *= opacity
+            stroke_opacity *= opacity
+
+    if do_fill and isinstance(style.fill_paint, VG.ColorPaint):
+        style.fill_paint.opacity = fill_opacity
+        
+    if do_stroke and isinstance(style.stroke_paint, VG.ColorPaint):
+        style.stroke_paint.opacity = stroke_opacity            
+
 
     paint_mode = 0
     if do_stroke:
@@ -463,12 +684,6 @@ def to_style(attrs, do_stroke=False, do_fill=False):
     if do_fill:
         paint_mode |= VG_FILL_PATH
     style.paint_mode = paint_mode
-
-    if style.fill_paint:
-        style.fill_paint = style.fill_paint[0](*style.fill_paint[1])
-
-    if style.stroke_paint:
-        style.stroke_paint = style.stroke_paint[0](*style.stroke_paint[1])
 
     return style
 
@@ -541,4 +756,6 @@ SVG_ARC_COMMANDS = {(False, True):VG_SCCWARC_TO,
 
 SVG_TAG_MAP = dict(svg=SVG, g=Group, path=Path, rect=Rect, text=Text,
                    ellipse=Ellipse, circle=Circle,
-                   line=Line, polyline=PolyLine, polygon=Polygon)
+                   line=Line, polyline=PolyLine, polygon=Polygon,
+                   linearGradient=LinearGradient, radialGradient=RadialGradient)
+
