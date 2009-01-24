@@ -332,9 +332,21 @@ class Style(object):
             self.old_stroke_paint = get_paint(VG_STROKE_PATH)
             set_paint(self.stroke_paint, VG_STROKE_PATH)
 
+            if self.stroke_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_STROKE_PAINT_TO_USER)
+                load_matrix(self.stroke_paint.transform)
+                set(VG_MATRIX_MODE, old_mode)
+
         if self.fill_paint:
             self.old_fill_paint = get_paint(VG_FILL_PATH)
             set_paint(self.fill_paint, VG_FILL_PATH)
+            
+            if self.fill_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_FILL_PAINT_TO_USER)
+                load_matrix(self.fill_paint.transform)
+                set(VG_MATRIX_MODE, old_mode)
             
         for param_type, value in self.params.items():
             self.old_params[param_type] = get(param_type)
@@ -342,10 +354,30 @@ class Style(object):
 
     def disable(self):
         if self.stroke_paint:
+            if (self.old_stroke_paint and self.old_stroke_paint.transform) or \
+               self.stroke_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_STROKE_PAINT_TO_USER)
+                if self.old_stroke_paint and self.old_stroke_paint.transform:
+                    load_matrix(self.old_stroke_paint.transform)
+                else:
+                    load_identity()
+                set(VG_MATRIX_MODE, old_mode)
+            
             set_paint(self.old_stroke_paint, VG_STROKE_PATH)
             self.old_stroke_paint = None
             
         if self.fill_paint:
+            if (self.old_fill_paint and self.old_fill_paint.transform) or \
+               self.fill_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_FILL_PAINT_TO_USER)
+                if self.old_fill_paint and self.old_fill_paint.transform:
+                    load_matrix(self.old_fill_paint.transform)
+                else:
+                    load_identity()
+                set(VG_MATRIX_MODE, old_mode)
+            
             set_paint(self.old_fill_paint, VG_FILL_PATH)
             self.old_fill_paint = None
         

@@ -6,6 +6,8 @@ cdef class Paint:
         vgSetParameteri(self.handle, VG_PAINT_TYPE, paint_type)
         check_error()
         _paint_table[<long>self.handle] = self
+
+        self.transform = None
         
     def __dealloc__(self):
         vgDestroyPaint(self.handle)
@@ -54,7 +56,7 @@ cdef class ColorPaint(Paint):
             vgGetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
             check_error()
 
-            color[4] = value
+            color[3] = value
             vgSetParameterfv(self.handle, VG_PAINT_COLOR, 4, color)
             check_error()
             
@@ -67,6 +69,7 @@ cdef class GradientPaint(Paint):
             paint_type = VG_PAINT_TYPE_RADIAL_GRADIENT
         Paint.__init__(self, paint_type)
         self.gradient = gradient
+        self._opacity = 1.0
 
     property gradient:
         def __get__(self):
@@ -137,6 +140,7 @@ cdef class GradientPaint(Paint):
             free(<void*>values)
             check_error()
             return stops
+        
         def __set__(self, stops):
             cdef VGfloat *values
             cdef VGint count
@@ -147,10 +151,26 @@ cdef class GradientPaint(Paint):
                 values[i*5+1] = stops[i][1][0]
                 values[i*5+2] = stops[i][1][1]
                 values[i*5+3] = stops[i][1][2]
-                values[i*5+4] = stops[i][1][3]
+                values[i*5+4] = stops[i][1][3] * self.opacity
             vgSetParameterfv(self.handle, VG_PAINT_COLOR_RAMP_STOPS, count, values)
             free(<void*>values)
             check_error()
+
+    property opacity:
+        def __get__(self):
+            return self._opacity
+        
+        def __set__(self, value):
+            cdef VGfloat *values
+            count = vgGetParameterVectorSize(self.handle, VG_PAINT_COLOR_RAMP_STOPS)
+            values = <VGfloat*>malloc(sizeof(VGfloat) * count)
+            for i from 0 <= i < count/5:
+                values[i*5+4] *= value/self._opacity
+            vgSetParameterfv(self.handle, VG_PAINT_COLOR_RAMP_STOPS, count, values)
+            free(<void*>values)
+            check_error()
+
+            self._opacity = value
 
     property premultiplied:
         def __get__(self):

@@ -2,6 +2,8 @@ from math import tan, sin, cos, radians
 import numpy
 import re
 
+from OpenVG import VG
+
 #Attribute descriptors so that we don't have to dump getter functions
 #for every single conversion.
 
@@ -50,6 +52,10 @@ class Tuple(SVGDataType):
         for desc in self.descriptors:
             desc.dump(obj)
 
+class String(SVGDataType):
+    fromstring = staticmethod(str)
+    tostring = staticmethod(str)
+
 class Integer(SVGDataType):
     fromstring = staticmethod(int)
     tostring = staticmethod(str)
@@ -66,12 +72,12 @@ class Number(SVGDataType):
     def tostring(value):
         return str(value) if isinstance(value, int) else repr(value)
 
-length_pattern = re.compile(r"\s*(.+?)\s*(px|pt|pc|mm|cm|in)?\s*$", re.I)
-SVG_PIXELS_PER_UNIT = {None: 1, "px": 1, "pt": 1.25, "pc": 15,
-                       "mm": 3.543307, "cm": 35.43307, "in": 90}
-
 class Length(SVGDataType):
     valid_units = ["px","pt","mm","cm","in", "%"]
+    unit_table = {None: 1, "px": 1, "pt": 1.25, "pc": 15,
+                  "mm": 3.543307, "cm": 35.43307, "in": 90}
+    pattern = re.compile(r"\s*(.+?)\s*(%s)?\s*$" % "|".join(valid_units), re.I)
+    
     def __init__(self, key, default=None, units="px"):
         SVGDataType.__init__(self, key, default)
         if units not in self.valid_units:
@@ -82,15 +88,15 @@ class Length(SVGDataType):
     def fromstring(self, data):
         if data.endswith("%"):
             raise NotImplementedError("% lengths are not supported")
-        value, units = length_pattern.match(data).groups()
+        value, units = self.pattern.match(data).groups()
 
         if units == self.units:
             return Number.fromstring(value)
 
         if self.units == "px":
-            scale = SVG_PIXELS_PER_UNIT[units]
+            scale = self.unit_table[units]
         else:
-            scale = SVG_PIXELS_PER_UNIT[units]/SVG_PIXELS_PER_UNIT[self.units]
+            scale = self.unit_table[units]/self.unit_table[self.units]
         
         return Number.fromstring(value) * scale
 
@@ -99,11 +105,11 @@ class Length(SVGDataType):
 
 Coordinate = Length
 
-angle_pattern = re.compile(r"\s*(.+?)\s*(deg|grad|rad)?\s*$", re.I)
-SVG_DEGREES_PER_UNIT = {None: 1, "deg": 1, "grad": 1.11, "rad":57.30}
-
-class Angle(SVGDataType):
+class Angle(Length):
     valid_units = ["deg", "grad", "rad"]
+    unit_table = {None: 1, "deg": 1, "grad": 1.11, "rad":57.30}
+    pattern = re.compile(r"\s*(.+?)\s*(%s)?\s*$" % "|".join(valid_units), re.I)
+
     def __init__(self, key, default=None, units="deg"):
         SVGDataType.__init__(self, key, default)
         if units not in self.valid_units:
@@ -111,21 +117,13 @@ class Angle(SVGDataType):
                              % (units, key))
         self.units = units
 
-    def fromstring(self, data):
-        value, units = angle_pattern.match(data).groups()
-
-        if units == self.units:
-            return Number.fromstring(value)
-
-        if self.units == "deg":
-            scale = SVG_DEGREES_PER_UNIT[units]
-        else:
-            scale = SVG_DEGREES_PER_UNIT[units]/SVG_DEGREES_PER_UNIT[self.units]
-        
-        return Number.fromstring(value) * scale
-
-    def tostring(self, value):
-        return Number.tostring(value) + self.units
+class Percentage(Number):
+    @staticmethod
+    def fromstring(data):
+        return Number.fromstring(data.rstrip("%"))/100.0
+    @staticmethod
+    def tostring(value):
+        return Number.tostring(value) + "%"
 
 hex_pattern = re.compile(r"#\s*([0-9A-F]{3,6})", re.I)
 class Color(SVGDataType):
@@ -162,7 +160,21 @@ class Color(SVGDataType):
         return "rgb(%d,%d,%d)" % value
 
 class Paint(SVGDataType):
-    pass
+    @staticmethod
+    def fromstring(data, element):
+        if data.startswith("url"):
+            m = re.match("url\(#(.+?)\)", data)
+            if m is None:
+                raise NotImplementedError('Don\'t know how to handle uri of form "%s"' % data)
+            identifier = m.group(1)
+            if not identifier in element.id_table:
+                raise ValueError("Unknown id '%s' referenced" % identifier)
+            if not element.id_table[identifier].initialized:
+                element.id_table[identifier].init(element.id_table)
+            return element.id_table[identifier].build_paint(element)
+        else:
+            color = Color.fromstring(data)
+            return VG.ColorPaint((color[0]/255.0, color[1]/255.0, color[2]/255.0))
 
 
 transform_pattern = re.compile(r"(matrix|translate|scale|rotate|skewX|skewY)\s*\((.+?)\)", re.I)

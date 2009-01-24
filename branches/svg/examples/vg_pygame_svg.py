@@ -1,9 +1,8 @@
-import glob
-import os.path
+import os
+import traceback
 
-import pygame
-import xml.etree.ElementTree as ET
 import numpy
+import pygame
 
 from OpenVG import VG
 from OpenVG import VGU
@@ -35,14 +34,20 @@ def main(width, height, directory):
     text = vera.build_path("Scroll to change svg files. Drag to see more.")
 
     drawings = []
-    for path in glob.glob(os.path.join(directory, "*.svg")):
-        try:
-            tree = parse_svg(path)
-            name = vera.build_path(os.path.basename(path), 16)
-            drawings.append((tree.getroot(), name))
-        except:
-            print "Error in loading %s" % path
-            raise
+
+    for root, dirs, files in os.walk(directory):
+        for fname in files:
+            if not fname.endswith(".svg"):
+                continue
+            path = os.path.join(root, fname)
+            try:
+                tree = parse_svg(path)
+                name = vera.build_path(fname, 16)
+                tree.getroot().fit(width, height)
+                drawings.append((tree.getroot(), name))
+            except:
+                print "Error in loading %s" % path
+                traceback.print_exc()
     
     dragging = False
     dx = dy = 0
