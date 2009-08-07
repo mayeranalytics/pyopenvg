@@ -2,7 +2,7 @@ include *.py
 
 recursive-include include *.pxi *.h
 recursive-include src *.c
-include src *.pxd
+recursive-include src *.pyx *.pxd
 
 include examples *.py
 recursive-include examples/data *.svg *.jpg *.png *.gif
