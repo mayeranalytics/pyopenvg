@@ -45,7 +45,7 @@ def main(width, height, radius, count, flags=0):
     
     VG.set(VG_BLEND_MODE, blend_modes[0])
 
-    font = Font("data/Vera.ttf", 30)
+    font = Font("data/fonts/Vera.ttf", 30)
     src_path = font.build_path("SRC")
     dst_path = font.build_path("DST")
     message = font.build_path("Scroll to change the blend mode")

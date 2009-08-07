@@ -23,7 +23,7 @@ def main(width, height):
     VG.create_context((width, height))
     VG.set(VG_CLEAR_COLOR, (0.0, 0.0, 0.0, 1.0))
 
-    vera = Font("data/Vera.ttf", 32)
+    vera = Font("data/fonts/Vera.ttf", 32)
 
     message = vera.build_path("Hold down LMB to create flowers")
     message.style = VG.Style(fill_paint=VG.ColorPaint((1.0, 1.0, 1.0, 0.7)))
