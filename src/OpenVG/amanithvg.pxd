@@ -17,14 +17,16 @@ cdef class Path:
 
 cdef class Paint:
     cdef VGPaint handle
+    cdef public object transform
     cdef object __weakref__
 cdef class ColorPaint(Paint)
-cdef class GradientPaint(Paint)
+cdef class GradientPaint(Paint):
+    cdef object _opacity
 cdef class PatternPaint(Paint):
     cdef object _pattern
 
 cdef class Image:
     cdef VGImage handle
     cdef readonly int width, height
-    cdef object format
+    cdef public object format
     cdef object __weakref__

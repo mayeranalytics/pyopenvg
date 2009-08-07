@@ -1,3 +1,11 @@
+8/7/09:
+Added support for AmanithVG (no extensions)! This means a major overhaul of the base code, so it might be a bit buggy. Right now, it will look for AmanithVG, and then try to fallback to ShivaVG.
+
+Ditching build_shiva.py - it was pretty hacky anyways. Instead, you can deal with the hacky setup.py. Now, extensions are broken down into three separate commands - build_shiva, build_amanith, and build_freetype. It shouldn't be necessary to mess with setup.py anymore. Instead, the local stuff is in setup.cfg. At least on windows, if you've built all the dependencies from source and point it at the correct directories, it should build just fine.
+
+I drastically changed the internal structure of the svg module. The bad news is that if you were directly accessing any attributes, it probably won't work anymore. The good news is that I added support for gradients.
+The main difference is that you no longer have to import ElementTree and feed it an element, because it now subclasses ElementTree.ElementTree and ElementTree.Element. Instead of parsing the file yourself, just pass the path to svg.parse_svg
+
 10/14/08:
 If you have any trouble compiling this stuff, feel free to shoot me an email.
 I know that my build system is totally weird.

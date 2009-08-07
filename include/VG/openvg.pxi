@@ -451,9 +451,6 @@ cdef extern from "VG/openvg.h":
                         VGboolean outputPremultiplied)
     VGHardwareQueryResult vgHardwareQuery(VGHardwareQueryType key, VGint setting)
     VGubyte * vgGetString(VGStringID name)
-    VGboolean vgCreateContextSH(VGint width, VGint height)
-    void vgResizeSurfaceSH(VGint width, VGint height)
-    void vgDestroyContextSH()
 
 ##cdef VGshort VG_MAXSHORT
 ##VG_MAXSHORT = <VGshort>((~(<unsigned short>0)) >> 1)

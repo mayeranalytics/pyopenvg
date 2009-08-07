@@ -2,11 +2,10 @@ import math
 import random
 
 import pygame
-import xml.etree.ElementTree as ET
 
 from OpenVG import VG
 from OpenVG.font import Font
-from OpenVG.svg import load_svg_element
+from OpenVG.svg import parse_svg
 from OpenVG.constants import *
 
 
@@ -15,6 +14,8 @@ def main(width, height):
     pygame.init()
 
     pygame.display.gl_set_attribute(pygame.GL_STENCIL_SIZE, 2)
+    pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
+    pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
     screen = pygame.display.set_mode((width, height), pygame.OPENGL | pygame.DOUBLEBUF)
     pygame.display.set_caption("Flower test")
     
@@ -26,8 +27,10 @@ def main(width, height):
 
     message = vera.build_path("Hold down LMB to create flowers")
     message.style = VG.Style(fill_paint=VG.ColorPaint((1.0, 1.0, 1.0, 0.7)))
+
+    doc = parse_svg("data/svg/flower.svg")
     
-    flower = load_svg_element(ET.parse("data/flower.svg").getroot())
+    flower = doc.getroot()
     (x,y), (w,h) = flower.bounds()
     cx,cy = x+w/2.0, y+h/2.0
     

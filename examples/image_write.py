@@ -3,18 +3,7 @@ import pygame
 from OpenVG import VG
 from OpenVG.constants import *
 
-def make_mask(start, stop):
-    x = 0
-    for i in xrange(start, stop):
-        x |= 1 << i
-    return x
-
-R = make_mask(0, 8)
-G = make_mask(8, 16)
-B = make_mask(16, 24)
-A = ~(R | G | B)
-
-RGBA_masks = (R, G, B, A)
+RGBA_masks = (-16777216, 16711680, 65280, 255)
 
 def load_image(path):
     surf = pygame.image.load(path).convert(RGBA_masks)
@@ -73,4 +62,4 @@ def main(width, height, path, flags=0):
         pygame.display.flip()
 
 if __name__ == '__main__':
-    main(640, 480, "data/donkoose.jpg")
+    main(640, 480, "data/images/donkoose.jpg")

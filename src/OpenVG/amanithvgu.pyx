@@ -1,7 +1,7 @@
 include "stdlib.pxi"
 include "VG/vgu.pxi"
-from VG cimport class Path
-from VG import VGError
+from amanithvg cimport class Path
+from amanithvg import VGError
  
 class VGUError(VGError):
     error_code_table = {VGU_NO_ERROR:"VGU_NO_ERROR",
@@ -105,8 +105,3 @@ def compute_warp_quad_to_quad(quad1, quad2):
 
     return [m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]]
 
-
-__all__ = ["VGUError", "line", "rect", "round_rect", "ellipse", "arc",
-           "polygon",
-           "compute_warp_quad_to_square", "compute_warp_square_to_quad",
-           "compute_warp_quad_to_quad"]
