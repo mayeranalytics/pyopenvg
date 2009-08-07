@@ -24,8 +24,12 @@ cdef extern from "Python.h":
     char* PyString_AsString(object s) except NULL
 
     int PyBuffer_Check(object obj)
-    int PyObject_AsReadBuffer(object obj, void **buffer, Py_ssize_t *buffer_len) except - 1
+    int PyObject_AsReadBuffer(object obj, void **buffer, Py_ssize_t *buffer_len) except -1
     int PyObject_AsWriteBuffer(object obj, void **buffer, Py_ssize_t *buffer_len) except -1
+
+    object PyBuffer_New(Py_ssize_t size)
+    object PyBuffer_FromReadWriteMemory(void *ptr, Py_ssize_t size)
+    object PyBuffer_FromMemory(void *ptr, Py_ssize_t size)
 
     object PyErr_Occurred()
     void PyErr_Print()
