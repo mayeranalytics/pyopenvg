@@ -28,7 +28,7 @@ cdef int format_size(format):
     elif format == VG_BW_1:
         return 1
     else:
-        raise ValueError("Unknown format")
+        raise ValueError("Unknown format") 
 
 cdef void* get_read_buffer(object buffer) except NULL:
     cdef void *p
@@ -86,12 +86,16 @@ cdef class Image:
 
         size = format_size(format) * area[1][0]*area[1][1]/8
 
+        if buffer is None:
+            buffer = PyBuffer_New(size)
+            
         data = get_write_buffer(buffer, size)
         vgGetImageSubData(self.handle, data, stride, format,
                           area[0][0], area[0][1],
                           area[1][0], area[1][1])
         check_error()
-        
+
+        return buffer
 
 ##    def load_array(self, array, format, pos, dimensions, padded=False):
 ##        cdef PyArrayInterface *interface
@@ -211,6 +215,10 @@ cdef class Image:
         def __get__(self):
             return (self.width, self.height)
 
+    property stride:
+        def __get__(self):
+            return self.width * format_size(self.format)/8
+
     property parent:
         def __get__(self):
             cdef VGImage handle
@@ -224,6 +232,32 @@ cdef class Image:
                 return None
 
             return lookup_image(handle)
+
+##    property __array_interface__:
+##        def __get__(self):
+##            cdef object buffer
+##            I = {"version": 3}
+##            if format_size(self.format) == 32:
+##                I["shape"] = (self.width, self.height, 4)
+##                I["typestr"] = "|u1"
+##            elif format_size(self.format) == 16:
+##                raise NotImplementedError
+##            elif format_size(self.format) == 8:
+##                I["shape"] = (self.width, self.height)
+##                I["typestr"] = "|u1"
+##            elif self.format == VG_BW_1:
+##                raise NotImplementedError
+##
+##            stride = format_size(self.format) * self.width/8
+##            size = stride * self.height
+##            
+##            buffer = PyBuffer_New(size)
+##            self.get_sub_data(buffer, ((0,0), self.size), self.format, stride)
+##
+##            I["data"] = buffer
+##
+##            return I
+            
 
 cdef object lookup_image(VGImage handle):
     cdef Image im
@@ -303,11 +337,15 @@ def write_to_buffer(object buffer, object area, format, stride):
 
     size = format_size(format) * area[1][0]*area[1][1]/8
 
+    if buffer is None:
+        buffer = PyBuffer_New(size)
     data = get_write_buffer(buffer, size)
     vgReadPixels(data, stride, format,
                  area[0][0], area[0][1],
                  area[1][0], area[1][1])
     check_error()
+
+    return buffer
 
 def write_to_image(Image dest not None, dest_pos, area):
     vgGetPixels(dest.handle, dest_pos[0], dest_pos[1],

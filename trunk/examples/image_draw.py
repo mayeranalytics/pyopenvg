@@ -1,20 +1,10 @@
 import pygame
+import Image
 
 from OpenVG import VG
 from OpenVG.constants import *
 
-def make_mask(start, stop):
-    x = 0
-    for i in xrange(start, stop):
-        x |= 1 << i
-    return x
-
-R = make_mask(0, 8)
-G = make_mask(8, 16)
-B = make_mask(16, 24)
-A = ~(R | G | B)
-
-RGBA_masks = (R, G, B, A)
+RGBA_masks = (-16777216, 16711680, 65280, 255)
 
 def load_image(path):
     surf = pygame.image.load(path).convert(RGBA_masks)
@@ -26,6 +16,58 @@ def load_image(path):
                 flip=True)
 
     return im
+
+mode_table = {
+    VG_sRGBX_8888:("RGBX", "XBGR"),
+    VG_sRGBA_8888:("RGBA", "ABGR"),
+    VG_sRGBA_8888_PRE:None,
+    VG_sRGB_565:None,
+    VG_sRGBA_5551:None,
+    VG_sRGBA_4444:None,
+    VG_sL_8:("L", "L"),
+    VG_lRGBX_8888:("RGBX", "XBGR"),
+    VG_lRGBA_8888:("RGBA", "ABGR"),
+    VG_lRGBA_8888_PRE:None,
+    VG_lL_8:("L", "L"),
+    VG_A_8:("A", "A"),
+    VG_BW_1:("1", "1"),
+    VG_sXRGB_8888:("RGBX", "RGBX"),
+    VG_sARGB_8888:("RGBA", "RGBA"),
+    VG_sARGB_8888_PRE:None,
+    VG_sARGB_1555:None,
+    VG_sARGB_4444:None,
+    VG_lXRGB_8888:("RGBX", "RGBX"),
+    VG_lARGB_8888:("RGBA", "RGBA"),
+    VG_lARGB_8888_PRE:None,
+    VG_sBGRX_8888:("RGBX", "XRGB"),
+    VG_sBGRA_8888:("RGBA", "ARGB"),
+    VG_sBGRA_8888_PRE:None,
+    VG_sBGR_565:None,
+    VG_sBGRA_5551:None,
+    VG_sBGRA_4444:None,
+    VG_lBGRX_8888:("RGBX", "XRGB"),
+    VG_lBGRA_8888:("RGBA", "ARGB"),
+    VG_lBGRA_8888_PRE:None,
+    VG_sXBGR_8888:("RGBX", "XBGR"),
+    VG_sABGR_8888:("RGBA", "ABGR"),
+    VG_sABGR_8888_PRE:("RGBA", "RGBa"),
+    VG_sABGR_1555:None,
+    VG_sABGR_4444:None,
+    VG_lXBGR_8888:("RGBX", "RGBX"),
+    VG_lABGR_8888:("RGBA", "RGBA"),
+    VG_lABGR_8888_PRE:("RGBA", "RGBa")}
+
+def to_image(im):
+    data = im.get_sub_data(None, ((0,0), im.size), im.format, im.stride)
+    try:
+        mode, raw_mode = mode_table[im.format]
+    except TypeError:
+        raise NotImplementedError
+    return Image.frombuffer(mode, im.size, data, "raw", raw_mode, 0, -1)
+
+def dump_image(im):
+    image = to_image(im)
+    image.save("out.jpg")
 
 def main(width, height, path, flags=0):
     pygame.init()
@@ -41,6 +83,7 @@ def main(width, height, path, flags=0):
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
 
     im = load_image(path)
+    dump_image(im)
 
     dest_x = (width-im.width)/2.0
     dest_y = (height-im.height)/2.0
@@ -78,4 +121,4 @@ def main(width, height, path, flags=0):
         pygame.display.flip()
 
 if __name__ == '__main__':
-    main(640, 480, "data/donkoose.jpg")
+    main(640, 480, "data/images/donkoose.jpg")

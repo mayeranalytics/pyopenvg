@@ -72,4 +72,4 @@ def main(width, height, font_path, size):
         pygame.display.flip()
 
 if __name__ == '__main__':
-    main(640, 480, "data/Vera.ttf", 42)
+    main(640, 480, "data/fonts/Vera.ttf", 42)

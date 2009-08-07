@@ -37,7 +37,7 @@ win = window.Window(visible=False, config=config)
 context = VG.create_context((640, 480))
 VG.set(VG_CLEAR_COLOR, (0.0, 0.0, 0.0, 1.0))
 
-im = load_image("data/donkoose.jpg")
+im = load_image("data/images/donkoose.jpg")
 
 win.set_visible()
 while not win.has_exit:

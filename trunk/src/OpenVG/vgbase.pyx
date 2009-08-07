@@ -25,25 +25,9 @@ class VGError(BaseException):
             msg = self.error_code_table[error_code]
         BaseException.__init__(self, msg)
 
-
-
 include "path.pyx"
 include "paint.pyx"
 include "image.pyx"
-
-
-
-def create_context(dimensions):
-    return Context(dimensions)
-
-def resize_context(dimensions):
-    if Context.singleton is not None:
-        Context.singleton.resize(dimensions)
-    else:
-        raise RuntimeError("Cannot resize context before creating context")
-
-def destroy_context():
-    vgDestroyContextSH()
 
 def get_error():
     return VGError(vgGetError())
@@ -250,63 +234,6 @@ def get_string(string_id):
     check_error()
     return s
 
-class Context(object):
-    def __init__(self, dimensions):
-        self.dimensions = dimensions
-
-    def resize(self, dimensions):
-        vgResizeSurfaceSH(dimensions[0], dimensions[1])
-        check_error()
-
-    def __del__(self):
-        if self.__class__.singleton is not None:
-            destroy_context()
-        self.__class__.singleton = None
-
-    def destroy(self):
-        self.__del__()
-        
-def __new__(cls, dimensions):
-    if cls.singleton is None:
-        success = vgCreateContextSH(dimensions[0], dimensions[1])
-        if not success:
-            raise RuntimeError("Unable to create OpenVG context")
-        cls.singleton = object.__new__(cls)
-        cls.singleton.stroke_paint = None
-        cls.singleton.fill_paint = None
-    else:
-        if dimensions != cls.singleton.dimensions:
-            cls.singleton.resize(dimensions)
-    return cls.singleton
-
-Context.__new__ = staticmethod(__new__)
-del __new__
-Context.singleton = None
-
-Context.get_error = staticmethod(get_error)
-Context.get = staticmethod(get)
-Context.set = staticmethod(set)
-Context.get_string = staticmethod(get_string)
-Context.get_paint = staticmethod(get_paint)
-Context.set_paint = staticmethod(set_paint)
-Context.clear = staticmethod(clear)
-Context.write_image = staticmethod(write_image)
-Context.write_to_image = staticmethod(write_to_image)
-Context.write_buffer = staticmethod(write_buffer)
-Context.write_to_buffer = staticmethod(write_to_buffer)
-Context.copy_pixels = staticmethod(copy_pixels)
-Context.flush = staticmethod(flush)
-Context.finish = staticmethod(finish)
-Context.get_matrix = staticmethod(get_matrix)
-Context.load_matrix = staticmethod(load_matrix)
-Context.load_identity = staticmethod(load_identity)
-Context.mult_matrix = staticmethod(mult_matrix)
-Context.translate = staticmethod(translate)
-Context.scale = staticmethod(scale)
-Context.shear = staticmethod(shear)
-Context.rotate = staticmethod(rotate)
-Context.interpolate = staticmethod(interpolate)
-
 from constants import param_table
 class Style(object):
     def __init__(self, stroke_paint=None, fill_paint=None, **params):
@@ -332,9 +259,21 @@ class Style(object):
             self.old_stroke_paint = get_paint(VG_STROKE_PATH)
             set_paint(self.stroke_paint, VG_STROKE_PATH)
 
+            if self.stroke_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_STROKE_PAINT_TO_USER)
+                load_matrix(self.stroke_paint.transform)
+                set(VG_MATRIX_MODE, old_mode)
+
         if self.fill_paint:
             self.old_fill_paint = get_paint(VG_FILL_PATH)
             set_paint(self.fill_paint, VG_FILL_PATH)
+            
+            if self.fill_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_FILL_PAINT_TO_USER)
+                load_matrix(self.fill_paint.transform)
+                set(VG_MATRIX_MODE, old_mode)
             
         for param_type, value in self.params.items():
             self.old_params[param_type] = get(param_type)
@@ -342,10 +281,30 @@ class Style(object):
 
     def disable(self):
         if self.stroke_paint:
+            if (self.old_stroke_paint and self.old_stroke_paint.transform) or \
+               self.stroke_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_STROKE_PAINT_TO_USER)
+                if self.old_stroke_paint and self.old_stroke_paint.transform:
+                    load_matrix(self.old_stroke_paint.transform)
+                else:
+                    load_identity()
+                set(VG_MATRIX_MODE, old_mode)
+            
             set_paint(self.old_stroke_paint, VG_STROKE_PATH)
             self.old_stroke_paint = None
             
         if self.fill_paint:
+            if (self.old_fill_paint and self.old_fill_paint.transform) or \
+               self.fill_paint.transform:
+                old_mode = get(VG_MATRIX_MODE)
+                set(VG_MATRIX_MODE, VG_MATRIX_FILL_PAINT_TO_USER)
+                if self.old_fill_paint and self.old_fill_paint.transform:
+                    load_matrix(self.old_fill_paint.transform)
+                else:
+                    load_identity()
+                set(VG_MATRIX_MODE, old_mode)
+            
             set_paint(self.old_fill_paint, VG_FILL_PATH)
             self.old_fill_paint = None
         
@@ -399,8 +358,3 @@ class Style(object):
         style.old_params = {}
 
         return style
-
-__all__ = ["Path", "Paint", "ColorPaint", "GradientPaint", "PatternPaint",
-           "Image", "Context", "Style" "VGError", "check_error", "interpolate",
-           "write_image", "write_buffer", "write_to_buffer", "write_to_image",
-           "copy_pixels"]

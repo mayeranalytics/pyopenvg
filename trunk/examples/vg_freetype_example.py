@@ -20,7 +20,7 @@ def main(width, height, message, rpm=20):
     VG.create_context((width, height))
     VG.set(VG_CLEAR_COLOR, (1.0, 1.0, 1.0, 1.0))
 
-    font = Font("data/Vera.ttf", 64)
+    font = Font("data/fonts/Vera.ttf", 64)
 
     red_paint = VG.ColorPaint((1.0, 0.0, 0.0, 1.0))
     text = font.build_path(message)

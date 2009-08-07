@@ -2,11 +2,13 @@ include *.py
 
 recursive-include include *.pxi *.h
 recursive-include src *.c
-include src/OpenVG/VG.pxd
+include src *.pxd
 
 include examples *.py
-include examples/data *.svg *.jpg
+recursive-include examples/data *.svg *.jpg *.png *.gif
+recursive-include examples/data *.ttf
 prune examples/OpenVG
 prune examples/FT
 
 include README
+include setup.cfg
