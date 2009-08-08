@@ -5,6 +5,11 @@
 
 In OpenVG, VGPaint objects determine how paths are stroked and filled. A given paint object has many parameters, but only those relevant to the type of paint are used (VG_PAINT_COLOR is only applicable to paint objects of type VG_PAINT_TYPE_COLOR). Instead of having one monolithic paint class which allows the user to set parameters that are not used by the type of paint, subclasses of the base Paint class implement the functionality relevant to each paint type: !ColorPaint handles solid colors, !GradientPaint handles radial and linear gradients of color, and !PatternPaint handles patterns based on images.
 
+== Common Properties ==
+These properties are common to all paint classes.
+  * *transform* - an OpenVG transformation matrix that specifies the appropriate paint transformation when used with a style. None by default.
+
+
 = !ColorPaint =
 
 == Properties ==
@@ -27,6 +32,7 @@ VG.set_paint(translucent_green, VG_FILL_PATH)
   * *gradient* - For linear gradients, this is a pair of tuples representing the start and end points in the form (start, end). For radial gradients, this is a pair of tuples and the radius representing the center and focus points in the form (center, focus, radius).
   * *stops* - a list of the color ramp stops that define the gradient colors.
   * *spread_mode* - the mode that OpenVG uses to determine the colors for points outside of the gradient. 
+  * *opacity* - a float from 0.0 to 1.0 which will be multiplied with the stop-colors' opacities.
 
 The !GradientPaint class can represent either a linear or radial gradient. Both radial and linear gradients consist of two parts: the gradient function which maps a given coordinate to a value in the range [0, 1] and a color ramp, which maps colors to each value in the range [0, 1]. For more information on how the gradient function for linear and radial gradients are defined, see the [http://www.khronos.org/openvg/ OpenVG specs].
 
