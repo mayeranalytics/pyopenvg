@@ -4,26 +4,47 @@
 = Introduction =
 PyOpenVG has three dependencies:
   * [http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/ Pyrex], which the extension modules depend upon.
-  * [http://sourceforge.net/projects/shivavg ShivaVG] for the OpenVG implementation (in theory, any implementation could be substituted, but PyOpenVG is dependent on ShivaVG specific extensions to create and destroy contexts because EGL support on non-mobile platforms is limited.)
-  * [http://freetype.sourceforge.net/freetype2/index.html FreeType2], which is used to read in font outline data.]
+  * An OpenVG implementation, your choice of [http://sourceforge.net/projects/shivavg ShivaVG] (LGPL) or [http://www.amanith.org/project.html AmanithVG] (commercial, free evaluation version)
+  * [http://freetype.sourceforge.net/freetype2/index.html FreeType2], which is used to read in font outline data.
 
 = Details =
 Installing Pyrex itself is fairly straightforward. You can either download it from directly from the Pyrex homepage and run "python setup.py install" or you can use the package manager of your choice.
 
 Building libOpenVG with ShivaVG is straightforward if you are building on Linux with the GNU toolchain or on Windows with Visual Studio 2005 (Express) or newer. Unfortunately, building with MSYS and MinGW doesn't seem to work.
 
-!FreeType2 binaries can be acquired from [http://freetype.sourceforge.net/download.html the FreeType download page] or you can build it yourself from source, if you feel so inclined.
-Users of 64-bit systems may have to tweak some of the DEFs in freetype.pxi to reflect the appropriate type sizes.
+libAmanith binaries are available on an evaluation basis for Win32/x86 from [http://www.amanith.org/download.html the AmanithVG download page] 
 
-The setup.py needs to be modified to include wherever you put libOpenVG in the library search paths. So if you installed libOpenVG to "C:\lib", then you would change the line:
+!FreeType2 binaries can be acquired from [http://freetype.sourceforge.net/download.html the FreeType download page] or you can build it yourself from source, if you feel so inclined.
+Users of 64-bit systems may have to tweak some of the DEFs in {{{freetype.pxi}}} to reflect the appropriate type sizes.
+
+To build PyOpenVG, you need to alter the paths in the {{{setup.cfg}}}. Specifically, the setup script needs to know where to find the headers and binaries for ShivaVG/AmanithVG and !FreeType. If you've already checked out/downloaded the dependencies and compiled them, the easiest way is to just set {{{src-root}}} to the proper directory.
+
+For example, this is the setup.cfg that I use to build PyOpenVG:
 {{{
-library_dirs = ["."]
+[build]
+compiler=mingw32
+
+[build_amanith]
+disabled=0
+src_root=C:\dropbox\amanithvg
+pyrex_include_dirs=include
+library_dirs=lib
+
+[build_shiva]
+disabled=0
+src_root=C:\dropbox\ShivaVG-0.2.1
+pyrex_include_dirs=include
+library_dirs=lib
+
+[build_freetype]
+disabled=0
+src_root=C:\Program Files\GnuWin32
+pyrex_include_dirs=include
+include_dirs=include
 }}}
-to
-{{{
-library_dirs = ["C:\lib"]
-}}}
-Additionally, the freetype_root variable must be set to point to wherever your freetype installation directory happens to be.
+
+If your directory structure doesn't exactly mirror the one that the script assumes, then you can always dump the relevant libraries in the {{{lib}}} directory and add your own paths to the include list.
+
 
 From here on, running "python setup.py build" should work correctly and with luck you should have a compiled copy of PyOpenVG.
 
