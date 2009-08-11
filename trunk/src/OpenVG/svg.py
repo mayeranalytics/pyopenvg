@@ -11,6 +11,11 @@ from OpenVG.constants import *
 
 from OpenVG import descriptors as desc
 
+try:
+    from FT.constants import FT_KERNING_UNSCALED
+except ImportError:
+    pass
+
 __all__ = ["SVGElement", "SVGDrawableElement", "SVGContainer", "SVGPrimitive",
            "SVG", "Group",
            "Path", "Rect", "Ellipse", "Circle", "Line", "PolyLine", "Polygon",
@@ -19,6 +24,7 @@ __all__ = ["SVGElement", "SVGDrawableElement", "SVGContainer", "SVGPrimitive",
 
 #ElementTree kludge for outputting svg instead of ns0
 ElementTree._namespace_map["http://www.w3.org/2000/svg"] = "svg"
+ElementTree._namespace_map["http://www.w3.org/1999/xlink"] = "xlink"
 
 def SVGElementFactory(tag, attrib):
     factory = SVG_TAG_MAP.get(tag[tag.rfind("}")+1:], SVGElement)
@@ -91,7 +97,8 @@ class SVGDrawableElement(SVGElement):
                 attrs = style_pattern.findall(self.get("style"))
             else:
                 attrs = []
-            attrs.extend(self.items())
+            pres_attrs = SVG_PROPERTY_SET.intersection(self.keys())
+            attrs.extend((name, self.get(name)) for name in pres_attrs)
             style = to_style(self, attrs, do_stroke, do_fill)
             paint_mode = style.paint_mode
         else:
@@ -212,6 +219,22 @@ class SVGContainer(SVGDrawableElement):
                 T = transform * T
         
         return T
+
+class SVGImplicitContainer(SVGContainer):
+    def init(self, do_stroke=False, do_fill=False, id_table=None):
+        SVGDrawableElement.init(self, do_stroke, do_fill, id_table)
+
+        self.style, self.paint_mode = self.get_style(do_stroke, do_fill)
+        
+        do_stroke = self.paint_mode & VG_STROKE_PATH
+        do_fill = self.paint_mode & VG_FILL_PATH
+        
+        self.drawables = []
+        
+
+    def build_children(self, do_stroke, do_fill, id_table):
+        raise NotImplementedError
+
 
 class SVGPrimitive(SVGDrawableElement):
     def init(self, do_stroke=False, do_fill=False, id_table=None):
@@ -441,37 +464,185 @@ class PolyLine(SVGPrimitive):
 class Polygon(PolyLine):
     closed = True
 
-class Text(SVGPrimitive):
-    def build_path(self):
-        text = self.font.build_path(self.text)
-
-        (x,y), (w,h) = text.bounds()
-
-        mat = VG.get_matrix()
-        VG.load_matrix([1,0,0,0,-1,0,self.x[0],self.y[0],1])
-
-        path = VG.Path()
-        text.transform(path)
-
-        VG.load_matrix(mat)
-
-        return path
-
+class Text(SVGImplicitContainer):
     _attributes = dict(
         transform = desc.TransformList("transform"),
-        x = desc.ListOf(desc.Coordinate(None), "x", default="0"),
-        y = desc.ListOf(desc.Coordinate(None), "y", default="0"),
-        dx = desc.ListOf(desc.Coordinate(None), "dx", default="0"),
-        dy = desc.ListOf(desc.Coordinate(None), "dy", default="0"),
+        x = desc.ListOf(desc.Coordinate(None), "x"),
+        y = desc.ListOf(desc.Coordinate(None), "y"),
+        dx = desc.ListOf(desc.Coordinate(None), "dx"),
+        dy = desc.ListOf(desc.Coordinate(None), "dy"),
+        rotate = desc.ListOf(desc.Number(None), "rotate"),
 
+        font_family = desc.String("font-family"),
         font_size = desc.Length("font-size", default="16pt", units="pt"))
 
-    @property
-    def font(self):
+    def init(self, do_stroke=False, do_fill=True, id_table=None,
+             x=None, y=None, dx=None, dy=None, rotate=None,
+             ctp=None):
+
+        SVGImplicitContainer.init(self, do_stroke, True, id_table)
+
+        self.paint_mode = VG_FILL_PATH
+        if do_stroke:
+            self.paint_mode |= VG_STROKE_PATH
+        
         name = self.get("font-family", "freesansbold")
+        self.font = load_font(name, self.font_size)
+        if ctp is not None:
+            ftp_x, ftp_y = ctp
+        else:
+            ftp_x = ftp_y = 0
 
-        return load_font(name, self.font_size)
+        if x is None: x = []
+        if y is None: y = []
+        if dx is None: dx = []
+        if dy is None: dy = []
+        if rotate is None: rotate = []
+        
+        self.tx = self.x + x[len(self.x):]
+        self.ty = self.y + y[len(self.y):]
+        self.tdx = self.dx + dx[len(self.dx):]
+        self.tdy = self.dy + dy[len(self.dy):]
+        self.trot = self.rotate + rotate[len(self.rotate):]
+            
 
+        if self.tx:
+            ftp_x = self.tx[0]
+        if self.ty:
+            ftp_y = self.ty[0]
+
+        self.ftp = (ftp_x, ftp_y)
+
+        self.build_children(do_stroke, True, id_table)
+        
+    
+    def build_children(self, do_stroke, do_fill, id_table):
+        #A refresher on ElementTree's interpretation of text
+        #<text id="A">A.text<tspan id="B">B.text</tspan>B.tail</text>A.tail
+
+        index = 0
+        ctp = self.ftp
+        space_adv = self.font.get_glyph(" ").advance[0]*self.font.scale
+        
+        if self.text.strip():
+            path, ctp = self.build_path(process_text(self.text), index, ctp)
+            ctp = (ctp[0]+space_adv, ctp[1])
+            index += len(process_text(self.text))
+            self.drawables.append(path)
+
+        for child in self:
+            if isinstance(child, (Text, TSpan, TRef)):
+                self.drawables.append(child)
+                child.init(do_stroke, do_fill, id_table,
+                           self.tx, self.ty, self.tdx, self.tdy, self.trot,
+                           ctp)
+                
+                ctp = child.ltp
+                ctp = (ctp[0]+space_adv, ctp[1])
+                index += child.length()
+                if child.tail.strip():
+                    path = self.build_path(process_text(child.tail), index, ctp)
+                    index += len(process_text(child.tail))
+
+        self.ltp = ctp
+
+
+    def _transform(self, px, py, index):
+        if index < len(self.tx)-1:
+            px = self.tx[index]
+        if index < len(self.tdx)-1:
+            px += self.tdx[index]
+
+        if index < len(self.ty)-1:
+            py = self.ty[index]
+        if index < len(self.tdy)-1:
+            py += self.tdy[index]
+
+        return px, py
+
+    def build_path(self, string, index, ctp):
+        ctp_x, ctp_y = ctp
+        
+        path = VG.Path()
+        vertical = False
+        with VG.push([1,0,0,0,1,0,0,0,1]):
+            #TODO: vertical and bidi text.
+            last_glyph = None
+            for char in string:
+                ctp_x, ctp_y = self._transform(ctp_x, ctp_y, index)
+                glyph = self.font.get_glyph(char)
+                subpath = self.font.get_path_for_glyph(glyph)
+                #Flip it.
+                with VG.push([1,0,0,0,-1,0,0,0,1]):
+                    subpath = subpath.transform()
+                
+                VG.translate(ctp_x, ctp_y)
+                if self.font.face.has_kerning and last_glyph is not None:
+                    kerning = self.font.face.get_kerning(last_glyph.index,
+                                                         glyph.index,
+                                                         FT_KERNING_UNSCALED)
+                    VG.translate(self.font.scale*kerning[0],
+                                 self.font.scale*kerning[1])
+                    ctp_x += self.font.scale*kerning[0]
+                    ctp_y += self.font.scale*kerning[1]
+                
+                if index < len(self.trot)-1:
+                    VG.translate(ctp_x, ctp_y)
+                    VG.rotate(self.rotate[index])
+                    VG.translate(-ctp_x, -ctp_y)
+
+                last_glyph = glyph
+                
+                subpath.transform(path)
+                ctp_x += self.font.scale*glyph.advance[0]
+                ctp_y += self.font.scale*glyph.advance[1]*vertical
+                VG.load_matrix([1,0,0,0,1,0,0,0,1])
+
+        return path, ctp
+                            
+    def length(self):
+        L = len(process_text(self.text)) + len(process_text(self.tail))
+        for child in self:
+            if isinstance(child, (Text, TSpan, TRef)):
+                L += child.length()
+        return L
+
+    def corners(self, transform=None):
+        return (None,None), (None,None)
+
+    def draw(self):
+        if self.transform:
+            mat = VG.get_matrix()
+            VG.mult_matrix(self.transform)
+
+        if self.style:
+            self.style.enable()
+
+        for child in self.drawables:
+            if isinstance(child, VG.Path):
+                child.draw(self.paint_mode)
+            else:
+                child.draw()
+
+        if self.style:
+            self.style.disable()
+        
+        if self.transform:
+            VG.load_matrix(mat)
+
+class TSpan(Text):
+    pass
+
+#TODO: Implement TRefs in a way that will not cause unintended write-back
+class TRef(TSpan):
+    pass
+    _attributes = TSpan._attributes.copy()
+    _attributes["href"] = desc.String("{http://www.w3.org/1999/xlink}href")
+    def init(self, *args, **kwargs):
+        id_table = kwargs["id_table"]
+        href = id_table[self.get("{http://www.w3.org/1999/xlink}href")[1:]]
+        self.text = href.text
+        TSpan.init(self, *args, **kwargs)
 
 class Gradient(SVGElement):
     linear = True
@@ -666,6 +837,20 @@ class Pattern(SVGElement):
                 self.pattern = href.pattern
         self.clip_pattern()
 
+    #TODO: Implement rendering stuff into images and whatnot when
+    #somebody implements EGL
+    def get_pattern(self):
+        pass
+
+    def clip_pattern(self):
+        pass
+
+    def build_paint(self, element):
+        paint = VG.PatternPaint(self.pattern, tiling_mode=VG_TILE_REPEAT)
+        paint.transform = self.transform
+
+        return paint
+
 
 def parse_svg(source, init=True):
     svg_tree_builder = ElementTree.TreeBuilder(SVGElementFactory)
@@ -682,15 +867,10 @@ def parse_svg(source, init=True):
     return tree
 
 
-style_properties = ["fill", "fill-opacity", "fill-rule",
-                    "stroke", "stroke-opacity", "stroke-width",
-                    "stroke-dasharray", "stroke-dashoffset",
-                    "stroke-linecap", "stroke-linejoin", "stroke-miterlimit"]
-
 def has_style(keys):
     if "style" in keys:
         return True
-    return any(key in style_properties for key in keys)
+    return bool(SVG_PROPERTY_SET.intersection(keys))
 
 style_pattern = re.compile(r"(\w+-?\w+)\s*:\s*([^;]+)(?:;|$)")
 to_px = desc.Length(None, units="px").fromstring
@@ -700,7 +880,7 @@ def to_style(element, attrs, do_stroke=False, do_fill=False):
     fill_opacity = stroke_opacity = opacity = 1.0
     
     for name, value in attrs:
-        name = name.lower().strip()
+        name = name.strip()
         value = value.strip()
         if name == "fill":
             if value == "none":
@@ -773,7 +953,7 @@ def to_style(element, attrs, do_stroke=False, do_fill=False):
 
     return style
 
-path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+)", re.IGNORECASE)
+path_pattern = re.compile(r"([MZLHVCSQTA])([^MZLHVCSQTA]+|$)", re.IGNORECASE)
 def to_commands(data):
     for command, args in path_pattern.findall(data):
         command = command.strip()
@@ -825,6 +1005,10 @@ def arg_count(command):
     else:
         raise ValueError("Unsupported command type % r" % command)
 
+def process_text(text):
+    #TODO: Handle entities and all that fun stuff.
+    return " ".join(s.strip() for s in text.strip().split("\n") if s.strip())
+
 SVG_PATH_COMMANDS = dict(M=VG_MOVE_TO_ABS,   m=VG_MOVE_TO_REL,
                          Z=VG_CLOSE_PATH,    z=VG_CLOSE_PATH,
                          L=VG_LINE_TO_ABS,   l=VG_LINE_TO_REL,
@@ -840,8 +1024,32 @@ SVG_ARC_COMMANDS = {(False, True):VG_SCCWARC_TO,
                     (True, True):VG_LCCWARC_TO,
                     (True, False):VG_LCWARC_TO}
 
-SVG_TAG_MAP = dict(svg=SVG, g=Group, path=Path, rect=Rect, text=Text,
+SVG_PROPERTY_SET = set(['alignment-baseline', 'dominant-baseline', 'baseline-shift',
+                        'clip', 'clip-path', 'clip-rule',
+                        'color', 'color-interpolation', 'color-interpolation-filters',
+                        'color-profile',
+                        'display', 'enable-background',
+                        'fill', 'fill-opacity', 'fill-rule',
+                        'filter', 'lighting-color', 'flood-color', 'flood-opacity',                        
+                        'font', 'font-family', 'font-size', 'font-size-adjust',
+                        'font-stretch', 'font-style', 'font-variant', 'font-weight',
+                        'direction', 'kerning', 'letter-spacing',
+                        'glyph-orientation-horizontal', 'glyph-orientation-vertical',
+                        'color-rendering', 'image-rendering', 'shape-rendering',
+                        'marker', 'marker-end',
+                        'mask',
+                        'opacity',
+                        'overflow',
+                        'cursor', 'pointer-events',
+                        'stop-color', 'stop-opacity',
+                        'stroke', 'stroke-dasharray', 'stroke-dashoffset',
+                        'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit',
+                        'stroke-opacity', 'stroke-width'])
+
+SVG_TAG_MAP = dict(svg=SVG, g=Group, path=Path, rect=Rect,
+                   text=Text, tspan=TSpan, tref=TRef,
                    ellipse=Ellipse, circle=Circle,
                    line=Line, polyline=PolyLine, polygon=Polygon,
-                   linearGradient=LinearGradient, radialGradient=RadialGradient)
+                   linearGradient=LinearGradient, radialGradient=RadialGradient,
+                   pattern=Pattern)
 
