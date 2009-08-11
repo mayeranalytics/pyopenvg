@@ -33,7 +33,19 @@ class ListOf(SVGDataType):
         SVGDataType.__init__(self, key, default)
         self.datatype = datatype
 
+    def load(self, obj):
+        data = obj.get(self.key, self.default)
+        if data is None:
+            return []
+        return self.fromstring(data)
+
+    def dump(self, obj, value):
+        if self.key in obj.keys() and value:
+            obj.set(self.key, self.tostring(value))
+
     def fromstring(self, data):
+        if not data.strip():
+            return []
         items = re.split(r"(?:,|\s+)", data.strip())
         return [self.datatype.fromstring(item) for item in items]
 
