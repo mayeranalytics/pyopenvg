@@ -1,0 +1,424 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Path Class &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="up" title="VG Module" href="VG.html" />
+    <link rel="next" title="Paint Classes" href="paint.html" />
+    <link rel="prev" title="Image Class" href="image.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="paint.html" title="Paint Classes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="image.html" title="Image Class"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" accesskey="U">VG Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="path-class">
+<h1>Path Class<a class="headerlink" href="#path-class" title="Permalink to this headline">¶</a></h1>
+<p>The Path class wraps a VGPath handle and provides the functionality needed to create, transform, and draw paths.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Path objects have a style attribute which can be used to automatically set the corresponding context parameters when drawing and then restore the old parameters.</p>
+</div>
+<dl class="class">
+<dt id="VG.Path">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">Path</tt><big>(</big><span class="optional">[</span><em>format=0</em>, <em>datatype=VG_PATH_DATATYPE_F</em>, <em>scale=1.0</em>, <em>bias=0</em>, <em>segment_hint=0</em>, <em>coord_hint=0</em>, <em>capabilities=VG_PATH_CAPABILITY_ALL</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path" title="Permalink to this definition">¶</a></dt>
+<dd><p>For the most part, there is no reason to pass the constructor any values besides the defaults.</p>
+<ul class="simple">
+<li>format corresponds to the path format used internally by OpenVG. 0 indicates the standard format currently.</li>
+<li>datatype is a constant indicating the datatype used to represent the path coordinates. Other options are VG_PATH_DATATYPE_S_8, VG_PATH_DATATYPE_S_16, and VG_PATH_DATATYPE_32. Certain kinds of paths (such as fonts) fit nicely in smaller datatypes.</li>
+<li>segment and bias are used together with the datatype to define the valid range of coordinates. A given coordinate v is mapped to v*scale + bias.</li>
+<li>segment_hint and coord_hint are hints to OpenVG telling it how much space it might need to allocate for a given path. Setting these might help performance a little, but probably won&#8217;t make a difference.</li>
+<li>capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you&#8217;ll want to stick with VG_PATH_CAPABILITY_ALL.</li>
+</ul>
+<dl class="attribute">
+<dt id="VG.Path.format">
+<tt class="descname">format</tt><a class="headerlink" href="#VG.Path.format" title="Permalink to this definition">¶</a></dt>
+<dd>The path format used by OpenVG. Normally this is 0.</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Path.datatype">
+<tt class="descname">datatype</tt><a class="headerlink" href="#VG.Path.datatype" title="Permalink to this definition">¶</a></dt>
+<dd>The datatype that path coordinates are stored as. Usually this will be VG_PATH_DATATYPE_F.</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Path.scale">
+<tt class="descname">scale</tt><a class="headerlink" href="#VG.Path.scale" title="Permalink to this definition">¶</a></dt>
+<dd>The scaling factor applied to all incoming path coordinates</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Path.bias">
+<tt class="descname">bias</tt><a class="headerlink" href="#VG.Path.bias" title="Permalink to this definition">¶</a></dt>
+<dd>The bias (offset) applied to all incoming path coordinates</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Path.num_segments">
+<tt class="descname">num_segments</tt><a class="headerlink" href="#VG.Path.num_segments" title="Permalink to this definition">¶</a></dt>
+<dd>The number of segments in the path</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Path.num_coords">
+<tt class="descname">num_coords</tt><a class="headerlink" href="#VG.Path.num_coords" title="Permalink to this definition">¶</a></dt>
+<dd>The number of coordinates that define the path</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Path.capabilities">
+<tt class="descname">capabilities</tt><a class="headerlink" href="#VG.Path.capabilities" title="Permalink to this definition">¶</a></dt>
+<dd><p>The bitwise OR of the capabilities supported by the path. Normally VG_PATH_CAPABILITY_ALL.
+Capabilities can be removed by using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">path</span><span class="o">.</span><span class="n">capabilities</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="n">capability1</span> <span class="o">|</span> <span class="n">capability2</span> <span class="o">|</span> <span class="n">capability3</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.clear">
+<tt class="descname">clear</tt><big>(</big><span class="optional">[</span><em>capabilities</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path.clear" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>capabilities</em> &#8211; the bitwise OR of capabilities that the path should have. Passing None or omitting this argument defaults to the current capabilities.</td>
+</tr>
+</tbody>
+</table>
+<p>Empties the path, removing all segments. Additionally, the handle will refer to a path with the specified capabilities and the same datatype and format.</p>
+<p>This may be faster than creating and destroying many short-lived paths of the same format.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.append">
+<tt class="descname">append</tt><big>(</big><em>segment</em><big>)</big><a class="headerlink" href="#VG.Path.append" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>segment</em> &#8211; a tuple of the form (command, data) representing a single OpenVG path command and its corresponding control points</td>
+</tr>
+</tbody>
+</table>
+<p>Appends a single path segment to the path.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">path</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Path</span><span class="p">()</span>
+<span class="n">command</span> <span class="o">=</span> <span class="n">VG_MOVE_TO_ABS</span>
+<span class="n">dest</span> <span class="o">=</span> <span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)</span>
+<span class="n">segment</span> <span class="o">=</span> <span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+<span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.extend">
+<tt class="descname">extend</tt><big>(</big><em>segments</em><big>)</big><a class="headerlink" href="#VG.Path.extend" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>segments</em> &#8211; either a list of segments or a path</td>
+</tr>
+</tbody>
+</table>
+<p>Adds all of the segments to the end of the path.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">path</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Path</span><span class="p">()</span>
+<span class="n">segments</span> <span class="o">=</span> <span class="p">[(</span><span class="n">VG_MOVE_TO_ABS</span><span class="p">,</span> <span class="p">(</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO_REL</span><span class="p">,</span> <span class="p">(</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO_REL</span><span class="p">,</span> <span class="p">(</span> <span class="mf">20.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO_REL</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_CLOSE_PATH</span><span class="p">,</span> <span class="p">())]</span>
+<span class="n">path</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.modify">
+<tt class="descname">modify</tt><big>(</big><em>index</em>, <em>data</em><big>)</big><a class="headerlink" href="#VG.Path.modify" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><em>index</em> &#8211; the index of the first command to be modified</li>
+<li><em>data</em> &#8211; a list of tuples containing the new coordinates</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Replaces the segment data starting from the index-th segment on.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Create a path, then translate it and grow it</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Path</span><span class="p">()</span>
+<span class="n">segments</span> <span class="o">=</span> <span class="p">[(</span><span class="n">VG_MOVE_TO_ABS</span><span class="p">,</span> <span class="p">(</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO_REL</span><span class="p">,</span> <span class="p">(</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO_REL</span><span class="p">,</span> <span class="p">(</span> <span class="mf">20.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO_REL</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mf">20.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">)),</span>
+            <span class="p">(</span><span class="n">VG_CLOSE_PATH</span><span class="p">,</span> <span class="p">())]</span>
+<span class="n">path</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+
+<span class="c">#This changes the initial VG_MOVE_TO_ABS to 100.0,100.0 instead of 10.0,10.0</span>
+<span class="n">path</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="p">[(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)])</span>
+<span class="c">#This changes the VG_LINE_TO_RELs to move further</span>
+<span class="n">path</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span> <span class="p">[(</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">),</span>
+                <span class="p">(</span> <span class="mf">50.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">50.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">)])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.transform">
+<tt class="descname">transform</tt><big>(</big><span class="optional">[</span><em>dest=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path.transform" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>dest</em> &#8211; the path to which the transformed version of the path will be appended.</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the destination path or a new path, if dest was None</td>
+</tr>
+</tbody>
+</table>
+<p>Appends a version of the path with the current path matrix transform applied to the destination path.
+This does <em>not</em> modify the original. However, if dest is None, an empty path of identical format and capabilities will be used as the destination and returned.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Translate to the center, then rotate 60 degrees, then create a copy of the path with</span>
+<span class="c">#this transformation applied</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="mf">320</span><span class="p">,</span> <span class="mf">240</span><span class="p">)</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="mf">60</span><span class="p">)</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">transform</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.get_point">
+<tt class="descname">get_point</tt><big>(</big><em>distance</em><span class="optional">[</span>, <em>start=0</em><span class="optional">[</span>, <em>num_segments=None</em><span class="optional">]</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path.get_point" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><em>distance</em> &#8211; the distance along the path in path units.</li>
+<li><em>start</em> &#8211; the index of the segment to start counting from</li>
+<li><em>num_segments</em> &#8211; TODO</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the point and its tangent vector</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Calculates and returns the point and its tangent vector that one would reach by:</p>
+<blockquote>
+<ul class="simple">
+<li>starting at the end point of the start-th path segment</li>
+<li>travelling the specified distance along the specified subpath</li>
+<li>the subpath is defined by the start segment up to the next num_segments (or the end of the path if None)</li>
+</ul>
+</blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.length">
+<tt class="descname">length</tt><big>(</big><span class="optional">[</span><em>start=0</em><span class="optional">[</span>, <em>num_segments=None</em><span class="optional">]</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path.length" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><em>start</em> &#8211; the index of the segment to start counting from</li>
+<li><em>num_segments</em> &#8211; how many segments to count (or all of them if None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the length in path units of the subpath starting at the start-th index and ending num_segments later</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.draw">
+<tt class="descname">draw</tt><big>(</big><em>paint_mode</em><span class="optional">[</span>, <em>style=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path.draw" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><em>paint_mode</em> &#8211; the bitwise OR of VG_FILL_PATH and/or VG_STROKE_PATH.
+If paint_modes is VG_FILL_PATH, only the fill will be drawn. If paint_modes is VG_STROKE_PATH then only the stroke will be drawn. If paint_modes is VG_FILL_PATH | VG_STROKE_PATH, then both will be drawn.</li>
+<li><em>style</em> &#8211; an optional argument, which if supplied provides the style information that OpenVG will use to render the path. This is combined with the path&#8217;s style attribute if it exists.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Draws the path to the screen according to the paint mode.</p>
+</dd></dl>
+
+<p>The following methods simply append the corresponding segment command to the path</p>
+<dl class="method">
+<dt id="VG.Path.move_to">
+<tt class="descname">move_to</tt><big>(</big><em>p</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.move_to" title="Permalink to this definition">¶</a></dt>
+<dd>moves the path to point p</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.line_to">
+<tt class="descname">line_to</tt><big>(</big><em>p</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.line_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a line to point p</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.hline_to">
+<tt class="descname">hline_to</tt><big>(</big><em>x</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.hline_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a horizontal line to x</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.vline_to">
+<tt class="descname">vline_to</tt><big>(</big><em>y</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.vline_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a vertical line to y</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.quad_to">
+<tt class="descname">quad_to</tt><big>(</big><em>p1</em>, <em>p2</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.quad_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a quadratic Bezier curve to p2 with control point p1</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.squad_to">
+<tt class="descname">squad_to</tt><big>(</big><em>p2</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.squad_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a smooth quadratic Bezier curve to p2 using the reflection of the previous control point across the previous end point as the control point</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.cubic_to">
+<tt class="descname">cubic_to</tt><big>(</big><em>p1</em>, <em>p2</em>, <em>p3</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.cubic_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a cubic Bezier curve to p3 with control points p1 and p2</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.scubic_to">
+<tt class="descname">scubic_to</tt><big>(</big><em>p2</em>, <em>p3</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.scubic_to" title="Permalink to this definition">¶</a></dt>
+<dd>adds a smooth cubic Bezier curve to p3 with control point p2 and the reflection of the previous control point across the previous end point.</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.arc_to">
+<tt class="descname">arc_to</tt><big>(</big><em>p1</em>, <em>rh</em>, <em>rv</em>, <em>rot</em>, <em>major</em>, <em>CCW</em>, <em>rel=False</em><big>)</big><a class="headerlink" href="#VG.Path.arc_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds an elliptical arc passing through p1. major determines if it is a large or small arc. See section <em>8.4 Elliptical Arcs</em> of the OpenVG specification for more details.</p>
+<p>
+<span class="versionmodified">Changed in version 0.0.4.</span></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Path.close" title="Permalink to this definition">¶</a></dt>
+<dd>closes the current subpath (a line will be drawn to the beginning of the subpath if stroked)</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.interpolate">
+<tt class="descclassname">VG.</tt><tt class="descname">interpolate</tt><big>(</big><em>start</em>, <em>end</em>, <em>dest</em>, <em>amount</em><big>)</big><a class="headerlink" href="#VG.interpolate" title="Permalink to this definition">¶</a></dt>
+<dd>Appends the result of interpolating or extrapolating (if amount is outside of [0.0,1.0]) amount between start and end. If dest is None, a new path will be created with the interpolated path segments appended. In order for two paths to be interpolated, they must have the exact same series of commands.
+See the <a class="reference external" href="http://code.google.com/p/pyopenvg/source/browse/trunk/examples/interpolate.py">Interpolation example</a> to see an example of how to do interpolation.</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="image.html"
+                                  title="previous chapter">Image Class</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="paint.html"
+                                  title="next chapter">Paint Classes</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/path.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="paint.html" title="Paint Classes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="image.html" title="Image Class"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" >VG Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

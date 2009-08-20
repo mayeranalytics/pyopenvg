@@ -1,0 +1,86 @@
+..  module:: font
+
+
+===========
+Font Module
+===========
+Because OpenVG 1.0 does not specify any methods for font rendering, it is necessary to use third-party libraries to handle text. OpenVG.font uses a minimal wrapper around FreeType2 (internally called FT, if you really want to get at it) to read in the outline data for outline fonts such as TrueType. The glyph data is read and used to create short paths for each glyph which are then placed according to individual font metrics and kerning rules to render a block of text as a path.
+
+This is not as fast as it would be to simply use FreeType to render the text to a bitmap and then draw that to the screen directly, but allows for more flexibility (And I have not yet gotten around to writing the wrappers around the glyph rendering part of FreeType).
+
+A short example::
+
+    import OpenVG.font
+    vera = OpenVG.font.Font("data/fonts/Vera.ttf", 14)
+
+    message = vera.build_path("Hello, world!")
+    message.draw(VG_FILL_PATH)
+
+Font Class
+==========
+
+The font module exposes a single class that has the functionality that you need to render text: the Font class.
+
+..  class:: Font(path, size[, dpi=72[, preload=True]])
+
+    ..  attribute:: path
+
+        the path which was passed to the constructor to load the font from
+
+    ..  attribute:: size
+
+        the size of the font in points (1/72 of an inch)
+
+    ..  attribute:: face
+
+        the internal FreeType face object wrapper
+
+    ..  attribute:: glyph_table
+
+        a dictionary mapping character codes (ord(s)) to glyph wrappers
+
+    ..  attribute:: path_table
+
+        a dictionary mapping glyph indices to paths
+        
+    ..  method:: build_path(text[, horizontal=True[, do_kerning=True]])
+
+        :param text: the text to be rendered
+        :param horizontal: whether the text should be rendered horizontally or vertically. Defaults to horizontally.
+        :param do_kerning: whether kerning should be applied to the text
+        :returns: a new path containing the text
+
+        ..  note::
+
+            Certain combinations of kerning and large text size may lead to glyph subpaths overlapping, which will cause visual glitches where the even-odd fill-rule applies.
+
+    ..  method:: compile_paths()
+
+        load all glyphs immediately
+
+    ..  method:: get_path_for_char(char)
+
+        loads (if necessary) the appropriate glyph for char and returns the associated path
+
+
+Loading fonts
+=============
+
+
+..  function:: load_font(name, size[, dpi=72[, preload=True]])
+
+    :param name: the name of the font-face to load
+    :param size: the size in points of the font
+    :param dpi: the resolution of the font
+    :param preload: whether to immediately load all glyphs or not
+
+    :returns: a :class:`Font` object matching the name and size specified, if found
+    :raises: :exc:`IOError` when no matching font is found
+
+    Attempts to locate and load the specified font by calling registered font-finding functions.
+    No font-finding functions are provided by default.
+
+..  function:: register_font_finder(func)
+
+    :param func: a font-finding function; it should take a single argument name which specifies the name of the font or font-family and returns either a single string containing the path to the font or a list of paths to possible fonts.
+

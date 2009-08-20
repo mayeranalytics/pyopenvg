@@ -1,0 +1,330 @@
+..  currentmodule:: VG
+
+========
+Contexts
+========
+..  class:: Context(dimensions)
+
+    Context objects represent EGL contexts, which store settings pertaining
+    to transforming, filtering, stroking, and filling operations as well as
+    details of the drawing surface. 
+
+    With ShivaVG and AmanithVG, there is no means to specify an EGL context
+    to bind to; instead they provide their own internal context-like objects.
+    Accordingly, at this moment, there can only be one context at a time. The
+    Context class is a singleton.
+
+    Context objects must be created before any OpenVG functions or classes can
+    be instantiated, except for :class:`Style` objects. A context can be instantiated
+    only after there is an OpenGL surface for OpenVG to bind to.
+
+    All functions of the OpenVG.VG module are mirrored as staticmethods on context
+    objects.
+
+    ..  method:: resize(dimensions)
+
+        Resizes the OpenVG context
+
+    ..  method:: destroy()
+
+        Destroys the OpenVG context
+
+
+..  function:: create_context(dimensions)
+
+    Creates and returns a context of the specified dimensions
+    It is not necessary to hold a reference to the created context.
+
+..  function:: resize_context(dimensions)
+
+    Resizes the current context
+
+..  function:: destroy_context()
+
+    Destroys the current context; this will automatically be done when
+    the program terminates and the context object is garbage-collected
+
+
+Getting/Setting Parameters
+==========================
+
+Context parameters (such as stroke width, dashing, scissoring, etc) are
+accessed through the :func:`get` and :func:`set` functions. These functions
+abstract away the details of remembering whether the parameter is a float or
+an int or how many parameters it's supposed to return.
+
+..  note::
+
+    :func:`get` and :func:`set` are *not* included in ``__all__``, so they cannot
+    be imported using ``from OpenVG.VG import *``
+
+
+..  function:: get(param_type)
+
+    Given a param from the VGParamType enumeration, this returns the corresponding
+    context parameter. See the `specification and header file <http://khronos.org/openvg/>`_
+    for a full list of context parameters, their behaviors, and default values.
+
+    Usage::
+
+        color = VG.get(VG_CLEAR_COLOR)
+
+..  function:: set(param_type, value) 
+
+    Given a param from the VGParamType enumeration, this sets the corresponding
+    context parameter to value.
+
+    Usage::
+
+        VG.set(VG_STROKE_DASH_PATTERN, (5, 10))
+
+Getting/Setting Paint
+---------------------
+In OpenVG, filling and stroking is abstracted into Paint objects, which represent
+a means of coloring a surface. Each paint object stores the information needed to
+paint a surface (color, gradient stops, etc). A paint mode can be associated with
+stroking, filling, or both.
+
+..  function:: get_paint(mode)
+
+    :param mode: the paint mode requested (which must be either :const:`VG_STROKE_PATH` or :const:`VG_FILL_PATH`)
+    :returns: the current paint or None if no paint has been set for that mode.
+
+..  function:: set_paint(paint, mode)
+
+    Sets the paint for mode (which must be :const:`VG_STROKE_PATH`, :const:`VG_FILL_PATH`,
+    or the result of bitwise ORing them together) to paint. If paint is None,
+    then the default paint is set (opaque black).
+
+Querying OpenVG properties
+--------------------------
+OpenVG exposes implementation-specific information such as the vendor, version,
+renderer, and extensions through the vgGetString function.
+
+..  function:: get_string(string_id)
+
+    :param string_id: an enum corresponding to the string requested. Valid values include :const:`VG_VENDOR`, :const:`VG_RENDERER`, :const:`VG_VERSION`, and :const:`VG_EXTENSIONS`. This may not be called before the context has been created.
+
+    :returns: the corresponding string information. 
+
+
+
+Graphics Functions
+==================
+
+..  function:: clear(corner, dimensions[, color=None])
+
+    Clears the area from corner (the bottom left corner) with the dimensions
+    supplied. If color is not None, then that RGBA 4-tuple is used as the clear
+    color. Otherwise the screen is cleared using :term:`VG_CLEAR_COLOR`.
+
+..  function:: flush()
+
+    Tells OpenVG to hurry up and complete all pending drawing requests, but does
+    not guarantee that all pending requests will be completed immediately
+
+..  function:: finish()
+
+    Tells OpenVG to block until all pending drawing requests are complete.
+
+Transformations
+===============
+
+Matrix Manipulation
+-------------------
+
+The matrix mode can be set using::
+
+    VG.set(VG_MATRIX_MODE, mode)
+
+where mode is from
+
+..  code-block:: c
+
+    typedef enum {
+        VG_MATRIX_PATH_USER_TO_SURFACE              = 0x1400,
+        VG_MATRIX_IMAGE_USER_TO_SURFACE             = 0x1401,
+        VG_MATRIX_FILL_PAINT_TO_USER                = 0x1402,
+        VG_MATRIX_STROKE_PAINT_TO_USER              = 0x1403
+    } VGMatrixMode;
+
+
+..  function:: get_matrix()
+
+    :returns: the flattened 3x3 transformation matrix for the current matrix mode.
+
+..  function:: load_matrix(M)
+
+    :param M: a 9-element tuple corresponding to a transformation matrix (affine
+        matrices must be padded.)
+
+    loads the matrix M as the matrix for the current matrix mode.                                         
+
+..  function:: load_identity()
+
+    loads the identity matrix as the transformation matrix for the current matrix mode.
+
+..  function:: mult_matrix(M)
+
+    multiplies the current transformation matrix by M.
+
+General Transformation Functions
+--------------------------------
+
+..  function:: translate(tx, ty)
+
+    applies a translation by (tx, ty) pixels to the current transform matrix
+
+..  function:: scale(sx, sy)
+
+    applies a scale by sx in the x direction and sy in the y direction to the
+    current transform matrix
+
+..  function:: rotate(angle)
+
+    :param angle: the angle in degrees to rotate by
+
+    applies a rotation by angle degrees to the current transform matrix
+
+..  function:: shear(shx, shy)
+
+    applies a shear by shx and shy to the current transform matrix
+
+
+Context Parameters
+==================
+
+..  glossary::
+
+    :const:`VG_MATRIX_MODE`
+        Determines which transformation matrix to apply transformations to.
+    
+    :const:`VG_FILL_RULE`
+        Determines how paths are filled - either :const:`VG_EVEN_ODD` or :const:`VG_NON_ZERO`
+    
+    :const:`VG_IMAGE_QUALITY`
+        Determines how images should be sampled and rendered - one of:
+
+            * :const:`VG_IMAGE_QUALITY_NONANTIALIASED`
+            * :const:`VG_IMAGE_QUALITY_FASTER`
+            * :const:`VG_IMAGE_QUALITY_BETTER`
+    
+    :const:`VG_RENDERING_QUALITY`
+        Determines how OpenVG should render everything overall.
+
+    :const:`VG_BLEND_MODE`
+        Determines how paths, images, and paint is composited - one of:
+            
+            * :const:`VG_BLEND_SRC`
+            * :const:`VG_BLEND_SRC_OVER`
+            * :const:`VG_BLEND_DST_OVER`
+            * :const:`VG_BLEND_SRC_IN`
+            * :const:`VG_BLEND_DST_IN`
+            * :const:`VG_BLEND_MULTIPLY`
+            * :const:`VG_BLEND_SCREEN`
+            * :const:`VG_BLEND_DARKEN`
+            * :const:`VG_BLEND_LIGHTEN`
+            * :const:`VG_BLEND_ADDITIVE`
+
+    :const:`VG_IMAGE_MODE`
+        Determines how to draw image data to the screen - one of:
+            
+            * :const:`VG_DRAW_IMAGE_NORMAL`
+            * :const:`VG_DRAW_IMAGE_MULTIPLY`
+            * :const:`VG_DRAW_IMAGE_STENCIL`
+
+    :const:`VG_SCISSOR_RECTS`
+        A list of integers corresponding to scissoring rectangles in the
+        form [x1, y1, width1, height1, ... xn, yn, widthn, heightn]
+
+    :const:`VG_STROKE_LINE_WIDTH`
+        The stroke-width in pixels for all paths being drawn
+
+    :const:`VG_STROKE_CAP_STYLE`
+        The cap-style for all paths being drawn - one of:
+            
+            * :const:`VG_CAP_BUTT`
+            * :const:`VG_CAP_ROUND`
+            * :const:`VG_CAP_SQUARE`
+
+    :const:`VG_STROKE_JOIN_STYLE`
+        The join-style for all paths being drawn - one of:
+            
+            * :const:`VG_JOIN_MITER`
+            * :const:`VG_JOIN_ROUND`
+            * :const:`VG_JOIN_BEVEL`
+
+    :const:`VG_STROKE_MITER_LIMIT`
+        The maximum length in pixels of a miter-joint for all paths being drawn
+        with miter-joints.
+
+    :const:`VG_STROKE_DASH_PATTERN`
+        TODO
+
+    :const:`VG_STROKE_DASH_PHASE`
+        TODO
+
+    :const:`VG_STROKE_DASH_PHASE_RESET`
+        TODO
+
+    :const:`VG_TILE_FILL_COLOR`
+        TODO
+
+    :const:`VG_CLEAR_COLOR`
+        The color used to fill when :func:`clear` is called or :func:`Image.clear`
+        is called.
+
+    :const:`VG_MASKING`
+        TODO
+
+    :const:`VG_SCISSORING`
+        TODO
+
+    :const:`VG_PIXEL_LAYOUT`
+        TODO
+
+    :const:`VG_SCREEN_LAYOUT`
+        TODO
+
+    :const:`VG_FILTER_FORMAT_LINEAR`
+        TODO
+
+    :const:`VG_FILTER_FORMAT_PREMULTIPLIED`
+        TODO
+    
+    :const:`VG_FILTER_CHANNEL_MASK`
+        TODO
+    
+    :const:`VG_MAX_SCISSOR_RECTS`
+        TODO
+    
+    :const:`VG_MAX_DASH_COUNT`
+        TODO
+    
+    :const:`VG_MAX_KERNEL_SIZE`
+        TODO
+    
+    :const:`VG_MAX_SEPARABLE_KERNEL_SIZE`
+        TODO
+    
+    :const:`VG_MAX_COLOR_RAMP_STOPS`
+        TODO
+    
+    :const:`VG_MAX_IMAGE_WIDTH`
+        TODO
+
+    :const:`VG_MAX_IMAGE_HEIGHT`
+        TODO
+    
+    :const:`VG_MAX_IMAGE_PIXELS`
+        TODO
+    
+    :const:`VG_MAX_IMAGE_BYTES`
+        TODO
+
+    :const:`VG_MAX_FLOAT`
+        TODO
+
+    :const:`VG_MAX_GAUSSIAN_STD_DEVIATION`
+        TODO
+

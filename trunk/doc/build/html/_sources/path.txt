@@ -1,0 +1,212 @@
+..  currentmodule:: VG
+
+==========
+Path Class
+==========
+The Path class wraps a VGPath handle and provides the functionality needed to create, transform, and draw paths.
+
+..  note:: Path objects have a style attribute which can be used to automatically set the corresponding context parameters when drawing and then restore the old parameters.
+
+
+..  class:: Path([format=0, datatype=VG_PATH_DATATYPE_F, scale=1.0, bias=0, segment_hint=0, coord_hint=0, capabilities=VG_PATH_CAPABILITY_ALL])
+
+    For the most part, there is no reason to pass the constructor any values besides the defaults. 
+
+    * format corresponds to the path format used internally by OpenVG. 0 indicates the standard format currently.
+    * datatype is a constant indicating the datatype used to represent the path coordinates. Other options are VG_PATH_DATATYPE_S_8, VG_PATH_DATATYPE_S_16, and VG_PATH_DATATYPE_32. Certain kinds of paths (such as fonts) fit nicely in smaller datatypes.
+    * segment and bias are used together with the datatype to define the valid range of coordinates. A given coordinate v is mapped to v*scale + bias.
+    * segment_hint and coord_hint are hints to OpenVG telling it how much space it might need to allocate for a given path. Setting these might help performance a little, but probably won't make a difference.
+    * capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you'll want to stick with VG_PATH_CAPABILITY_ALL.
+
+    ..  attribute:: format
+    
+        The path format used by OpenVG. Normally this is 0.
+
+    ..  attribute:: datatype
+    
+        The datatype that path coordinates are stored as. Usually this will be VG_PATH_DATATYPE_F.
+
+    ..  attribute:: scale
+    
+        The scaling factor applied to all incoming path coordinates
+
+    ..  attribute:: bias
+    
+        The bias (offset) applied to all incoming path coordinates
+
+    ..  attribute:: num_segments
+    
+        The number of segments in the path
+
+    ..  attribute:: num_coords
+    
+        The number of coordinates that define the path
+
+    ..  attribute:: capabilities
+    
+        The bitwise OR of the capabilities supported by the path. Normally VG_PATH_CAPABILITY_ALL.
+        Capabilities can be removed by using::
+
+            path.capabilities &= ~(capability1 | capability2 | capability3)
+
+
+    ..  method:: clear([capabilities])
+    
+        :param capabilities: the bitwise OR of capabilities that the path should have. Passing None or omitting this argument defaults to the current capabilities.
+
+        Empties the path, removing all segments. Additionally, the handle will refer to a path with the specified capabilities and the same datatype and format.
+
+        This may be faster than creating and destroying many short-lived paths of the same format.
+
+    ..  method:: append(segment)
+    
+        :param segment: a tuple of the form (command, data) representing a single OpenVG path command and its corresponding control points
+
+        Appends a single path segment to the path.
+
+        Usage::
+
+            path = VG.Path()
+            command = VG_MOVE_TO_ABS
+            dest = (10.0, 10.0)
+            segment = (command, dest)
+            path.append(segment)
+
+    ..  method:: extend(segments)
+    
+        :param segments: either a list of segments or a path
+
+        Adds all of the segments to the end of the path.
+
+        Usage::
+            
+            path = VG.Path()
+            segments = [(VG_MOVE_TO_ABS, ( 10.0, 10.0)),
+                        (VG_LINE_TO_REL, (  0.0, 20.0)),
+                        (VG_LINE_TO_REL, ( 20.0,  0.0)),
+                        (VG_LINE_TO_REL, (-10.0,  0.0)),
+                        (VG_CLOSE_PATH, ())]
+            path.extend(segments)
+
+    ..  method:: modify(index, data)
+    
+        :param index: the index of the first command to be modified
+        :param data: a list of tuples containing the new coordinates
+
+        Replaces the segment data starting from the index-th segment on.
+
+        Usage::
+            
+            #Create a path, then translate it and grow it
+            path = VG.Path()
+            segments = [(VG_MOVE_TO_ABS, ( 10.0, 10.0)),
+                        (VG_LINE_TO_REL, (  0.0, 20.0)),
+                        (VG_LINE_TO_REL, ( 20.0,  0.0)),
+                        (VG_LINE_TO_REL, (-20.0,  0.0)),
+                        (VG_CLOSE_PATH, ())]
+            path.extend(segments)
+
+            #This changes the initial VG_MOVE_TO_ABS to 100.0,100.0 instead of 10.0,10.0
+            path.modify(0, [(100.0, 100.0)])
+            #This changes the VG_LINE_TO_RELs to move further
+            path.modify(1, [(  0.0, 50.0),
+                            ( 50.0,  0.0),
+                            (-50.0,  0.0)])
+            
+    ..  method:: transform([dest=None])
+    
+        :param dest: the path to which the transformed version of the path will be appended.
+        :returns: the destination path or a new path, if dest was None
+
+        Appends a version of the path with the current path matrix transform applied to the destination path.
+        This does *not* modify the original. However, if dest is None, an empty path of identical format and capabilities will be used as the destination and returned.
+
+        Usage::
+
+            #Translate to the center, then rotate 60 degrees, then create a copy of the path with
+            #this transformation applied
+            VG.translate(320, 240)
+            VG.rotate(60)
+            path = path.transform()
+
+    ..  method:: get_point(distance[, start=0[, num_segments=None]])
+
+        :param distance: the distance along the path in path units.
+        :param start: the index of the segment to start counting from
+        :param num_segments: TODO
+
+        :returns: the point and its tangent vector
+
+        Calculates and returns the point and its tangent vector that one would reach by:
+
+            * starting at the end point of the start-th path segment
+            * travelling the specified distance along the specified subpath
+            * the subpath is defined by the start segment up to the next num_segments (or the end of the path if None)
+
+    ..  method:: length([start=0[,num_segments=None]])
+
+        :param start: the index of the segment to start counting from
+        :param num_segments: how many segments to count (or all of them if None)
+
+        :returns: the length in path units of the subpath starting at the start-th index and ending num_segments later
+
+    ..  method:: draw(paint_mode[, style=None])
+
+        :param paint_mode: the bitwise OR of VG_FILL_PATH and/or VG_STROKE_PATH.
+            If paint_modes is VG_FILL_PATH, only the fill will be drawn. If paint_modes is VG_STROKE_PATH then only the stroke will be drawn. If paint_modes is VG_FILL_PATH | VG_STROKE_PATH, then both will be drawn.
+        :param style: an optional argument, which if supplied provides the style information that OpenVG will use to render the path. This is combined with the path's style attribute if it exists.
+
+        Draws the path to the screen according to the paint mode.
+
+    The following methods simply append the corresponding segment command to the path
+
+    ..  method:: move_to(p, rel=False)
+
+        moves the path to point p
+
+    ..  method:: line_to(p, rel=False)
+
+        adds a line to point p
+
+    ..  method:: hline_to(x, rel=False)
+
+        adds a horizontal line to x
+
+    ..  method:: vline_to(y, rel=False)
+
+        adds a vertical line to y
+
+    ..  method:: quad_to(p1, p2, rel=False)
+
+        adds a quadratic Bezier curve to p2 with control point p1
+
+    ..  method:: squad_to(p2, rel=False)
+
+        adds a smooth quadratic Bezier curve to p2 using the reflection of the previous control point across the previous end point as the control point
+
+    ..  method:: cubic_to(p1, p2, p3, rel=False)
+
+        adds a cubic Bezier curve to p3 with control points p1 and p2
+
+    ..  method:: scubic_to(p2, p3, rel=False)
+
+        adds a smooth cubic Bezier curve to p3 with control point p2 and the reflection of the previous control point across the previous end point.
+
+    ..  method:: arc_to(p1, rh, rv, rot, major, CCW, rel=False)
+
+        adds an elliptical arc passing through p1. major determines if it is a large or small arc. See section *8.4 Elliptical Arcs* of the OpenVG specification for more details.
+
+        ..  versionchanged:: 0.0.4
+
+            The CW argument has been switched to CCW.
+
+    ..  method:: close()
+
+        closes the current subpath (a line will be drawn to the beginning of the subpath if stroked)
+
+
+..  function:: interpolate(start, end, dest, amount)
+
+    Appends the result of interpolating or extrapolating (if amount is outside of [0.0,1.0]) amount between start and end. If dest is None, a new path will be created with the interpolated path segments appended. In order for two paths to be interpolated, they must have the exact same series of commands.
+    See the `Interpolation example <http://code.google.com/p/pyopenvg/source/browse/trunk/examples/interpolate.py>`_ to see an example of how to do interpolation.
+

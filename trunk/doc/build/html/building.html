@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Building PyOpenVG &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="next" title="VG Module" href="VG.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="VG.html" title="VG Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="building-pyopenvg">
+<h1>Building PyOpenVG<a class="headerlink" href="#building-pyopenvg" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>PyOpenVG has three dependencies:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/">Pyrex</a>, which the extension modules depend upon.</li>
+<li><a class="reference external" href="http://sourceforge.net/projects/shivavg">An OpenVG implementation, your choice of `ShivaVG</a> (LGPL) or <a class="reference external" href="http://www.amanith.org/project.html">AmanithVG</a> (commercial, free evaluation version)</li>
+<li><a class="reference external" href="http://freetype.sourceforge.net/freetype2/index.html">Freetype2</a> which is used to read in font outline data.</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="instructions">
+<h2>Instructions<a class="headerlink" href="#instructions" title="Permalink to this headline">¶</a></h2>
+<p>Installing Pyrex itself is fairly straightforward. You can either download it from directly from the Pyrex homepage and run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt> or you can use the package manager of your choice.</p>
+<p>Building libOpenVG with ShivaVG is straightforward if you are building on Linux with the GNU toolchain or on Windows with Visual Studio 2005 (Express) or newer. Unfortunately, building with MSYS and MinGW doesn&#8217;t seem to work.</p>
+<p>libAmanith binaries are available on an evaluation basis for Win32/x86 from [<a class="reference external" href="http://www.amanith.org/download.html">http://www.amanith.org/download.html</a> the AmanithVG download page]</p>
+<p>FreeType2 binaries can be acquired from <a class="reference external" href="http://freetype.sourceforge.net/download.html">the FreeType download page</a> or you can build it yourself from source, if you feel so inclined.
+Users of 64-bit systems may have to tweak some of the DEFs in <tt class="docutils literal"><span class="pre">freetype.pxi</span></tt> to reflect the appropriate type sizes.</p>
+<p>To build PyOpenVG, you need to alter the paths in the <tt class="docutils literal"><span class="pre">setup.cfg</span></tt>. Specifically, the setup script needs to know where to find the headers and binaries for ShivaVG/AmanithVG and !FreeType. If you&#8217;ve already checked out/downloaded the dependencies and compiled them, the easiest way is to just set <tt class="docutils literal"><span class="pre">src-root</span></tt> to the proper directory.</p>
+<p>For example, this is the setup.cfg that I use to build PyOpenVG:</p>
+<div class="highlight-python"><pre>[build]
+compiler=mingw32
+
+[build_amanith]
+disabled=0
+src_root=C:\dropbox\amanithvg
+pyrex_include_dirs=include
+library_dirs=lib
+
+[build_shiva]
+disabled=0
+src_root=C:\dropbox\ShivaVG-0.2.1
+pyrex_include_dirs=include
+library_dirs=lib
+
+[build_freetype]
+disabled=0
+src_root=C:\Program Files\GnuWin32
+pyrex_include_dirs=include
+include_dirs=include</pre>
+</div>
+<p>If your directory structure doesn&#8217;t exactly mirror the one that the script assumes, then you can always dump the relevant libraries in the <tt class="docutils literal"><span class="pre">lib</span></tt> directory and add your own paths to the include list.</p>
+<p>From here on, running <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build</span></tt> should work correctly and with luck you should have a compiled copy of PyOpenVG.</p>
+<p>The examples in the example directories should help clarify the details of getting PyOpenVG working with <a class="reference external" href="http://pyglet.org/">Pyglet</a> and <a class="reference external" href="http://www.pygame.org/">Pygame</a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Building PyOpenVG</a><ul>
+<li><a class="reference external" href="#dependencies">Dependencies</a></li>
+<li><a class="reference external" href="#instructions">Instructions</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="introduction.html"
+                                  title="previous chapter">Introduction</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="VG.html"
+                                  title="next chapter">VG Module</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/building.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="VG.html" title="VG Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>
