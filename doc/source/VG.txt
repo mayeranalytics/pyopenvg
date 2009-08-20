@@ -1,0 +1,15 @@
+..  module:: VG
+
+=========
+VG Module
+=========
+
+..  toctree::
+
+    :maxdepth: 1
+
+    context
+    style
+    image
+    path
+    paint
