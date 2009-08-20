@@ -1,0 +1,12 @@
+..  module:: svg
+
+===
+SVG
+===
+
+..  function:: parse_svg(source[, init=True])
+
+    :param source: the path or file of the svg data
+    :param init: whether or not to turn the parsed tree into a drawable structure immediately
+
+    :returns: an SVGElementTree

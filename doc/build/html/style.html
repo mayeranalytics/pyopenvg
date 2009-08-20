@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Style Class &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="up" title="VG Module" href="VG.html" />
+    <link rel="next" title="Image Class" href="image.html" />
+    <link rel="prev" title="Contexts" href="context.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="image.html" title="Image Class"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="context.html" title="Contexts"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" accesskey="U">VG Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="style-class">
+<h1>Style Class<a class="headerlink" href="#style-class" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="VG.Style">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">Style</tt><big>(</big><em>stroke_paint=None</em>, <em>fill_paint=None</em>, <em>**params</em><big>)</big><a class="headerlink" href="#VG.Style" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Style class maps the name of parameters to their enumerations
+at instantiation, but not when accessing it directly.</p>
+<p>So <tt class="docutils literal"><span class="pre">style[&quot;VG_STROKE_LINE_WIDTH&quot;]</span></tt> will not work, but <tt class="docutils literal"><span class="pre">style[VG_STROKE_LINE_WIDTH]</span></tt> will,
+assuming that the <tt class="xref docutils literal"><span class="pre">VG_STROKE_LINE_WIDTH</span></tt> has been imported into the local namespace.</p>
+<dl class="method">
+<dt id="VG.Style.enable">
+<tt class="descname">enable</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Style.enable" title="Permalink to this definition">¶</a></dt>
+<dd>Saves the current context parameters and applies the style&#8217;s own parameters</dd></dl>
+
+<dl class="method">
+<dt id="VG.Style.disable">
+<tt class="descname">disable</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Style.disable" title="Permalink to this definition">¶</a></dt>
+<dd>Restores the old context parameters.</dd></dl>
+
+</dd></dl>
+
+<p>Style objects take care of storing, setting, and restoring the OpenVG context parameters related to styling and drawing. For example, this code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Save old settings</span>
+<span class="n">old_paint</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">get_paint</span><span class="p">(</span><span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+<span class="n">old_stroke_width</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">VG_STROKE_LINE_WIDTH</span><span class="p">)</span>
+
+<span class="c">#Set current settings</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">set_paint</span><span class="p">(</span><span class="n">stroke_paint</span><span class="p">,</span> <span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">VG_STROKE_LINE_WIDTH</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+
+<span class="c">#Draw</span>
+<span class="n">path</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+
+<span class="c">#Restore old settings</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">set_paint</span><span class="p">(</span><span class="n">old_paint</span><span class="p">,</span> <span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">VG_STROKE_LINE_WIDTH</span><span class="p">,</span> <span class="n">old_stroke_width</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>becomes:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Create style object</span>
+<span class="n">style</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">stroke_paint</span><span class="o">=</span><span class="n">stroke_paint</span><span class="p">,</span> <span class="n">VG_STROKE_LINE_WIDTH</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+
+<span class="c">#Set current settings</span>
+<span class="n">style</span><span class="o">.</span><span class="n">enable</span><span class="p">()</span>
+
+<span class="c">#Draw</span>
+<span class="n">path</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+
+<span class="c">#Restore old settings</span>
+<span class="n">style</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Style objects are also context managers, allowing you to use the with statement introduced in Python 2.6:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">style</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">stroke_paint</span><span class="o">=</span><span class="n">stroke_paint</span><span class="p">,</span> <span class="n">VG_STROKE_LINE_WIDTH</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">style</span><span class="p">:</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For one-off things, you can also pass a style parameter to path.draw:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">style</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">stroke_paint</span><span class="o">=</span><span class="n">stroke_paint</span><span class="p">,</span> <span class="n">VG_STROKE_LINE_WIDTH</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+<span class="n">path</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">VG_STROKE_PATH</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="getting-and-setting-style-parameters">
+<h2>Getting and setting style parameters<a class="headerlink" href="#getting-and-setting-style-parameters" title="Permalink to this headline">¶</a></h2>
+<p>You can get or set any style parameter (such as VG_STROKE_DASH_PATTERN) by using style[VG_STROKE_DASH_PATTERN]. The only exception is that paint must be accessed directly through style.stroke_paint and style.fill_paint.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">style</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">stroke_paint</span><span class="o">=</span><span class="n">VG</span><span class="o">.</span><span class="n">ColorPaint</span><span class="p">((</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span> <span class="c">#red stroke paint</span>
+                 <span class="n">VG_STROKE_DASH_PATTERN</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">))</span>            <span class="c">#dash pattern of 5 on, 10 off</span>
+<span class="k">print</span> <span class="n">style</span><span class="p">[</span><span class="n">VG_STROKE_DASH_PATTERN</span><span class="p">]</span> <span class="c">#should print (5, 10)</span>
+
+<span class="c">#Set the fill paint to purple</span>
+<span class="n">style</span><span class="o">.</span><span class="n">fill_paint</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">ColorPaint</span><span class="p">((</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Although get_paint and set_paint usually use None to signify that the default paint is being used or set, Style objects will <em>not</em> set the paint to the default if None is passed in.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Style Class</a><ul>
+<li><a class="reference external" href="#getting-and-setting-style-parameters">Getting and setting style parameters</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="context.html"
+                                  title="previous chapter">Contexts</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="image.html"
+                                  title="next chapter">Image Class</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/style.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="image.html" title="Image Class"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="context.html" title="Contexts"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" >VG Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

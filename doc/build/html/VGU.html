@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>VGU Module &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="next" title="Font Module" href="font.html" />
+    <link rel="prev" title="Paint Classes" href="paint.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="font.html" title="Font Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="paint.html" title="Paint Classes"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="vgu-module">
+<span id="module-VGU"></span><h1>VGU Module<a class="headerlink" href="#vgu-module" title="Permalink to this headline">¶</a></h1>
+<p>VGU is to OpenVG what GLU is to OpenGL - it provides some handy functions that you would otherwise end up writing yourself anyways. It is not guaranteed to be provided, but it probably will be since it&#8217;s fairly straight-forward.</p>
+<div class="section" id="drawing-primitives">
+<h2>Drawing Primitives<a class="headerlink" href="#drawing-primitives" title="Permalink to this headline">¶</a></h2>
+<p>VGU supplies several functions to draw basic primitives to make you life easier:</p>
+<dl class="function">
+<dt id="VGU.line">
+<tt class="descclassname">VGU.</tt><tt class="descname">line</tt><big>(</big><em>path</em>, <em>p1</em>, <em>p2</em><big>)</big><a class="headerlink" href="#VGU.line" title="Permalink to this definition">¶</a></dt>
+<dd>appends a line segment from p1 to p2 to path</dd></dl>
+
+<dl class="function">
+<dt id="VGU.polygon">
+<tt class="descclassname">VGU.</tt><tt class="descname">polygon</tt><big>(</big><em>path</em>, <em>points</em>, <em>closed=True</em><big>)</big><a class="headerlink" href="#VGU.polygon" title="Permalink to this definition">¶</a></dt>
+<dd>appends a polygon with points p to path</dd></dl>
+
+<dl class="function">
+<dt id="VGU.rect">
+<tt class="descclassname">VGU.</tt><tt class="descname">rect</tt><big>(</big><em>path</em>, <em>pos</em>, <em>dimensions</em><big>)</big><a class="headerlink" href="#VGU.rect" title="Permalink to this definition">¶</a></dt>
+<dd>appends a rectangle with its bottom-left corner at pos and with the supplied dimensions</dd></dl>
+
+<dl class="function">
+<dt id="VGU.round_rect">
+<tt class="descclassname">VGU.</tt><tt class="descname">round_rect</tt><big>(</big><em>path</em>, <em>pos</em>, <em>dimensions</em>, <em>arc_width</em>, <em>arc_height</em><big>)</big><a class="headerlink" href="#VGU.round_rect" title="Permalink to this definition">¶</a></dt>
+<dd>appends a rounded rectangle with its bottom-left corner at pos with the supplied dimensions and with corners with the supplied arc_width and height.</dd></dl>
+
+<dl class="function">
+<dt id="VGU.ellipse">
+<tt class="descclassname">VGU.</tt><tt class="descname">ellipse</tt><big>(</big><em>path</em>, <em>center</em>, <em>dimensions</em><big>)</big><a class="headerlink" href="#VGU.ellipse" title="Permalink to this definition">¶</a></dt>
+<dd>appends an ellipse centered at center with the supplied dimensions. For a circle, use (2*radius, 2*radius) for the dimensions.</dd></dl>
+
+<dl class="function">
+<dt id="VGU.arc">
+<tt class="descclassname">VGU.</tt><tt class="descname">arc</tt><big>(</big><em>path</em>, <em>pos</em>, <em>dimensions</em>, <em>start_angle</em>, <em>angle_extent</em>, <em>arc_type</em><big>)</big><a class="headerlink" href="#VGU.arc" title="Permalink to this definition">¶</a></dt>
+<dd><p>appends either a regular arc, a chord, or a sector (pie shape). The angles are specified in degrees. arc_type must be an enum from</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+  <span class="n">VGU_ARC_OPEN</span>                                 <span class="o">=</span> <span class="mh">0xF100</span><span class="p">,</span>
+  <span class="n">VGU_ARC_CHORD</span>                                <span class="o">=</span> <span class="mh">0xF101</span><span class="p">,</span>
+  <span class="n">VGU_ARC_PIE</span>                                  <span class="o">=</span> <span class="mh">0xF102</span>
+<span class="p">}</span> <span class="n">VGUArcType</span><span class="p">;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="computing-warp-matrices">
+<h2>Computing Warp Matrices<a class="headerlink" href="#computing-warp-matrices" title="Permalink to this headline">¶</a></h2>
+<p>VGU also provides functions to compute the appropriate matrix for transforming the drawing surface from one shape to another:</p>
+<dl class="function">
+<dt id="VGU.compute_warp_quad_to_square">
+<tt class="descclassname">VGU.</tt><tt class="descname">compute_warp_quad_to_square</tt><big>(</big><em>p1</em>, <em>p2</em>, <em>p3</em>, <em>p4</em><big>)</big><a class="headerlink" href="#VGU.compute_warp_quad_to_square" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a matrix that maps an arbitrary quadrilateral defined by points p1, p2, p3, and p4 to the unit square.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><pre>  p2 _______ p3      0,1 ______ 1,1
+    /      /            |      |
+   /      /     --&gt;     |      |
+p1/______/ p4        0,0|______|1,0</pre>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="VGU.compute_warp_square_to_quad">
+<tt class="descclassname">VGU.</tt><tt class="descname">compute_warp_square_to_quad</tt><big>(</big><em>p1</em>, <em>p2</em>, <em>p3</em>, <em>p4</em><big>)</big><a class="headerlink" href="#VGU.compute_warp_square_to_quad" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a matrix that maps the unit square to an arbitrary quadrilateral defined by points p1, p2, p3, and p4.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><pre>0,1 ______ 1,1         p2 _______ p3
+   |      |              /      /
+   |      |   --&gt;       /      /
+0,0|______|1,0       p1/______/ p4*</pre>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="VGU.compute_warp_quad_to_quad">
+<tt class="descclassname">VGU.</tt><tt class="descname">compute_warp_quad_to_quad</tt><big>(</big><em>quad1</em>, <em>quad2</em><big>)</big><a class="headerlink" href="#VGU.compute_warp_quad_to_quad" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">a matrix that maps an arbitrary quadrilateral to another quadrilateral</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><pre>  p2 _______ p3      q2 _______ q3
+    /      /            \      \
+   /      /     --&gt;      \      \
+p1/______/ p4          q1 \______\ q4</pre>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">VGU Module</a><ul>
+<li><a class="reference external" href="#drawing-primitives">Drawing Primitives</a></li>
+<li><a class="reference external" href="#computing-warp-matrices">Computing Warp Matrices</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="paint.html"
+                                  title="previous chapter">Paint Classes</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="font.html"
+                                  title="next chapter">Font Module</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/VGU.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="font.html" title="Font Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="paint.html" title="Paint Classes"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Font Module &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="next" title="SVG" href="svg.html" />
+    <link rel="prev" title="VGU Module" href="VGU.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="svg.html" title="SVG"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="VGU.html" title="VGU Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="font-module">
+<span id="module-font"></span><h1>Font Module<a class="headerlink" href="#font-module" title="Permalink to this headline">¶</a></h1>
+<p>Because OpenVG 1.0 does not specify any methods for font rendering, it is necessary to use third-party libraries to handle text. OpenVG.font uses a minimal wrapper around FreeType2 (internally called FT, if you really want to get at it) to read in the outline data for outline fonts such as TrueType. The glyph data is read and used to create short paths for each glyph which are then placed according to individual font metrics and kerning rules to render a block of text as a path.</p>
+<p>This is not as fast as it would be to simply use FreeType to render the text to a bitmap and then draw that to the screen directly, but allows for more flexibility (And I have not yet gotten around to writing the wrappers around the glyph rendering part of FreeType).</p>
+<p>A short example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">OpenVG.font</span>
+<span class="n">vera</span> <span class="o">=</span> <span class="n">OpenVG</span><span class="o">.</span><span class="n">font</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="s">&quot;data/fonts/Vera.ttf&quot;</span><span class="p">,</span> <span class="mf">14</span><span class="p">)</span>
+
+<span class="n">message</span> <span class="o">=</span> <span class="n">vera</span><span class="o">.</span><span class="n">build_path</span><span class="p">(</span><span class="s">&quot;Hello, world!&quot;</span><span class="p">)</span>
+<span class="n">message</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">VG_FILL_PATH</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="font-class">
+<h2>Font Class<a class="headerlink" href="#font-class" title="Permalink to this headline">¶</a></h2>
+<p>The font module exposes a single class that has the functionality that you need to render text: the Font class.</p>
+<dl class="class">
+<dt id="font.Font">
+<em class="property">
+class </em><tt class="descclassname">font.</tt><tt class="descname">Font</tt><big>(</big><em>path</em>, <em>size</em><span class="optional">[</span>, <em>dpi=72</em><span class="optional">[</span>, <em>preload=True</em><span class="optional">]</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#font.Font" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="font.Font.path">
+<tt class="descname">path</tt><a class="headerlink" href="#font.Font.path" title="Permalink to this definition">¶</a></dt>
+<dd>the path which was passed to the constructor to load the font from</dd></dl>
+
+<dl class="attribute">
+<dt id="font.Font.size">
+<tt class="descname">size</tt><a class="headerlink" href="#font.Font.size" title="Permalink to this definition">¶</a></dt>
+<dd>the size of the font in points (1/72 of an inch)</dd></dl>
+
+<dl class="attribute">
+<dt id="font.Font.face">
+<tt class="descname">face</tt><a class="headerlink" href="#font.Font.face" title="Permalink to this definition">¶</a></dt>
+<dd>the internal FreeType face object wrapper</dd></dl>
+
+<dl class="attribute">
+<dt id="font.Font.glyph_table">
+<tt class="descname">glyph_table</tt><a class="headerlink" href="#font.Font.glyph_table" title="Permalink to this definition">¶</a></dt>
+<dd>a dictionary mapping character codes (ord(s)) to glyph wrappers</dd></dl>
+
+<dl class="attribute">
+<dt id="font.Font.path_table">
+<tt class="descname">path_table</tt><a class="headerlink" href="#font.Font.path_table" title="Permalink to this definition">¶</a></dt>
+<dd>a dictionary mapping glyph indices to paths</dd></dl>
+
+<dl class="method">
+<dt id="font.Font.build_path">
+<tt class="descname">build_path</tt><big>(</big><em>text</em><span class="optional">[</span>, <em>horizontal=True</em><span class="optional">[</span>, <em>do_kerning=True</em><span class="optional">]</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#font.Font.build_path" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><em>text</em> &#8211; the text to be rendered</li>
+<li><em>horizontal</em> &#8211; whether the text should be rendered horizontally or vertically. Defaults to horizontally.</li>
+<li><em>do_kerning</em> &#8211; whether kerning should be applied to the text</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a new path containing the text</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Certain combinations of kerning and large text size may lead to glyph subpaths overlapping, which will cause visual glitches where the even-odd fill-rule applies.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="font.Font.compile_paths">
+<tt class="descname">compile_paths</tt><big>(</big><big>)</big><a class="headerlink" href="#font.Font.compile_paths" title="Permalink to this definition">¶</a></dt>
+<dd>load all glyphs immediately</dd></dl>
+
+<dl class="method">
+<dt id="font.Font.get_path_for_char">
+<tt class="descname">get_path_for_char</tt><big>(</big><em>char</em><big>)</big><a class="headerlink" href="#font.Font.get_path_for_char" title="Permalink to this definition">¶</a></dt>
+<dd>loads (if necessary) the appropriate glyph for char and returns the associated path</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="loading-fonts">
+<h2>Loading fonts<a class="headerlink" href="#loading-fonts" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="font.load_font">
+<tt class="descclassname">font.</tt><tt class="descname">load_font</tt><big>(</big><em>name</em>, <em>size</em><span class="optional">[</span>, <em>dpi=72</em><span class="optional">[</span>, <em>preload=True</em><span class="optional">]</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#font.load_font" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><em>name</em> &#8211; the name of the font-face to load</li>
+<li><em>size</em> &#8211; the size in points of the font</li>
+<li><em>dpi</em> &#8211; the resolution of the font</li>
+<li><em>preload</em> &#8211; whether to immediately load all glyphs or not</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a <a title="font.Font" class="reference internal" href="#font.Font"><tt class="xref docutils literal"><span class="pre">Font</span></tt></a> object matching the name and size specified, if found</p>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><tt class="xref docutils literal"><span class="pre">IOError</span></tt> when no matching font is found</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Attempts to locate and load the specified font by calling registered font-finding functions.
+No font-finding functions are provided by default.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="font.register_font_finder">
+<tt class="descclassname">font.</tt><tt class="descname">register_font_finder</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#font.register_font_finder" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>func</em> &#8211; a font-finding function; it should take a single argument name which specifies the name of the font or font-family and returns either a single string containing the path to the font or a list of paths to possible fonts.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Font Module</a><ul>
+<li><a class="reference external" href="#font-class">Font Class</a></li>
+<li><a class="reference external" href="#loading-fonts">Loading fonts</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="VGU.html"
+                                  title="previous chapter">VGU Module</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="svg.html"
+                                  title="next chapter">SVG</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/font.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="svg.html" title="SVG"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="VGU.html" title="VGU Module"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

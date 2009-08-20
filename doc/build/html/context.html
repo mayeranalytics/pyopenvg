@@ -1,0 +1,497 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Contexts &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="up" title="VG Module" href="VG.html" />
+    <link rel="next" title="Style Class" href="style.html" />
+    <link rel="prev" title="VG Module" href="VG.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="style.html" title="Style Class"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="VG.html" title="VG Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" accesskey="U">VG Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="contexts">
+<h1>Contexts<a class="headerlink" href="#contexts" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="VG.Context">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">Context</tt><big>(</big><em>dimensions</em><big>)</big><a class="headerlink" href="#VG.Context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Context objects represent EGL contexts, which store settings pertaining
+to transforming, filtering, stroking, and filling operations as well as
+details of the drawing surface.</p>
+<p>With ShivaVG and AmanithVG, there is no means to specify an EGL context
+to bind to; instead they provide their own internal context-like objects.
+Accordingly, at this moment, there can only be one context at a time. The
+Context class is a singleton.</p>
+<p>Context objects must be created before any OpenVG functions or classes can
+be instantiated, except for <a title="VG.Style" class="reference external" href="style.html#VG.Style"><tt class="xref docutils literal"><span class="pre">Style</span></tt></a> objects. A context can be instantiated
+only after there is an OpenGL surface for OpenVG to bind to.</p>
+<p>All functions of the OpenVG.VG module are mirrored as staticmethods on context
+objects.</p>
+<dl class="method">
+<dt id="VG.Context.resize">
+<tt class="descname">resize</tt><big>(</big><em>dimensions</em><big>)</big><a class="headerlink" href="#VG.Context.resize" title="Permalink to this definition">¶</a></dt>
+<dd>Resizes the OpenVG context</dd></dl>
+
+<dl class="method">
+<dt id="VG.Context.destroy">
+<tt class="descname">destroy</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Context.destroy" title="Permalink to this definition">¶</a></dt>
+<dd>Destroys the OpenVG context</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.create_context">
+<tt class="descclassname">VG.</tt><tt class="descname">create_context</tt><big>(</big><em>dimensions</em><big>)</big><a class="headerlink" href="#VG.create_context" title="Permalink to this definition">¶</a></dt>
+<dd>Creates and returns a context of the specified dimensions
+It is not necessary to hold a reference to the created context.</dd></dl>
+
+<dl class="function">
+<dt id="VG.resize_context">
+<tt class="descclassname">VG.</tt><tt class="descname">resize_context</tt><big>(</big><em>dimensions</em><big>)</big><a class="headerlink" href="#VG.resize_context" title="Permalink to this definition">¶</a></dt>
+<dd>Resizes the current context</dd></dl>
+
+<dl class="function">
+<dt id="VG.destroy_context">
+<tt class="descclassname">VG.</tt><tt class="descname">destroy_context</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.destroy_context" title="Permalink to this definition">¶</a></dt>
+<dd>Destroys the current context; this will automatically be done when
+the program terminates and the context object is garbage-collected</dd></dl>
+
+<div class="section" id="getting-setting-parameters">
+<h2>Getting/Setting Parameters<a class="headerlink" href="#getting-setting-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Context parameters (such as stroke width, dashing, scissoring, etc) are
+accessed through the <a title="VG.get" class="reference internal" href="#VG.get"><tt class="xref docutils literal"><span class="pre">get()</span></tt></a> and <a title="VG.set" class="reference internal" href="#VG.set"><tt class="xref docutils literal"><span class="pre">set()</span></tt></a> functions. These functions
+abstract away the details of remembering whether the parameter is a float or
+an int or how many parameters it&#8217;s supposed to return.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a title="VG.get" class="reference internal" href="#VG.get"><tt class="xref docutils literal"><span class="pre">get()</span></tt></a> and <a title="VG.set" class="reference internal" href="#VG.set"><tt class="xref docutils literal"><span class="pre">set()</span></tt></a> are <em>not</em> included in <tt class="docutils literal"><span class="pre">__all__</span></tt>, so they cannot
+be imported using <tt class="docutils literal"><span class="pre">from</span> <span class="pre">OpenVG.VG</span> <span class="pre">import</span> <span class="pre">*</span></tt></p>
+</div>
+<dl class="function">
+<dt id="VG.get">
+<tt class="descclassname">VG.</tt><tt class="descname">get</tt><big>(</big><em>param_type</em><big>)</big><a class="headerlink" href="#VG.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a param from the VGParamType enumeration, this returns the corresponding
+context parameter. See the <a class="reference external" href="http://khronos.org/openvg/">specification and header file</a>
+for a full list of context parameters, their behaviors, and default values.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">color</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">VG_CLEAR_COLOR</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.set">
+<tt class="descclassname">VG.</tt><tt class="descname">set</tt><big>(</big><em>param_type</em>, <em>value</em><big>)</big><a class="headerlink" href="#VG.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a param from the VGParamType enumeration, this sets the corresponding
+context parameter to value.</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">VG</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">VG_STROKE_DASH_PATTERN</span><span class="p">,</span> <span class="p">(</span><span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<div class="section" id="getting-setting-paint">
+<h3>Getting/Setting Paint<a class="headerlink" href="#getting-setting-paint" title="Permalink to this headline">¶</a></h3>
+<p>In OpenVG, filling and stroking is abstracted into Paint objects, which represent
+a means of coloring a surface. Each paint object stores the information needed to
+paint a surface (color, gradient stops, etc). A paint mode can be associated with
+stroking, filling, or both.</p>
+<dl class="function">
+<dt id="VG.get_paint">
+<tt class="descclassname">VG.</tt><tt class="descname">get_paint</tt><big>(</big><em>mode</em><big>)</big><a class="headerlink" href="#VG.get_paint" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>mode</em> &#8211; the paint mode requested (which must be either <tt class="xref docutils literal"><span class="pre">VG_STROKE_PATH</span></tt> or <tt class="xref docutils literal"><span class="pre">VG_FILL_PATH</span></tt>)</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the current paint or None if no paint has been set for that mode.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.set_paint">
+<tt class="descclassname">VG.</tt><tt class="descname">set_paint</tt><big>(</big><em>paint</em>, <em>mode</em><big>)</big><a class="headerlink" href="#VG.set_paint" title="Permalink to this definition">¶</a></dt>
+<dd>Sets the paint for mode (which must be <tt class="xref docutils literal"><span class="pre">VG_STROKE_PATH</span></tt>, <tt class="xref docutils literal"><span class="pre">VG_FILL_PATH</span></tt>,
+or the result of bitwise ORing them together) to paint. If paint is None,
+then the default paint is set (opaque black).</dd></dl>
+
+</div>
+<div class="section" id="querying-openvg-properties">
+<h3>Querying OpenVG properties<a class="headerlink" href="#querying-openvg-properties" title="Permalink to this headline">¶</a></h3>
+<p>OpenVG exposes implementation-specific information such as the vendor, version,
+renderer, and extensions through the vgGetString function.</p>
+<dl class="function">
+<dt id="VG.get_string">
+<tt class="descclassname">VG.</tt><tt class="descname">get_string</tt><big>(</big><em>string_id</em><big>)</big><a class="headerlink" href="#VG.get_string" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>string_id</em> &#8211; an enum corresponding to the string requested. Valid values include <tt class="xref docutils literal"><span class="pre">VG_VENDOR</span></tt>, <tt class="xref docutils literal"><span class="pre">VG_RENDERER</span></tt>, <tt class="xref docutils literal"><span class="pre">VG_VERSION</span></tt>, and <tt class="xref docutils literal"><span class="pre">VG_EXTENSIONS</span></tt>. This may not be called before the context has been created.</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the corresponding string information.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="graphics-functions">
+<h2>Graphics Functions<a class="headerlink" href="#graphics-functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="VG.clear">
+<tt class="descclassname">VG.</tt><tt class="descname">clear</tt><big>(</big><em>corner</em>, <em>dimensions</em><span class="optional">[</span>, <em>color=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.clear" title="Permalink to this definition">¶</a></dt>
+<dd>Clears the area from corner (the bottom left corner) with the dimensions
+supplied. If color is not None, then that RGBA 4-tuple is used as the clear
+color. Otherwise the screen is cleared using <a class="reference internal" href="#term-vg-clear-color"><em class="xref">VG_CLEAR_COLOR</em></a>.</dd></dl>
+
+<dl class="function">
+<dt id="VG.flush">
+<tt class="descclassname">VG.</tt><tt class="descname">flush</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.flush" title="Permalink to this definition">¶</a></dt>
+<dd>Tells OpenVG to hurry up and complete all pending drawing requests, but does
+not guarantee that all pending requests will be completed immediately</dd></dl>
+
+<dl class="function">
+<dt id="VG.finish">
+<tt class="descclassname">VG.</tt><tt class="descname">finish</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.finish" title="Permalink to this definition">¶</a></dt>
+<dd>Tells OpenVG to block until all pending drawing requests are complete.</dd></dl>
+
+</div>
+<div class="section" id="transformations">
+<h2>Transformations<a class="headerlink" href="#transformations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="matrix-manipulation">
+<h3>Matrix Manipulation<a class="headerlink" href="#matrix-manipulation" title="Permalink to this headline">¶</a></h3>
+<p>The matrix mode can be set using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">VG</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">VG_MATRIX_MODE</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where mode is from</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+    <span class="n">VG_MATRIX_PATH_USER_TO_SURFACE</span>              <span class="o">=</span> <span class="mh">0x1400</span><span class="p">,</span>
+    <span class="n">VG_MATRIX_IMAGE_USER_TO_SURFACE</span>             <span class="o">=</span> <span class="mh">0x1401</span><span class="p">,</span>
+    <span class="n">VG_MATRIX_FILL_PAINT_TO_USER</span>                <span class="o">=</span> <span class="mh">0x1402</span><span class="p">,</span>
+    <span class="n">VG_MATRIX_STROKE_PAINT_TO_USER</span>              <span class="o">=</span> <span class="mh">0x1403</span>
+<span class="p">}</span> <span class="n">VGMatrixMode</span><span class="p">;</span>
+</pre></div>
+</div>
+<dl class="function">
+<dt id="VG.get_matrix">
+<tt class="descclassname">VG.</tt><tt class="descname">get_matrix</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.get_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the flattened 3x3 transformation matrix for the current matrix mode.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.load_matrix">
+<tt class="descclassname">VG.</tt><tt class="descname">load_matrix</tt><big>(</big><em>M</em><big>)</big><a class="headerlink" href="#VG.load_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>M</em> &#8211; a 9-element tuple corresponding to a transformation matrix (affine
+matrices must be padded.)</td>
+</tr>
+</tbody>
+</table>
+<p>loads the matrix M as the matrix for the current matrix mode.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.load_identity">
+<tt class="descclassname">VG.</tt><tt class="descname">load_identity</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.load_identity" title="Permalink to this definition">¶</a></dt>
+<dd>loads the identity matrix as the transformation matrix for the current matrix mode.</dd></dl>
+
+<dl class="function">
+<dt id="VG.mult_matrix">
+<tt class="descclassname">VG.</tt><tt class="descname">mult_matrix</tt><big>(</big><em>M</em><big>)</big><a class="headerlink" href="#VG.mult_matrix" title="Permalink to this definition">¶</a></dt>
+<dd>multiplies the current transformation matrix by M.</dd></dl>
+
+</div>
+<div class="section" id="general-transformation-functions">
+<h3>General Transformation Functions<a class="headerlink" href="#general-transformation-functions" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="VG.translate">
+<tt class="descclassname">VG.</tt><tt class="descname">translate</tt><big>(</big><em>tx</em>, <em>ty</em><big>)</big><a class="headerlink" href="#VG.translate" title="Permalink to this definition">¶</a></dt>
+<dd>applies a translation by (tx, ty) pixels to the current transform matrix</dd></dl>
+
+<dl class="function">
+<dt id="VG.scale">
+<tt class="descclassname">VG.</tt><tt class="descname">scale</tt><big>(</big><em>sx</em>, <em>sy</em><big>)</big><a class="headerlink" href="#VG.scale" title="Permalink to this definition">¶</a></dt>
+<dd>applies a scale by sx in the x direction and sy in the y direction to the
+current transform matrix</dd></dl>
+
+<dl class="function">
+<dt id="VG.rotate">
+<tt class="descclassname">VG.</tt><tt class="descname">rotate</tt><big>(</big><em>angle</em><big>)</big><a class="headerlink" href="#VG.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>angle</em> &#8211; the angle in degrees to rotate by</td>
+</tr>
+</tbody>
+</table>
+<p>applies a rotation by angle degrees to the current transform matrix</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.shear">
+<tt class="descclassname">VG.</tt><tt class="descname">shear</tt><big>(</big><em>shx</em>, <em>shy</em><big>)</big><a class="headerlink" href="#VG.shear" title="Permalink to this definition">¶</a></dt>
+<dd>applies a shear by shx and shy to the current transform matrix</dd></dl>
+
+</div>
+</div>
+<div class="section" id="context-parameters">
+<h2>Context Parameters<a class="headerlink" href="#context-parameters" title="Permalink to this headline">¶</a></h2>
+<dl class="glossary docutils">
+<dt id="term-vg-matrix-mode"><tt class="xref docutils literal"><span class="pre">VG_MATRIX_MODE</span></tt></dt>
+<dd>Determines which transformation matrix to apply transformations to.</dd>
+<dt id="term-vg-fill-rule"><tt class="xref docutils literal"><span class="pre">VG_FILL_RULE</span></tt></dt>
+<dd>Determines how paths are filled - either <tt class="xref docutils literal"><span class="pre">VG_EVEN_ODD</span></tt> or <tt class="xref docutils literal"><span class="pre">VG_NON_ZERO</span></tt></dd>
+<dt id="term-vg-image-quality"><tt class="xref docutils literal"><span class="pre">VG_IMAGE_QUALITY</span></tt></dt>
+<dd><p class="first">Determines how images should be sampled and rendered - one of:</p>
+<blockquote class="last">
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_IMAGE_QUALITY_NONANTIALIASED</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_IMAGE_QUALITY_FASTER</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_IMAGE_QUALITY_BETTER</span></tt></li>
+</ul>
+</blockquote>
+</dd>
+<dt id="term-vg-rendering-quality"><tt class="xref docutils literal"><span class="pre">VG_RENDERING_QUALITY</span></tt></dt>
+<dd>Determines how OpenVG should render everything overall.</dd>
+<dt id="term-vg-blend-mode"><tt class="xref docutils literal"><span class="pre">VG_BLEND_MODE</span></tt></dt>
+<dd><p class="first">Determines how paths, images, and paint is composited - one of:</p>
+<blockquote class="last">
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_SRC</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_SRC_OVER</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_DST_OVER</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_SRC_IN</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_DST_IN</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_MULTIPLY</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_SCREEN</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_DARKEN</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_LIGHTEN</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_BLEND_ADDITIVE</span></tt></li>
+</ul>
+</blockquote>
+</dd>
+<dt id="term-vg-image-mode"><tt class="xref docutils literal"><span class="pre">VG_IMAGE_MODE</span></tt></dt>
+<dd><p class="first">Determines how to draw image data to the screen - one of:</p>
+<blockquote class="last">
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_DRAW_IMAGE_NORMAL</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_DRAW_IMAGE_MULTIPLY</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_DRAW_IMAGE_STENCIL</span></tt></li>
+</ul>
+</blockquote>
+</dd>
+<dt id="term-vg-scissor-rects"><tt class="xref docutils literal"><span class="pre">VG_SCISSOR_RECTS</span></tt></dt>
+<dd>A list of integers corresponding to scissoring rectangles in the
+form [x1, y1, width1, height1, ... xn, yn, widthn, heightn]</dd>
+<dt id="term-vg-stroke-line-width"><tt class="xref docutils literal"><span class="pre">VG_STROKE_LINE_WIDTH</span></tt></dt>
+<dd>The stroke-width in pixels for all paths being drawn</dd>
+<dt id="term-vg-stroke-cap-style"><tt class="xref docutils literal"><span class="pre">VG_STROKE_CAP_STYLE</span></tt></dt>
+<dd><p class="first">The cap-style for all paths being drawn - one of:</p>
+<blockquote class="last">
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_CAP_BUTT</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_CAP_ROUND</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_CAP_SQUARE</span></tt></li>
+</ul>
+</blockquote>
+</dd>
+<dt id="term-vg-stroke-join-style"><tt class="xref docutils literal"><span class="pre">VG_STROKE_JOIN_STYLE</span></tt></dt>
+<dd><p class="first">The join-style for all paths being drawn - one of:</p>
+<blockquote class="last">
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_JOIN_MITER</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_JOIN_ROUND</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_JOIN_BEVEL</span></tt></li>
+</ul>
+</blockquote>
+</dd>
+<dt id="term-vg-stroke-miter-limit"><tt class="xref docutils literal"><span class="pre">VG_STROKE_MITER_LIMIT</span></tt></dt>
+<dd>The maximum length in pixels of a miter-joint for all paths being drawn
+with miter-joints.</dd>
+<dt id="term-vg-stroke-dash-pattern"><tt class="xref docutils literal"><span class="pre">VG_STROKE_DASH_PATTERN</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-stroke-dash-phase"><tt class="xref docutils literal"><span class="pre">VG_STROKE_DASH_PHASE</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-stroke-dash-phase-reset"><tt class="xref docutils literal"><span class="pre">VG_STROKE_DASH_PHASE_RESET</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-tile-fill-color"><tt class="xref docutils literal"><span class="pre">VG_TILE_FILL_COLOR</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-clear-color"><tt class="xref docutils literal"><span class="pre">VG_CLEAR_COLOR</span></tt></dt>
+<dd>The color used to fill when <a title="VG.clear" class="reference internal" href="#VG.clear"><tt class="xref docutils literal"><span class="pre">clear()</span></tt></a> is called or <a title="VG.Image.clear" class="reference external" href="image.html#VG.Image.clear"><tt class="xref docutils literal"><span class="pre">Image.clear()</span></tt></a>
+is called.</dd>
+<dt id="term-vg-masking"><tt class="xref docutils literal"><span class="pre">VG_MASKING</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-scissoring"><tt class="xref docutils literal"><span class="pre">VG_SCISSORING</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-pixel-layout"><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-screen-layout"><tt class="xref docutils literal"><span class="pre">VG_SCREEN_LAYOUT</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-filter-format-linear"><tt class="xref docutils literal"><span class="pre">VG_FILTER_FORMAT_LINEAR</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-filter-format-premultiplied"><tt class="xref docutils literal"><span class="pre">VG_FILTER_FORMAT_PREMULTIPLIED</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-filter-channel-mask"><tt class="xref docutils literal"><span class="pre">VG_FILTER_CHANNEL_MASK</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-scissor-rects"><tt class="xref docutils literal"><span class="pre">VG_MAX_SCISSOR_RECTS</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-dash-count"><tt class="xref docutils literal"><span class="pre">VG_MAX_DASH_COUNT</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-kernel-size"><tt class="xref docutils literal"><span class="pre">VG_MAX_KERNEL_SIZE</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-separable-kernel-size"><tt class="xref docutils literal"><span class="pre">VG_MAX_SEPARABLE_KERNEL_SIZE</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-color-ramp-stops"><tt class="xref docutils literal"><span class="pre">VG_MAX_COLOR_RAMP_STOPS</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-image-width"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_WIDTH</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-image-height"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_HEIGHT</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-image-pixels"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_PIXELS</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-image-bytes"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_BYTES</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-float"><tt class="xref docutils literal"><span class="pre">VG_MAX_FLOAT</span></tt></dt>
+<dd>TODO</dd>
+<dt id="term-vg-max-gaussian-std-deviation"><tt class="xref docutils literal"><span class="pre">VG_MAX_GAUSSIAN_STD_DEVIATION</span></tt></dt>
+<dd>TODO</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Contexts</a><ul>
+<li><a class="reference external" href="#getting-setting-parameters">Getting/Setting Parameters</a><ul>
+<li><a class="reference external" href="#getting-setting-paint">Getting/Setting Paint</a></li>
+<li><a class="reference external" href="#querying-openvg-properties">Querying OpenVG properties</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#graphics-functions">Graphics Functions</a></li>
+<li><a class="reference external" href="#transformations">Transformations</a><ul>
+<li><a class="reference external" href="#matrix-manipulation">Matrix Manipulation</a></li>
+<li><a class="reference external" href="#general-transformation-functions">General Transformation Functions</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#context-parameters">Context Parameters</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="VG.html"
+                                  title="previous chapter">VG Module</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="style.html"
+                                  title="next chapter">Style Class</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/context.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="style.html" title="Style Class"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="VG.html" title="VG Module"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" >VG Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

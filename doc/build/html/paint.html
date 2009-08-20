@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Paint Classes &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="up" title="VG Module" href="VG.html" />
+    <link rel="next" title="VGU Module" href="VGU.html" />
+    <link rel="prev" title="Path Class" href="path.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="VGU.html" title="VGU Module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="path.html" title="Path Class"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" accesskey="U">VG Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="paint-classes">
+<h1>Paint Classes<a class="headerlink" href="#paint-classes" title="Permalink to this headline">¶</a></h1>
+<p>In OpenVG, VGPaint objects determine how paths are stroked and filled. A given paint object has many parameters, but only those relevant to the type of paint are used (VG_PAINT_COLOR is only applicable to paint objects of type VG_PAINT_TYPE_COLOR).</p>
+<p>Instead of having one monolithic paint class which allows the user to set parameters that are not used by the type of paint, subclasses of the base Paint class implement the functionality relevant to each paint type: ColorPaint handles solid colors, GradientPaint handles radial and linear gradients of color, and PatternPaint handles patterns based on images.</p>
+<div class="section" id="solid-color-paint">
+<h2>Solid Color Paint<a class="headerlink" href="#solid-color-paint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="VG.ColorPaint">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">ColorPaint</tt><big>(</big><em>color</em><big>)</big><a class="headerlink" href="#VG.ColorPaint" title="Permalink to this definition">¶</a></dt>
+<dd><p>The simplest of the paint types, ColorPaint represents a solid color such as red or blue. It takes a single parameter, color which can be a 3-tuple of colors in the RGB format (from 0.0 to 1.0) or a 4-tuple of the colors and alpha.</p>
+<dl class="attribute">
+<dt id="VG.ColorPaint.transform">
+<tt class="descname">transform</tt><a class="headerlink" href="#VG.ColorPaint.transform" title="Permalink to this definition">¶</a></dt>
+<dd>an OpenVG transformation matrix specifying a transform to be applied when filling or stroking with the referenced paint. None signifies no transform.</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.ColorPaint.color">
+<tt class="descname">color</tt><a class="headerlink" href="#VG.ColorPaint.color" title="Permalink to this definition">¶</a></dt>
+<dd>a four-tuple representing the color of the paint in RGBA form, specified as four floats from 0.0 to 1.0.</dd></dl>
+
+</dd></dl>
+
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Make the stroke paint red and the fill paint translucent green</span>
+<span class="n">red</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">ColorPaint</span><span class="p">((</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+<span class="n">translucent_green</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">ColorPaint</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">set_paint</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">VG_STROKE_PATH</span><span class="p">)</span>
+<span class="n">VG</span><span class="o">.</span><span class="n">set_paint</span><span class="p">(</span><span class="n">translucent_green</span><span class="p">,</span> <span class="n">VG_FILL_PATH</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="gradient-paint">
+<h2>Gradient Paint<a class="headerlink" href="#gradient-paint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="VG.GradientPaint">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">GradientPaint</tt><big>(</big><em>stops</em><span class="optional">[</span>, <em>linear=True</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.GradientPaint" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="VG.GradientPaint.gradient">
+<tt class="descname">gradient</tt><a class="headerlink" href="#VG.GradientPaint.gradient" title="Permalink to this definition">¶</a></dt>
+<dd>For linear gradients, this is a pair of tuples representing the start and end points in the form (start, end).
+For radial gradients, this is a pair of tuples and the radius representing the center and focus points in the form (center, focus, radius)</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.GradientPaint.stops">
+<tt class="descname">stops</tt><a class="headerlink" href="#VG.GradientPaint.stops" title="Permalink to this definition">¶</a></dt>
+<dd>a list of the color-ramp stops that define the gradient colors</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.GradientPaint.spread_mode">
+<tt class="descname">spread_mode</tt><a class="headerlink" href="#VG.GradientPaint.spread_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>an enum that determines how OpenVG calculates the color of points that lie outside of the gradient.
+Possible values include:</p>
+<blockquote>
+<dl class="docutils">
+<dt>VG_COLOR_RAMP_SPREAD_PAD</dt>
+<dd>this is the default spread mode. Anything outside is simply mapped to the same color as the start or end stop - anything greater than 1 is the same color as the end of the gradient and anything less than 0 is the same color as the beginning of the gradient.</dd>
+<dt>VG_COLOR_RAMP_SPREAD_REPEAT</dt>
+<dd>the gradient function starts over again as if it had a period of 1.</dd>
+<dt>VG_COLOR_RAMP_SPREAD_REFLECT</dt>
+<dd>the gradient function is reflected across either 0 or 1, depending on if number is less than 0 or greater than 1, respectively.</dd>
+</dl>
+</blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.GradientPaint.opacity">
+<tt class="descname">opacity</tt><a class="headerlink" href="#VG.GradientPaint.opacity" title="Permalink to this definition">¶</a></dt>
+<dd><p>this property is for convenience only; setting the opacity is equivalent to:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gradient</span><span class="o">.</span><span class="n">stops</span><span class="p">):</span>
+   <span class="n">R</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">A</span> <span class="o">=</span> <span class="n">color</span>
+   <span class="n">A</span> <span class="o">*=</span> <span class="n">new_opacity</span><span class="o">/</span><span class="n">old_opacity</span>
+   <span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+   <span class="n">gradient</span><span class="o">.</span><span class="n">stops</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<p>The GradientPaint class can represent either a linear or radial gradient. Both radial and linear gradients consist of two parts: the gradient function which maps a given coordinate to a value in the range [0, 1] and a color ramp, which maps colors to each value in the range [0, 1]. For more information on how the gradient function for linear and radial gradients are defined, see the [<a class="reference external" href="http://www.khronos.org/openvg/">http://www.khronos.org/openvg/</a> OpenVG specs].</p>
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Create a linear gradient going from white to red to green to blue</span>
+<span class="n">paint</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">GradientPaint</span><span class="p">([(</span><span class="mf">0</span><span class="p">,</span><span class="mf">0</span><span class="p">),</span> <span class="p">(</span><span class="mf">250</span><span class="p">,</span><span class="mf">0</span><span class="p">)],</span> <span class="n">linear</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c">#Set the color stops</span>
+<span class="n">paint</span><span class="o">.</span><span class="n">stops</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="c">#white</span>
+               <span class="p">(</span><span class="mf">0.333</span><span class="p">,(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="c">#red</span>
+               <span class="p">(</span><span class="mf">0.666</span><span class="p">,(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="c">#green</span>
+               <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span>  <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))]</span> <span class="c">#blue</span>
+
+<span class="c">#Set the spread mode to reflect because it&#39;s prettier</span>
+<span class="n">paint</span><span class="o">.</span><span class="n">spread_mode</span> <span class="o">=</span> <span class="n">VG_COLOR_RAMP_SPREAD_REFLECT</span>
+</pre></div>
+</div>
+<p>If drawn on a 250x100 rectangle, this would result in:</p>
+<img alt="_images/linear_gradient.png" src="_images/linear_gradient.png" />
+<p>Usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#Create a simple radial gradient going with center == focus</span>
+<span class="n">paint</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">GradientPaint</span><span class="p">([(</span><span class="mf">50</span><span class="p">,</span><span class="mf">50</span><span class="p">),</span> <span class="p">(</span><span class="mf">50</span><span class="p">,</span><span class="mf">50</span><span class="p">),</span> <span class="mf">50</span><span class="p">],</span> <span class="n">linear</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="c">#Set the color stops</span>
+<span class="n">paint</span><span class="o">.</span><span class="n">stops</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="c">#white</span>
+               <span class="p">(</span><span class="mf">0.333</span><span class="p">,(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="c">#red</span>
+               <span class="p">(</span><span class="mf">0.666</span><span class="p">,(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="c">#green</span>
+               <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span>  <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))]</span> <span class="c">#blue</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pattern-paint">
+<h2>Pattern Paint<a class="headerlink" href="#pattern-paint" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="VG.PatternPaint">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">PatternPaint</tt><a class="headerlink" href="#VG.PatternPaint" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="VG.PatternPaint.pattern">
+<tt class="descname">pattern</tt><a class="headerlink" href="#VG.PatternPaint.pattern" title="Permalink to this definition">¶</a></dt>
+<dd>the VG.Image being used as a pattern. While this image is used as a pattern, it may not be directly drawn to the screen.</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">Paint Classes</a><ul>
+<li><a class="reference external" href="#solid-color-paint">Solid Color Paint</a></li>
+<li><a class="reference external" href="#gradient-paint">Gradient Paint</a></li>
+<li><a class="reference external" href="#pattern-paint">Pattern Paint</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="path.html"
+                                  title="previous chapter">Path Class</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="VGU.html"
+                                  title="next chapter">VGU Module</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/paint.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="VGU.html" title="VGU Module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="path.html" title="Path Class"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" >VG Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

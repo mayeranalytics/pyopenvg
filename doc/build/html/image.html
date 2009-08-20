@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Image Class &mdash; PyOpenVG v0.0.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
+    <link rel="up" title="VG Module" href="VG.html" />
+    <link rel="next" title="Path Class" href="path.html" />
+    <link rel="prev" title="Style Class" href="style.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             accesskey="M">modules</a> |</li>
+        <li class="right" >
+          <a href="path.html" title="Path Class"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="style.html" title="Style Class"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" accesskey="U">VG Module</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="image-class">
+<h1>Image Class<a class="headerlink" href="#image-class" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="VG.Image">
+<em class="property">
+class </em><tt class="descclassname">VG.</tt><tt class="descname">Image</tt><big>(</big><em>format</em>, <em>dimensions</em><span class="optional">[</span>, <em>quality=VG_IMAGE_QUALITY_BETTER</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Image" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="VG.Image.size">
+<tt class="descname">size</tt><a class="headerlink" href="#VG.Image.size" title="Permalink to this definition">¶</a></dt>
+<dd>the width and height of the image</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Image.stride">
+<tt class="descname">stride</tt><a class="headerlink" href="#VG.Image.stride" title="Permalink to this definition">¶</a></dt>
+<dd>the number of bytes from the start of one row to the start of the next row</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Image.parent">
+<tt class="descname">parent</tt><a class="headerlink" href="#VG.Image.parent" title="Permalink to this definition">¶</a></dt>
+<dd>the parent image if it has one, otherwise None</dd></dl>
+
+<dl class="method">
+<dt id="VG.Image.sub_data">
+<tt class="descname">sub_data</tt><big>(</big><em>data</em>, <em>format</em>, <em>stride</em>, <em>corner</em>, <em>dimensions</em><span class="optional">[</span>, <em>flip=False</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Image.sub_data" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><em>data</em> &#8211; an object supporting the buffer interface containing the image data</li>
+<li><em>format</em> &#8211; an enum indicating the byte-format of the data</li>
+<li><em>stride</em> &#8211; the number of bytes from the start of one row of data to the start of the next</li>
+<li><em>corner</em> &#8211; I forget.</li>
+<li><em>dimensions</em> &#8211; I forget.</li>
+<li><em>flip</em> &#8211; whether or not to flip the data vertically while reading it</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Writes data from a buffer into the image.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Image.get_sub_data">
+<tt class="descname">get_sub_data</tt><big>(</big><em>buffer</em>, <em>area</em>, <em>format</em>, <em>stride</em><big>)</big><a class="headerlink" href="#VG.Image.get_sub_data" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><em>buffer</em> &#8211; an object supporting the buffer interface into which the image data will be written</li>
+<li><em>area</em> &#8211; a nested tuple of the form ((x,y),(width,height)) specifying the region to be written</li>
+<li><em>format</em> &#8211; an enum indicating the byte-format to be used</li>
+<li><em>stride</em> &#8211; the number of bytes from the start of one row of data to the start of the next</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Writes data from the image into a buffer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Image.clear">
+<tt class="descname">clear</tt><big>(</big><em>pos</em>, <em>dimensions</em><span class="optional">[</span>, <em>color=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Image.clear" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><em>pos</em> &#8211; </li>
+<li><em>dimensions</em> &#8211; </li>
+<li><em>color</em> &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Fills the specified area with color or the current VG_CLEAR_COLOr if color is None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Image.make_child">
+<tt class="descname">make_child</tt><big>(</big><em>pos</em>, <em>dimensions</em><big>)</big><a class="headerlink" href="#VG.Image.make_child" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><em>pos</em> &#8211; </li>
+<li><em>dimensions</em> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an <a title="VG.Image" class="reference internal" href="#VG.Image"><tt class="xref docutils literal"><span class="pre">Image</span></tt></a> whose contents directly reference the area on its parent</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Image.write">
+<tt class="descname">write</tt><big>(</big><em>src</em>, <em>dest_pos</em><span class="optional">[</span>, <em>area=None</em><span class="optional">[</span>, <em>dither=VG_FALSE</em><span class="optional">]</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Image.write" title="Permalink to this definition">¶</a></dt>
+<dd>Copies part of the source image onto this image</dd></dl>
+
+<dl class="method">
+<dt id="VG.Image.draw">
+<tt class="descname">draw</tt><big>(</big><span class="optional">[</span><em>mode=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Image.draw" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameter:</th><td class="field-body"><em>mode</em> &#8211; list stuff here</td>
+</tr>
+</tbody>
+</table>
+<p>Draws the image to the screen</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="VG.write_image">
+<tt class="descclassname">VG.</tt><tt class="descname">write_image</tt><big>(</big><em>src</em>, <em>dest_pos</em><span class="optional">[</span>, <em>area</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.write_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="VG.write_buffer">
+<tt class="descclassname">VG.</tt><tt class="descname">write_buffer</tt><big>(</big><em>buffer</em>, <em>dest_pos</em>, <em>dimensions</em>, <em>format</em>, <em>stride</em><span class="optional">[</span>, <em>flip=True</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.write_buffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="VG.write_to_buffer">
+<tt class="descclassname">VG.</tt><tt class="descname">write_to_buffer</tt><big>(</big><em>buffer</em>, <em>area</em>, <em>format</em>, <em>stride</em><big>)</big><a class="headerlink" href="#VG.write_to_buffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="VG.write_to_image">
+<tt class="descclassname">VG.</tt><tt class="descname">write_to_image</tt><big>(</big><em>dest</em>, <em>dest_pos</em>, <em>area</em><big>)</big><a class="headerlink" href="#VG.write_to_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="VG.copy_pixels">
+<tt class="descclassname">VG.</tt><tt class="descname">copy_pixels</tt><big>(</big><em>dest_pos</em>, <em>area</em><big>)</big><a class="headerlink" href="#VG.copy_pixels" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="style.html"
+                                  title="previous chapter">Style Class</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="path.html"
+                                  title="next chapter">Path Class</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/image.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modindex.html" title="Global Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="path.html" title="Path Class"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="style.html" title="Style Class"
+             >previous</a> |</li>
+        <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
+          <li><a href="VG.html" >VG Module</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Devan Lai.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.2.
+    </div>
+  </body>
+</html>

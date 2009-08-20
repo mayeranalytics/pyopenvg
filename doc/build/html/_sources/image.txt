@@ -1,0 +1,75 @@
+..  currentmodule:: VG
+
+===========
+Image Class
+===========
+
+..  class:: Image(format, dimensions[, quality=VG_IMAGE_QUALITY_BETTER])
+
+    ..  attribute:: size
+
+        the width and height of the image
+
+    ..  attribute:: stride
+
+        the number of bytes from the start of one row to the start of the next row
+
+    ..  attribute:: parent
+
+        the parent image if it has one, otherwise None
+
+    ..  method:: sub_data(data, format, stride, corner, dimensions[, flip=False])
+
+        :param data: an object supporting the buffer interface containing the image data
+        :param format: an enum indicating the byte-format of the data
+        :param stride: the number of bytes from the start of one row of data to the start of the next
+        :param corner: I forget.
+        :param dimensions: I forget.
+        :param flip: whether or not to flip the data vertically while reading it
+
+        Writes data from a buffer into the image.
+
+    ..  method:: get_sub_data(buffer, area, format, stride)
+
+        :param buffer: an object supporting the buffer interface into which the image data will be written
+        :param area: a nested tuple of the form ((x,y),(width,height)) specifying the region to be written
+        :param format: an enum indicating the byte-format to be used
+        :param stride: the number of bytes from the start of one row of data to the start of the next
+
+        Writes data from the image into a buffer.
+
+    ..  method:: clear(pos, dimensions[, color=None])
+
+        :param pos:
+        :param dimensions:
+        :param color:
+
+        Fills the specified area with color or the current VG_CLEAR_COLOr if color is None
+
+    ..  method:: make_child(pos, dimensions)
+
+        :param pos:
+        :param dimensions:
+
+        :returns: an :class:`Image` whose contents directly reference the area on its parent
+
+    ..  method:: write(src, dest_pos[, area=None[, dither=VG_FALSE]])
+
+        Copies part of the source image onto this image
+
+    ..  method:: draw([mode=None])
+
+        :param mode: list stuff here
+
+        Draws the image to the screen
+
+..  function:: write_image(src, dest_pos[, area])
+
+..  function:: write_buffer(buffer, dest_pos, dimensions, format, stride[, flip=True])
+
+..  function:: write_to_buffer(buffer, area, format, stride)
+
+..  function:: write_to_image(dest, dest_pos, area)
+
+..  function:: copy_pixels(dest_pos, area)
+
