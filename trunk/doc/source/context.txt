@@ -1,8 +1,8 @@
 ..  currentmodule:: VG
 
-========
-Contexts
-========
+===============
+OpenVG Contexts
+===============
 ..  class:: Context(dimensions)
 
     Context objects represent EGL contexts, which store settings pertaining
@@ -133,21 +133,34 @@ Transformations
 Matrix Manipulation
 -------------------
 
-The matrix mode can be set using::
+OpenVG matrices are of the form::
 
-    VG.set(VG_MATRIX_MODE, mode)
+    sx  shx tx
+    shy sy  ty
+    w0  w1  w2
 
-where mode is from
+which is represented by a flat list of the form::
 
-..  code-block:: c
+    [sx, shy, w0, shx, sy, w1, tx, ty, w2]
 
-    typedef enum {
-        VG_MATRIX_PATH_USER_TO_SURFACE              = 0x1400,
-        VG_MATRIX_IMAGE_USER_TO_SURFACE             = 0x1401,
-        VG_MATRIX_FILL_PAINT_TO_USER                = 0x1402,
-        VG_MATRIX_STROKE_PAINT_TO_USER              = 0x1403
-    } VGMatrixMode;
+OpenVG keeps track of four transformation matrices:
 
+    :const:`VG_MATRIX_PATH_USER_TO_SURFACE`
+        applied to paths before drawing them
+
+    :const:`VG_MATRIX_IMAGE_USER_TO_SURFACE`
+        applied to images before drawing them
+
+    :const:`VG_MATRIX_FILL_PAINT_TO_USER`
+        applied to the fill paint when drawing
+
+    :const:`VG_MATRIX_STROKE_PAINT_TO_USER`
+        applied to the stroke paint when drawing
+
+The matrix mode can be set using ``VG.set(VG_MATRIX_MODE, mode)``
+
+The default matrix mode is :const:`VG_MATRIX_PATH_USER_TO_SURFACE`, which is
+probably the mode you want.
 
 ..  function:: get_matrix()
 
@@ -162,7 +175,8 @@ where mode is from
 
 ..  function:: load_identity()
 
-    loads the identity matrix as the transformation matrix for the current matrix mode.
+    loads the identity matrix as the transformation matrix for the current
+    matrix mode.
 
 ..  function:: mult_matrix(M)
 
@@ -200,7 +214,8 @@ Context Parameters
         Determines which transformation matrix to apply transformations to.
     
     :const:`VG_FILL_RULE`
-        Determines how paths are filled - either :const:`VG_EVEN_ODD` or :const:`VG_NON_ZERO`
+        Determines how paths are filled - either :const:`VG_EVEN_ODD` or
+        :const:`VG_NON_ZERO`
     
     :const:`VG_IMAGE_QUALITY`
         Determines how images should be sampled and rendered - one of:
@@ -210,7 +225,11 @@ Context Parameters
             * :const:`VG_IMAGE_QUALITY_BETTER`
     
     :const:`VG_RENDERING_QUALITY`
-        Determines how OpenVG should render everything overall.
+        Determines how OpenVG should render everything overall - one of:
+
+            * :const:`VG_RENDERING_QUALITY_NONANTIALIASED`
+            * :const:`VG_RENDERING_QUALITY_FASTER`
+            * :const:`VG_RENDERING_QUALITY_BETTER`
 
     :const:`VG_BLEND_MODE`
         Determines how paths, images, and paint is composited - one of:
@@ -235,7 +254,7 @@ Context Parameters
 
     :const:`VG_SCISSOR_RECTS`
         A list of integers corresponding to scissoring rectangles in the
-        form [x1, y1, width1, height1, ... xn, yn, widthn, heightn]
+        form ``[x1, y1, width1, height1, ... xn, yn, widthn, heightn]``
 
     :const:`VG_STROKE_LINE_WIDTH`
         The stroke-width in pixels for all paths being drawn
@@ -259,32 +278,47 @@ Context Parameters
         with miter-joints.
 
     :const:`VG_STROKE_DASH_PATTERN`
-        TODO
+        The dash-pattern used for all paths being drawn. The pattern is of the
+        form ``[dash_length1, gap_length1, ..., dash_lengthn, gap_lengthn]``
 
     :const:`VG_STROKE_DASH_PHASE`
-        TODO
+        The offset along the dash-pattern from which to begin drawing.
 
     :const:`VG_STROKE_DASH_PHASE_RESET`
-        TODO
+        If set to :const:`VG_TRUE`, then the dash pattern will reset at the beginning
+        of each subpath.
 
     :const:`VG_TILE_FILL_COLOR`
-        TODO
+        The color used by :class:`PatternPaint` to fill pixels outside of the defined
+        pattern when using the mode :VG_TILE_FILL:
 
     :const:`VG_CLEAR_COLOR`
         The color used to fill when :func:`clear` is called or :func:`Image.clear`
         is called.
 
     :const:`VG_MASKING`
-        TODO
+        Whether or not masking is enabled.
 
     :const:`VG_SCISSORING`
-        TODO
+        Whether or not scissoring is enabled; if enabled, only pixels within
+        the union of all scissoring rectangles will be written to during any
+        OpenVG operation.
 
     :const:`VG_PIXEL_LAYOUT`
-        TODO
+        The current pixel layout hint supplied to the implementation - one of:
+
+            * :const:`VG_PIXEL_LAYOUT_UNKNOWN`
+            * :const:`VG_PIXEL_LAYOUT_RGB_VERTICAL`
+            * :const:`VG_PIXEL_LAYOUT_BGR_VERTICAL`
+            * :const:`VG_PIXEL_LAYOUT_RGB_HORIZONTAL`
+            * :const:`VG_PIXEL_LAYOUT_BGR_HORIZONTAL`
+
+        See section *6.2 Additional Quality Settings* of the specification for
+        more details
 
     :const:`VG_SCREEN_LAYOUT`
-        TODO
+        The current pixel layout information that is associated with the drawing
+        surface; has the same possible values as :const:`VG_PIXEL_LAYOUT`
 
     :const:`VG_FILTER_FORMAT_LINEAR`
         TODO
@@ -296,10 +330,11 @@ Context Parameters
         TODO
     
     :const:`VG_MAX_SCISSOR_RECTS`
-        TODO
+        The maximum number of scissor rectangles that can be specified; at least 32
+        on compliant implementations.
     
     :const:`VG_MAX_DASH_COUNT`
-        TODO
+        The maximum number of dash on/off pairs; at least 8 on compliant implementations
     
     :const:`VG_MAX_KERNEL_SIZE`
         TODO
@@ -308,23 +343,25 @@ Context Parameters
         TODO
     
     :const:`VG_MAX_COLOR_RAMP_STOPS`
-        TODO
+        The maximum number of stops in a :class:`GradientPaint`; at least 32 on
+        compliant implementations
     
     :const:`VG_MAX_IMAGE_WIDTH`
-        TODO
+        The maximum :class:`Image` width in pixels
 
     :const:`VG_MAX_IMAGE_HEIGHT`
-        TODO
+        The maximum :class:`Image` height in pixels
     
     :const:`VG_MAX_IMAGE_PIXELS`
-        TODO
+        The maximum number of pixels in an :class:`Image`
     
     :const:`VG_MAX_IMAGE_BYTES`
-        TODO
+        The maxmimum size in bytes of an :class:`Image`
 
     :const:`VG_MAX_FLOAT`
-        TODO
+        The maximum supported value for a floating point number
 
     :const:`VG_MAX_GAUSSIAN_STD_DEVIATION`
-        TODO
+        The maximum standard deviation allowed for the gaussian filter; at least
+        128 on compliant implementations
 

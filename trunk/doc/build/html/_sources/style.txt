@@ -18,10 +18,19 @@ Style Class
 
     ..  method:: disable()
 
-        Restores the old context parameters.
+        Restores the old context parameters
+
+    ..  attribute:: stroke_paint
+
+        The Paint object used for stroking when this style is enabled
+
+    ..  attribute:: fill_paint
+
+        The Paint object used for filling when this style is enabled
 
 
-Style objects take care of storing, setting, and restoring the OpenVG context parameters related to styling and drawing. For example, this code::
+Style objects take care of storing, setting, and restoring the OpenVG context parameters related to
+styling and drawing. For example, this code::
 
     #Save old settings
     old_paint = VG.get_paint(VG_STROKE_PATH)
@@ -66,7 +75,7 @@ For one-off things, you can also pass a style parameter to path.draw::
 Getting and setting style parameters
 ====================================
 
-You can get or set any style parameter (such as VG_STROKE_DASH_PATTERN) by using style[VG_STROKE_DASH_PATTERN]. The only exception is that paint must be accessed directly through style.stroke_paint and style.fill_paint.
+You can get or set any style parameter (such as ``VG_STROKE_DASH_PATTERN``) by using ``style[VG_STROKE_DASH_PATTERN]``. The only exception is that paint must be accessed directly through style.stroke_paint and style.fill_paint.
 
 Usage::
     
@@ -79,4 +88,7 @@ Usage::
 
 
 .. note::
-    Although get_paint and set_paint usually use None to signify that the default paint is being used or set, Style objects will *not* set the paint to the default if None is passed in.
+
+    Although :func:`get_paint` and :func:`set_paint` usually use None to signify that the
+    default paint is being used or set, Style objects will *not* set the paint to the default
+    if None is passed in.

@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Contexts &mdash; PyOpenVG v0.0.4 documentation</title>
+    <title>OpenVG Contexts &mdash; PyOpenVG v0.0.4 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -50,8 +50,8 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="contexts">
-<h1>Contexts<a class="headerlink" href="#contexts" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="openvg-contexts">
+<h1>OpenVG Contexts<a class="headerlink" href="#openvg-contexts" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="VG.Context">
 <em class="property">
@@ -206,19 +206,31 @@ not guarantee that all pending requests will be completed immediately</dd></dl>
 <h2>Transformations<a class="headerlink" href="#transformations" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="matrix-manipulation">
 <h3>Matrix Manipulation<a class="headerlink" href="#matrix-manipulation" title="Permalink to this headline">¶</a></h3>
-<p>The matrix mode can be set using:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">VG</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">VG_MATRIX_MODE</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+<p>OpenVG matrices are of the form:</p>
+<div class="highlight-python"><pre>sx  shx tx
+shy sy  ty
+w0  w1  w2</pre>
+</div>
+<p>which is represented by a flat list of the form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">sx</span><span class="p">,</span> <span class="n">shy</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">shx</span><span class="p">,</span> <span class="n">sy</span><span class="p">,</span> <span class="n">w1</span><span class="p">,</span> <span class="n">tx</span><span class="p">,</span> <span class="n">ty</span><span class="p">,</span> <span class="n">w2</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>where mode is from</p>
-<div class="highlight-c"><div class="highlight"><pre><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
-    <span class="n">VG_MATRIX_PATH_USER_TO_SURFACE</span>              <span class="o">=</span> <span class="mh">0x1400</span><span class="p">,</span>
-    <span class="n">VG_MATRIX_IMAGE_USER_TO_SURFACE</span>             <span class="o">=</span> <span class="mh">0x1401</span><span class="p">,</span>
-    <span class="n">VG_MATRIX_FILL_PAINT_TO_USER</span>                <span class="o">=</span> <span class="mh">0x1402</span><span class="p">,</span>
-    <span class="n">VG_MATRIX_STROKE_PAINT_TO_USER</span>              <span class="o">=</span> <span class="mh">0x1403</span>
-<span class="p">}</span> <span class="n">VGMatrixMode</span><span class="p">;</span>
-</pre></div>
-</div>
+<p>OpenVG keeps track of four transformation matrices:</p>
+<blockquote>
+<dl class="docutils">
+<dt><tt class="xref docutils literal"><span class="pre">VG_MATRIX_PATH_USER_TO_SURFACE</span></tt></dt>
+<dd>applied to paths before drawing them</dd>
+<dt><tt class="xref docutils literal"><span class="pre">VG_MATRIX_IMAGE_USER_TO_SURFACE</span></tt></dt>
+<dd>applied to images before drawing them</dd>
+<dt><tt class="xref docutils literal"><span class="pre">VG_MATRIX_FILL_PAINT_TO_USER</span></tt></dt>
+<dd>applied to the fill paint when drawing</dd>
+<dt><tt class="xref docutils literal"><span class="pre">VG_MATRIX_STROKE_PAINT_TO_USER</span></tt></dt>
+<dd>applied to the stroke paint when drawing</dd>
+</dl>
+</blockquote>
+<p>The matrix mode can be set using <tt class="docutils literal"><span class="pre">VG.set(VG_MATRIX_MODE,</span> <span class="pre">mode)</span></tt></p>
+<p>The default matrix mode is <tt class="xref docutils literal"><span class="pre">VG_MATRIX_PATH_USER_TO_SURFACE</span></tt>, which is
+probably the mode you want.</p>
 <dl class="function">
 <dt id="VG.get_matrix">
 <tt class="descclassname">VG.</tt><tt class="descname">get_matrix</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.get_matrix" title="Permalink to this definition">¶</a></dt>
@@ -250,7 +262,8 @@ matrices must be padded.)</td>
 <dl class="function">
 <dt id="VG.load_identity">
 <tt class="descclassname">VG.</tt><tt class="descname">load_identity</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.load_identity" title="Permalink to this definition">¶</a></dt>
-<dd>loads the identity matrix as the transformation matrix for the current matrix mode.</dd></dl>
+<dd>loads the identity matrix as the transformation matrix for the current
+matrix mode.</dd></dl>
 
 <dl class="function">
 <dt id="VG.mult_matrix">
@@ -298,7 +311,8 @@ current transform matrix</dd></dl>
 <dt id="term-vg-matrix-mode"><tt class="xref docutils literal"><span class="pre">VG_MATRIX_MODE</span></tt></dt>
 <dd>Determines which transformation matrix to apply transformations to.</dd>
 <dt id="term-vg-fill-rule"><tt class="xref docutils literal"><span class="pre">VG_FILL_RULE</span></tt></dt>
-<dd>Determines how paths are filled - either <tt class="xref docutils literal"><span class="pre">VG_EVEN_ODD</span></tt> or <tt class="xref docutils literal"><span class="pre">VG_NON_ZERO</span></tt></dd>
+<dd>Determines how paths are filled - either <tt class="xref docutils literal"><span class="pre">VG_EVEN_ODD</span></tt> or
+<tt class="xref docutils literal"><span class="pre">VG_NON_ZERO</span></tt></dd>
 <dt id="term-vg-image-quality"><tt class="xref docutils literal"><span class="pre">VG_IMAGE_QUALITY</span></tt></dt>
 <dd><p class="first">Determines how images should be sampled and rendered - one of:</p>
 <blockquote class="last">
@@ -310,7 +324,15 @@ current transform matrix</dd></dl>
 </blockquote>
 </dd>
 <dt id="term-vg-rendering-quality"><tt class="xref docutils literal"><span class="pre">VG_RENDERING_QUALITY</span></tt></dt>
-<dd>Determines how OpenVG should render everything overall.</dd>
+<dd><p class="first">Determines how OpenVG should render everything overall - one of:</p>
+<blockquote class="last">
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_RENDERING_QUALITY_NONANTIALIASED</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_RENDERING_QUALITY_FASTER</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_RENDERING_QUALITY_BETTER</span></tt></li>
+</ul>
+</blockquote>
+</dd>
 <dt id="term-vg-blend-mode"><tt class="xref docutils literal"><span class="pre">VG_BLEND_MODE</span></tt></dt>
 <dd><p class="first">Determines how paths, images, and paint is composited - one of:</p>
 <blockquote class="last">
@@ -340,7 +362,7 @@ current transform matrix</dd></dl>
 </dd>
 <dt id="term-vg-scissor-rects"><tt class="xref docutils literal"><span class="pre">VG_SCISSOR_RECTS</span></tt></dt>
 <dd>A list of integers corresponding to scissoring rectangles in the
-form [x1, y1, width1, height1, ... xn, yn, widthn, heightn]</dd>
+form <tt class="docutils literal"><span class="pre">[x1,</span> <span class="pre">y1,</span> <span class="pre">width1,</span> <span class="pre">height1,</span> <span class="pre">...</span> <span class="pre">xn,</span> <span class="pre">yn,</span> <span class="pre">widthn,</span> <span class="pre">heightn]</span></tt></dd>
 <dt id="term-vg-stroke-line-width"><tt class="xref docutils literal"><span class="pre">VG_STROKE_LINE_WIDTH</span></tt></dt>
 <dd>The stroke-width in pixels for all paths being drawn</dd>
 <dt id="term-vg-stroke-cap-style"><tt class="xref docutils literal"><span class="pre">VG_STROKE_CAP_STYLE</span></tt></dt>
@@ -367,24 +389,42 @@ form [x1, y1, width1, height1, ... xn, yn, widthn, heightn]</dd>
 <dd>The maximum length in pixels of a miter-joint for all paths being drawn
 with miter-joints.</dd>
 <dt id="term-vg-stroke-dash-pattern"><tt class="xref docutils literal"><span class="pre">VG_STROKE_DASH_PATTERN</span></tt></dt>
-<dd>TODO</dd>
+<dd>The dash-pattern used for all paths being drawn. The pattern is of the
+form <tt class="docutils literal"><span class="pre">[dash_length1,</span> <span class="pre">gap_length1,</span> <span class="pre">...,</span> <span class="pre">dash_lengthn,</span> <span class="pre">gap_lengthn]</span></tt></dd>
 <dt id="term-vg-stroke-dash-phase"><tt class="xref docutils literal"><span class="pre">VG_STROKE_DASH_PHASE</span></tt></dt>
-<dd>TODO</dd>
+<dd>The offset along the dash-pattern from which to begin drawing.</dd>
 <dt id="term-vg-stroke-dash-phase-reset"><tt class="xref docutils literal"><span class="pre">VG_STROKE_DASH_PHASE_RESET</span></tt></dt>
-<dd>TODO</dd>
+<dd>If set to <tt class="xref docutils literal"><span class="pre">VG_TRUE</span></tt>, then the dash pattern will reset at the beginning
+of each subpath.</dd>
 <dt id="term-vg-tile-fill-color"><tt class="xref docutils literal"><span class="pre">VG_TILE_FILL_COLOR</span></tt></dt>
-<dd>TODO</dd>
+<dd>The color used by <a title="VG.PatternPaint" class="reference external" href="paint.html#VG.PatternPaint"><tt class="xref docutils literal"><span class="pre">PatternPaint</span></tt></a> to fill pixels outside of the defined
+pattern when using the mode :VG_TILE_FILL:</dd>
 <dt id="term-vg-clear-color"><tt class="xref docutils literal"><span class="pre">VG_CLEAR_COLOR</span></tt></dt>
 <dd>The color used to fill when <a title="VG.clear" class="reference internal" href="#VG.clear"><tt class="xref docutils literal"><span class="pre">clear()</span></tt></a> is called or <a title="VG.Image.clear" class="reference external" href="image.html#VG.Image.clear"><tt class="xref docutils literal"><span class="pre">Image.clear()</span></tt></a>
 is called.</dd>
 <dt id="term-vg-masking"><tt class="xref docutils literal"><span class="pre">VG_MASKING</span></tt></dt>
-<dd>TODO</dd>
+<dd>Whether or not masking is enabled.</dd>
 <dt id="term-vg-scissoring"><tt class="xref docutils literal"><span class="pre">VG_SCISSORING</span></tt></dt>
-<dd>TODO</dd>
+<dd>Whether or not scissoring is enabled; if enabled, only pixels within
+the union of all scissoring rectangles will be written to during any
+OpenVG operation.</dd>
 <dt id="term-vg-pixel-layout"><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT</span></tt></dt>
-<dd>TODO</dd>
+<dd><p class="first">The current pixel layout hint supplied to the implementation - one of:</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT_UNKNOWN</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT_RGB_VERTICAL</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT_BGR_VERTICAL</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT_RGB_HORIZONTAL</span></tt></li>
+<li><tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT_BGR_HORIZONTAL</span></tt></li>
+</ul>
+</blockquote>
+<p class="last">See section <em>6.2 Additional Quality Settings</em> of the specification for
+more details</p>
+</dd>
 <dt id="term-vg-screen-layout"><tt class="xref docutils literal"><span class="pre">VG_SCREEN_LAYOUT</span></tt></dt>
-<dd>TODO</dd>
+<dd>The current pixel layout information that is associated with the drawing
+surface; has the same possible values as <tt class="xref docutils literal"><span class="pre">VG_PIXEL_LAYOUT</span></tt></dd>
 <dt id="term-vg-filter-format-linear"><tt class="xref docutils literal"><span class="pre">VG_FILTER_FORMAT_LINEAR</span></tt></dt>
 <dd>TODO</dd>
 <dt id="term-vg-filter-format-premultiplied"><tt class="xref docutils literal"><span class="pre">VG_FILTER_FORMAT_PREMULTIPLIED</span></tt></dt>
@@ -392,27 +432,30 @@ is called.</dd>
 <dt id="term-vg-filter-channel-mask"><tt class="xref docutils literal"><span class="pre">VG_FILTER_CHANNEL_MASK</span></tt></dt>
 <dd>TODO</dd>
 <dt id="term-vg-max-scissor-rects"><tt class="xref docutils literal"><span class="pre">VG_MAX_SCISSOR_RECTS</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum number of scissor rectangles that can be specified; at least 32
+on compliant implementations.</dd>
 <dt id="term-vg-max-dash-count"><tt class="xref docutils literal"><span class="pre">VG_MAX_DASH_COUNT</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum number of dash on/off pairs; at least 8 on compliant implementations</dd>
 <dt id="term-vg-max-kernel-size"><tt class="xref docutils literal"><span class="pre">VG_MAX_KERNEL_SIZE</span></tt></dt>
 <dd>TODO</dd>
 <dt id="term-vg-max-separable-kernel-size"><tt class="xref docutils literal"><span class="pre">VG_MAX_SEPARABLE_KERNEL_SIZE</span></tt></dt>
 <dd>TODO</dd>
 <dt id="term-vg-max-color-ramp-stops"><tt class="xref docutils literal"><span class="pre">VG_MAX_COLOR_RAMP_STOPS</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum number of stops in a <a title="VG.GradientPaint" class="reference external" href="paint.html#VG.GradientPaint"><tt class="xref docutils literal"><span class="pre">GradientPaint</span></tt></a>; at least 32 on
+compliant implementations</dd>
 <dt id="term-vg-max-image-width"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_WIDTH</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum <a title="VG.Image" class="reference external" href="image.html#VG.Image"><tt class="xref docutils literal"><span class="pre">Image</span></tt></a> width in pixels</dd>
 <dt id="term-vg-max-image-height"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_HEIGHT</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum <a title="VG.Image" class="reference external" href="image.html#VG.Image"><tt class="xref docutils literal"><span class="pre">Image</span></tt></a> height in pixels</dd>
 <dt id="term-vg-max-image-pixels"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_PIXELS</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum number of pixels in an <a title="VG.Image" class="reference external" href="image.html#VG.Image"><tt class="xref docutils literal"><span class="pre">Image</span></tt></a></dd>
 <dt id="term-vg-max-image-bytes"><tt class="xref docutils literal"><span class="pre">VG_MAX_IMAGE_BYTES</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maxmimum size in bytes of an <a title="VG.Image" class="reference external" href="image.html#VG.Image"><tt class="xref docutils literal"><span class="pre">Image</span></tt></a></dd>
 <dt id="term-vg-max-float"><tt class="xref docutils literal"><span class="pre">VG_MAX_FLOAT</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum supported value for a floating point number</dd>
 <dt id="term-vg-max-gaussian-std-deviation"><tt class="xref docutils literal"><span class="pre">VG_MAX_GAUSSIAN_STD_DEVIATION</span></tt></dt>
-<dd>TODO</dd>
+<dd>The maximum standard deviation allowed for the gaussian filter; at least
+128 on compliant implementations</dd>
 </dl>
 </div>
 </div>
@@ -425,7 +468,7 @@ is called.</dd>
         <div class="sphinxsidebarwrapper">
             <h3><a href="index.html">Table Of Contents</a></h3>
             <ul>
-<li><a class="reference external" href="">Contexts</a><ul>
+<li><a class="reference external" href="">OpenVG Contexts</a><ul>
 <li><a class="reference external" href="#getting-setting-parameters">Getting/Setting Parameters</a><ul>
 <li><a class="reference external" href="#getting-setting-paint">Getting/Setting Paint</a></li>
 <li><a class="reference external" href="#querying-openvg-properties">Querying OpenVG properties</a></li>

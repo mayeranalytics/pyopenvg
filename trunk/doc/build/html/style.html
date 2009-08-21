@@ -22,7 +22,7 @@
     <link rel="top" title="PyOpenVG v0.0.4 documentation" href="index.html" />
     <link rel="up" title="VG Module" href="VG.html" />
     <link rel="next" title="Image Class" href="image.html" />
-    <link rel="prev" title="Contexts" href="context.html" /> 
+    <link rel="prev" title="OpenVG Contexts" href="context.html" /> 
   </head>
   <body>
     <div class="related">
@@ -38,7 +38,7 @@
           <a href="image.html" title="Image Class"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="context.html" title="Contexts"
+          <a href="context.html" title="OpenVG Contexts"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
           <li><a href="VG.html" accesskey="U">VG Module</a> &raquo;</li> 
@@ -68,11 +68,22 @@ assuming that the <tt class="xref docutils literal"><span class="pre">VG_STROKE_
 <dl class="method">
 <dt id="VG.Style.disable">
 <tt class="descname">disable</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Style.disable" title="Permalink to this definition">¶</a></dt>
-<dd>Restores the old context parameters.</dd></dl>
+<dd>Restores the old context parameters</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Style.stroke_paint">
+<tt class="descname">stroke_paint</tt><a class="headerlink" href="#VG.Style.stroke_paint" title="Permalink to this definition">¶</a></dt>
+<dd>The Paint object used for stroking when this style is enabled</dd></dl>
+
+<dl class="attribute">
+<dt id="VG.Style.fill_paint">
+<tt class="descname">fill_paint</tt><a class="headerlink" href="#VG.Style.fill_paint" title="Permalink to this definition">¶</a></dt>
+<dd>The Paint object used for filling when this style is enabled</dd></dl>
 
 </dd></dl>
 
-<p>Style objects take care of storing, setting, and restoring the OpenVG context parameters related to styling and drawing. For example, this code:</p>
+<p>Style objects take care of storing, setting, and restoring the OpenVG context parameters related to
+styling and drawing. For example, this code:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c">#Save old settings</span>
 <span class="n">old_paint</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">get_paint</span><span class="p">(</span><span class="n">VG_STROKE_PATH</span><span class="p">)</span>
 <span class="n">old_stroke_width</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">VG_STROKE_LINE_WIDTH</span><span class="p">)</span>
@@ -116,7 +127,7 @@ assuming that the <tt class="xref docutils literal"><span class="pre">VG_STROKE_
 </div>
 <div class="section" id="getting-and-setting-style-parameters">
 <h2>Getting and setting style parameters<a class="headerlink" href="#getting-and-setting-style-parameters" title="Permalink to this headline">¶</a></h2>
-<p>You can get or set any style parameter (such as VG_STROKE_DASH_PATTERN) by using style[VG_STROKE_DASH_PATTERN]. The only exception is that paint must be accessed directly through style.stroke_paint and style.fill_paint.</p>
+<p>You can get or set any style parameter (such as <tt class="docutils literal"><span class="pre">VG_STROKE_DASH_PATTERN</span></tt>) by using <tt class="docutils literal"><span class="pre">style[VG_STROKE_DASH_PATTERN]</span></tt>. The only exception is that paint must be accessed directly through style.stroke_paint and style.fill_paint.</p>
 <p>Usage:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">style</span> <span class="o">=</span> <span class="n">VG</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">stroke_paint</span><span class="o">=</span><span class="n">VG</span><span class="o">.</span><span class="n">ColorPaint</span><span class="p">((</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span> <span class="c">#red stroke paint</span>
                  <span class="n">VG_STROKE_DASH_PATTERN</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5</span><span class="p">,</span> <span class="mf">10</span><span class="p">))</span>            <span class="c">#dash pattern of 5 on, 10 off</span>
@@ -128,7 +139,9 @@ assuming that the <tt class="xref docutils literal"><span class="pre">VG_STROKE_
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Although get_paint and set_paint usually use None to signify that the default paint is being used or set, Style objects will <em>not</em> set the paint to the default if None is passed in.</p>
+<p class="last">Although <a title="VG.get_paint" class="reference external" href="context.html#VG.get_paint"><tt class="xref docutils literal"><span class="pre">get_paint()</span></tt></a> and <a title="VG.set_paint" class="reference external" href="context.html#VG.set_paint"><tt class="xref docutils literal"><span class="pre">set_paint()</span></tt></a> usually use None to signify that the
+default paint is being used or set, Style objects will <em>not</em> set the paint to the default
+if None is passed in.</p>
 </div>
 </div>
 </div>
@@ -149,7 +162,7 @@ assuming that the <tt class="xref docutils literal"><span class="pre">VG_STROKE_
 
             <h4>Previous topic</h4>
             <p class="topless"><a href="context.html"
-                                  title="previous chapter">Contexts</a></p>
+                                  title="previous chapter">OpenVG Contexts</a></p>
             <h4>Next topic</h4>
             <p class="topless"><a href="image.html"
                                   title="next chapter">Image Class</a></p>
@@ -188,7 +201,7 @@ assuming that the <tt class="xref docutils literal"><span class="pre">VG_STROKE_
           <a href="image.html" title="Image Class"
              >next</a> |</li>
         <li class="right" >
-          <a href="context.html" title="Contexts"
+          <a href="context.html" title="OpenVG Contexts"
              >previous</a> |</li>
         <li><a href="index.html">PyOpenVG v0.0.4 documentation</a> &raquo;</li>
           <li><a href="VG.html" >VG Module</a> &raquo;</li> 
