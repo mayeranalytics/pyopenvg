@@ -5,6 +5,17 @@ Path Class
 ==========
 The Path class wraps a VGPath handle and provides the functionality needed to create, transform, and draw paths.
 
+Paths consist of a sequence of segments. Each segment is a tuple of a path command
+and its corresponding data. A simple example would be::
+
+    segments = [(VG_MOVE_TO, (10.0, 10.0)), #VG_MOVE_TO is the command, and the data
+                                            #is a single point, (10.0, 10.0)
+                (VG_LINE_TO, (40.0, 10.0))]
+
+This would define a line from the point ``(10.0, 10.0)`` to ``(40.0, 10.0)``.
+
+For more details on other path commands and their arguments, see *Section 8.5.2 Segment commands* of the specification.
+
 ..  note:: Path objects have a style attribute which can be used to automatically set the corresponding context parameters when drawing and then restore the old parameters.
 
 
@@ -13,10 +24,10 @@ The Path class wraps a VGPath handle and provides the functionality needed to cr
     For the most part, there is no reason to pass the constructor any values besides the defaults. 
 
     * format corresponds to the path format used internally by OpenVG. 0 indicates the standard format currently.
-    * datatype is a constant indicating the datatype used to represent the path coordinates. Other options are VG_PATH_DATATYPE_S_8, VG_PATH_DATATYPE_S_16, and VG_PATH_DATATYPE_32. Certain kinds of paths (such as fonts) fit nicely in smaller datatypes.
-    * segment and bias are used together with the datatype to define the valid range of coordinates. A given coordinate v is mapped to v*scale + bias.
+    * datatype is a constant indicating the datatype used to represent the path coordinates. Other options are :const:`VG_PATH_DATATYPE_S_8`, :const:`VG_PATH_DATATYPE_S_16`, and :const:`VG_PATH_DATATYPE_32`. Certain kinds of paths (such as fonts) fit nicely in smaller datatypes.
+    * scale and bias are used together with the datatype to define the valid range of coordinates. A given coordinate ``v`` is mapped to ``v*scale + bias``.
     * segment_hint and coord_hint are hints to OpenVG telling it how much space it might need to allocate for a given path. Setting these might help performance a little, but probably won't make a difference.
-    * capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you'll want to stick with VG_PATH_CAPABILITY_ALL.
+    * capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you'll want to stick with :const:`VG_PATH_CAPABILITY_ALL`.
 
     ..  attribute:: format
     
@@ -24,7 +35,7 @@ The Path class wraps a VGPath handle and provides the functionality needed to cr
 
     ..  attribute:: datatype
     
-        The datatype that path coordinates are stored as. Usually this will be VG_PATH_DATATYPE_F.
+        The datatype that path coordinates are stored as. Usually this will be :const:`VG_PATH_DATATYPE_F`.
 
     ..  attribute:: scale
     
@@ -44,7 +55,7 @@ The Path class wraps a VGPath handle and provides the functionality needed to cr
 
     ..  attribute:: capabilities
     
-        The bitwise OR of the capabilities supported by the path. Normally VG_PATH_CAPABILITY_ALL.
+        The bitwise OR of the capabilities supported by the path. Normally :const:`VG_PATH_CAPABILITY_ALL`.
         Capabilities can be removed by using::
 
             path.capabilities &= ~(capability1 | capability2 | capability3)
@@ -112,6 +123,14 @@ The Path class wraps a VGPath handle and provides the functionality needed to cr
             path.modify(1, [(  0.0, 50.0),
                             ( 50.0,  0.0),
                             (-50.0,  0.0)])
+
+    ..  method:: bounds()
+
+        :returns: the bounding box in the form ``((minX, minY), (width, height))``
+
+    ..  method:: transformed_bounds()
+
+        :returns: the bounding box after applying the current path transform matrix
             
     ..  method:: transform([dest=None])
     
@@ -152,8 +171,8 @@ The Path class wraps a VGPath handle and provides the functionality needed to cr
 
     ..  method:: draw(paint_mode[, style=None])
 
-        :param paint_mode: the bitwise OR of VG_FILL_PATH and/or VG_STROKE_PATH.
-            If paint_modes is VG_FILL_PATH, only the fill will be drawn. If paint_modes is VG_STROKE_PATH then only the stroke will be drawn. If paint_modes is VG_FILL_PATH | VG_STROKE_PATH, then both will be drawn.
+        :param paint_mode: the bitwise OR of :const:`VG_FILL_PATH` and/or :const:`VG_STROKE_PATH`.
+            If paint_modes is :const:`VG_FILL_PATH`, only the fill will be drawn. If paint_modes is :const:`VG_STROKE_PATH` then only the stroke will be drawn. If paint_modes is ``VG_FILL_PATH | VG_STROKE_PATH``, then both will be drawn.
         :param style: an optional argument, which if supplied provides the style information that OpenVG will use to render the path. This is combined with the path's style attribute if it exists.
 
         Draws the path to the screen according to the paint mode.

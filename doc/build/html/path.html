@@ -53,6 +53,15 @@
   <div class="section" id="path-class">
 <h1>Path Class<a class="headerlink" href="#path-class" title="Permalink to this headline">¶</a></h1>
 <p>The Path class wraps a VGPath handle and provides the functionality needed to create, transform, and draw paths.</p>
+<p>Paths consist of a sequence of segments. Each segment is a tuple of a path command
+and its corresponding data. A simple example would be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">segments</span> <span class="o">=</span> <span class="p">[(</span><span class="n">VG_MOVE_TO</span><span class="p">,</span> <span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)),</span> <span class="c">#VG_MOVE_TO is the command, and the data</span>
+                                        <span class="c">#is a single point, (10.0, 10.0)</span>
+            <span class="p">(</span><span class="n">VG_LINE_TO</span><span class="p">,</span> <span class="p">(</span><span class="mf">40.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">))]</span>
+</pre></div>
+</div>
+<p>This would define a line from the point <tt class="docutils literal"><span class="pre">(10.0,</span> <span class="pre">10.0)</span></tt> to <tt class="docutils literal"><span class="pre">(40.0,</span> <span class="pre">10.0)</span></tt>.</p>
+<p>For more details on other path commands and their arguments, see <em>Section 8.5.2 Segment commands</em> of the specification.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Path objects have a style attribute which can be used to automatically set the corresponding context parameters when drawing and then restore the old parameters.</p>
@@ -64,10 +73,10 @@ class </em><tt class="descclassname">VG.</tt><tt class="descname">Path</tt><big>
 <dd><p>For the most part, there is no reason to pass the constructor any values besides the defaults.</p>
 <ul class="simple">
 <li>format corresponds to the path format used internally by OpenVG. 0 indicates the standard format currently.</li>
-<li>datatype is a constant indicating the datatype used to represent the path coordinates. Other options are VG_PATH_DATATYPE_S_8, VG_PATH_DATATYPE_S_16, and VG_PATH_DATATYPE_32. Certain kinds of paths (such as fonts) fit nicely in smaller datatypes.</li>
-<li>segment and bias are used together with the datatype to define the valid range of coordinates. A given coordinate v is mapped to v*scale + bias.</li>
+<li>datatype is a constant indicating the datatype used to represent the path coordinates. Other options are <tt class="xref docutils literal"><span class="pre">VG_PATH_DATATYPE_S_8</span></tt>, <tt class="xref docutils literal"><span class="pre">VG_PATH_DATATYPE_S_16</span></tt>, and <tt class="xref docutils literal"><span class="pre">VG_PATH_DATATYPE_32</span></tt>. Certain kinds of paths (such as fonts) fit nicely in smaller datatypes.</li>
+<li>scale and bias are used together with the datatype to define the valid range of coordinates. A given coordinate <tt class="docutils literal"><span class="pre">v</span></tt> is mapped to <tt class="docutils literal"><span class="pre">v*scale</span> <span class="pre">+</span> <span class="pre">bias</span></tt>.</li>
 <li>segment_hint and coord_hint are hints to OpenVG telling it how much space it might need to allocate for a given path. Setting these might help performance a little, but probably won&#8217;t make a difference.</li>
-<li>capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you&#8217;ll want to stick with VG_PATH_CAPABILITY_ALL.</li>
+<li>capabilities is a bitwise OR of the various capabilities that paths have (such has appending data, transforming, interpolating, etc). In theory OpenVG can save space if you specify fewer capabilities, but most of the time you&#8217;ll want to stick with <tt class="xref docutils literal"><span class="pre">VG_PATH_CAPABILITY_ALL</span></tt>.</li>
 </ul>
 <dl class="attribute">
 <dt id="VG.Path.format">
@@ -77,7 +86,7 @@ class </em><tt class="descclassname">VG.</tt><tt class="descname">Path</tt><big>
 <dl class="attribute">
 <dt id="VG.Path.datatype">
 <tt class="descname">datatype</tt><a class="headerlink" href="#VG.Path.datatype" title="Permalink to this definition">¶</a></dt>
-<dd>The datatype that path coordinates are stored as. Usually this will be VG_PATH_DATATYPE_F.</dd></dl>
+<dd>The datatype that path coordinates are stored as. Usually this will be <tt class="xref docutils literal"><span class="pre">VG_PATH_DATATYPE_F</span></tt>.</dd></dl>
 
 <dl class="attribute">
 <dt id="VG.Path.scale">
@@ -102,7 +111,7 @@ class </em><tt class="descclassname">VG.</tt><tt class="descname">Path</tt><big>
 <dl class="attribute">
 <dt id="VG.Path.capabilities">
 <tt class="descname">capabilities</tt><a class="headerlink" href="#VG.Path.capabilities" title="Permalink to this definition">¶</a></dt>
-<dd><p>The bitwise OR of the capabilities supported by the path. Normally VG_PATH_CAPABILITY_ALL.
+<dd><p>The bitwise OR of the capabilities supported by the path. Normally <tt class="xref docutils literal"><span class="pre">VG_PATH_CAPABILITY_ALL</span></tt>.
 Capabilities can be removed by using:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">path</span><span class="o">.</span><span class="n">capabilities</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="n">capability1</span> <span class="o">|</span> <span class="n">capability2</span> <span class="o">|</span> <span class="n">capability3</span><span class="p">)</span>
 </pre></div>
@@ -207,6 +216,32 @@ Capabilities can be removed by using:</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="VG.Path.bounds">
+<tt class="descname">bounds</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Path.bounds" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the bounding box in the form <tt class="docutils literal"><span class="pre">((minX,</span> <span class="pre">minY),</span> <span class="pre">(width,</span> <span class="pre">height))</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="VG.Path.transformed_bounds">
+<tt class="descname">transformed_bounds</tt><big>(</big><big>)</big><a class="headerlink" href="#VG.Path.transformed_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body">the bounding box after applying the current path transform matrix</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="VG.Path.transform">
 <tt class="descname">transform</tt><big>(</big><span class="optional">[</span><em>dest=None</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#VG.Path.transform" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
@@ -288,8 +323,8 @@ This does <em>not</em> modify the original. However, if dest is None, an empty p
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><em>paint_mode</em> &#8211; the bitwise OR of VG_FILL_PATH and/or VG_STROKE_PATH.
-If paint_modes is VG_FILL_PATH, only the fill will be drawn. If paint_modes is VG_STROKE_PATH then only the stroke will be drawn. If paint_modes is VG_FILL_PATH | VG_STROKE_PATH, then both will be drawn.</li>
+<li><em>paint_mode</em> &#8211; the bitwise OR of <tt class="xref docutils literal"><span class="pre">VG_FILL_PATH</span></tt> and/or <tt class="xref docutils literal"><span class="pre">VG_STROKE_PATH</span></tt>.
+If paint_modes is <tt class="xref docutils literal"><span class="pre">VG_FILL_PATH</span></tt>, only the fill will be drawn. If paint_modes is <tt class="xref docutils literal"><span class="pre">VG_STROKE_PATH</span></tt> then only the stroke will be drawn. If paint_modes is <tt class="docutils literal"><span class="pre">VG_FILL_PATH</span> <span class="pre">|</span> <span class="pre">VG_STROKE_PATH</span></tt>, then both will be drawn.</li>
 <li><em>style</em> &#8211; an optional argument, which if supplied provides the style information that OpenVG will use to render the path. This is combined with the path&#8217;s style attribute if it exists.</li>
 </ul>
 </td>
